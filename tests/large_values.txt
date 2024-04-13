@@ -1,0 +1,12 @@
+import "libc";
+VAL :: -9223372036854775800;
+AFTER_VAL :: ^;
+
+main :: proc(): int {
+    #static_assert(VAL == -9223372036854775800);
+    const_value: llong = -9223372036854775800;
+    enum_value: llong = VAL;
+    assert(const_value == enum_value);
+    assert(AFTER_VAL == const_value + 1);
+    return 0;
+}

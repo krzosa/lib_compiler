@@ -1,0 +1,6 @@
+import "std_types";
+import "32asd";
+
+main :: proc(): int {
+    return 0;
+}

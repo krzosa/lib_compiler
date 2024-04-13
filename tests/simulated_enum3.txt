@@ -1,0 +1,14 @@
+// #dont_run
+A :: 0b1;
+B :: <<;
+C :: <<;
+
+
+D :: 0b10000;
+E :: <<;
+
+#static_assert(A == 0b1);
+#static_assert(B == 0b10);
+#static_assert(C == 0b100);
+#static_assert(D == 0b10000);
+#static_assert(E == 0b100000);

@@ -1,0 +1,16 @@
+import "libc";
+
+#static_assert(~4 | (1 << 37) == -5);
+
+main :: proc(): int {
+    {a: llong = ~1;
+    b := ~:llong(1);
+    assert(a == b);}
+
+    {a: ullong = ~1;
+    b := ~:ullong(1);
+    assert(a == b);}
+
+    return 0;
+}
+

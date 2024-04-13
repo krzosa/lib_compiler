@@ -1,0 +1,10 @@
+// #failed: resolve
+// #error: cannot perform binary operation, types don't qualify for it, left: 'int' right: '*int'
+// #error: invalid binary operation for type
+main :: proc(): int {
+    a := 0;
+    b := &a;
+    c := a - b;
+    d := b - a;
+    return 0;
+}

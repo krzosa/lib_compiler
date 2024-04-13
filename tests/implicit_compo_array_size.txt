@@ -1,0 +1,16 @@
+import c "libc";
+
+a: []int = {1, 2, 3, 4, 5};
+b: [6]int = {1, 2, 3, 4};
+
+
+main :: proc(): int {
+    local_a: []int = {1, 2, 3, 4, 5};
+    local_b: [6]int = {1, 2, 3, 4};
+
+    c.assert(lengthof(a) == 5);
+    c.assert(lengthof(b) == 6);
+    c.assert(lengthof(local_a) == 5);
+    c.assert(lengthof(local_b) == 6);
+    return 0;
+}

@@ -1,0 +1,57 @@
+Vector2 :: struct {
+    x: float;
+    y: float;
+}
+
+Hitbox :: struct {
+    min: Vector2;
+    max: Vector2;
+}
+
+TPlayer :: struct {
+    DashSpeed: float;
+    EndDashSpeed: float;
+    EndDashUpMult: float;
+    DashTime: float;
+    DashCooldown: float;
+    DashRefillCooldown: float;
+    DashHJumpThruNudge: int;
+    DashCornerCorrection: int;
+    DashVFloorSnapDist: int;
+    DashAttackTime: float;
+
+    Level: int;
+    NormalHitbox: Hitbox;
+    DuckHitbox: Hitbox;
+
+    NormalHurtbox: Hitbox;
+    DuckHurtbox: Hitbox;
+}
+
+Player: TPlayer = {
+    DashSpeed            = 240,
+    EndDashSpeed         = 160,
+    EndDashUpMult        = 0.75,
+    DashTime             = 0.15,
+    DashCooldown         = 0.2,
+    DashRefillCooldown   = 0.1,
+    DashHJumpThruNudge   = 6,
+    DashCornerCorrection = 4,
+    DashVFloorSnapDist   = 3,
+    DashAttackTime       = 0.3,
+
+    Level                = LEVEL_BEGIN,
+    NormalHitbox         = { { 1, 1 }, { 2, 2 } },
+    NormalHurtbox        = { min = { x = 1, y = 1 }, max = { 2 } },
+};
+
+LEVEL_TUTORIAL :: 1;
+LEVEL_BEGIN    :: ^;
+
+IntValue   :: 232;
+FloatValue :: 13.0;
+SomeString :: "Thing";
+
+Variable: float = 32.0;
+Reference      := Variable + Variable;
+

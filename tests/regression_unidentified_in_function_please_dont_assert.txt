@@ -1,0 +1,14 @@
+// #failed: resolve
+
+// #error: undeclared identifier 'unidentified'
+thing :: proc(): unidentified {
+}
+
+// #error: undeclared identifier 'unidentified2'
+thing2 :: proc(a: unidentified2) {
+}
+
+main :: proc(): int {
+    thing();
+    return 0;
+}

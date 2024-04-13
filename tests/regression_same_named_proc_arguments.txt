@@ -1,0 +1,4 @@
+// #failed: resolve
+// #error: duplicate proc argument 'a'
+A :: proc(a: int, a: int) {
+}

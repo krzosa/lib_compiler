@@ -1,0 +1,6 @@
+a :: proc(): int {
+    return 0;
+}
+
+a :: proc() {
+}

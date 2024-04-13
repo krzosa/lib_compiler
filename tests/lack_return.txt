@@ -1,0 +1,92 @@
+// #failed: resolve
+
+// #error: you can get through this procedure without hitting a return stmt
+a :: proc(): int {
+    val := 10;
+
+    {
+        if (val == 1) {
+            return 0;
+        } else if val == 2 {
+            val = 5;
+        } else {
+            val = 4;
+        }
+    }
+}
+
+// #error: you can get through this procedure without hitting a return stmt
+b :: proc(): int {
+    val := 10;
+
+    {
+    if val == 10 {
+        if val == 10 {
+            return 0;
+        }
+    } else if val == 5 {
+        return 20;
+    } else {
+        return 0;
+    }
+    }
+}
+
+// regression, error in return and we don't want to report the lack of return by accident
+// #error: cannot assign void
+c :: proc(): int {
+    for {
+        return;
+    }
+}
+
+// #error: cannot assign void
+d :: proc(): int {
+    val := 4;
+    if val {
+        return;
+    }
+}
+
+// #error: you can get through this procedure without hitting a return stmt
+e :: proc(): int {
+    val := false;
+    for {
+        if val {
+            return 10;
+        }
+    }
+
+    if val {
+    }
+    else {
+        return 10;
+    }
+}
+
+f :: proc(): int {
+    switch 4 {
+        case 1: return 0;
+        default: return 0;
+    }
+}
+
+// #error: you can get through this procedure without hitting a return stmt
+g :: proc(): int {
+    val := 4;
+    switch val {
+        case 1: return 0;
+        case 2: return 0;
+        case 3: return 0;
+    }
+}
+
+h :: proc(): int {
+    val := 4;
+    switch val {
+        case 1: return 0;
+        case 2: return 0;
+        case 3: return 0;
+        default: return 0;
+    }
+}

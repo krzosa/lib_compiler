@@ -1,0 +1,9 @@
+// You can edit this code!
+// Click here and start typing.
+
+import "libc";
+
+main :: proc(): int {
+    printf("hello world!\n");
+    return 0;
+}

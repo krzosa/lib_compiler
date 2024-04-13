@@ -1,0 +1,17 @@
+#`#include<ctype.h>`;
+
+isalnum  :: proc(c: int): int; @foreign
+isalpha  :: proc(c: int): int; @foreign
+isblank  :: proc(c: int): int; @foreign
+iscntrl  :: proc(c: int): int; @foreign
+isdigit  :: proc(c: int): int; @foreign
+isgraph  :: proc(c: int): int; @foreign
+islower  :: proc(c: int): int; @foreign
+isprint  :: proc(c: int): int; @foreign
+ispunct  :: proc(c: int): int; @foreign
+isspace  :: proc(c: int): int; @foreign
+isupper  :: proc(c: int): int; @foreign
+isxdigit :: proc(c: int): int; @foreign
+
+tolower  :: proc(c: int): int; @foreign
+toupper  :: proc(c: int): int; @foreign

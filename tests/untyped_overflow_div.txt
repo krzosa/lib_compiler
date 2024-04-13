@@ -1,0 +1,11 @@
+b :: -2147483648 / -1;
+#static_assert(b == 2147483648);
+
+c :: -9223372036854775808 / -1;
+#static_assert(c == 9223372036854775808);
+
+main :: proc(): int {
+    a: ullong = c;
+    result: int = :int(a - 9223372036854775808);
+    return result;
+}

@@ -1,0 +1,55 @@
+import "libc";
+
+Node :: struct {
+    i: int;
+    l: *Node;
+    r: *Node;
+}
+
+v: int;
+thing :: proc(a:int @unused, b:int @unused, c:int @unused) {}
+thingp :: proc(): *int {return &v;}
+
+default_args :: proc(a: int = 10 @unused, b: int = 10 @unused): int {return 0;}
+vargs_proc :: proc(a: int @unused, ...) {}
+
+// v1 := default_args(v0, v0); // @todo: make error
+// v0 := default_args(1,2);
+main :: proc(): int {
+    node: Node = {
+        i = 1,
+        l = &:Node{
+            i = 2,
+        },
+        r = &:Node{
+            i = 3,
+            l = &:Node{
+                i = 4,
+            }
+        }
+    };
+
+    default_args();
+    default_args(a = 1);
+    default_args(b = 2);
+    default_args(1, 2);
+    default_args(a = 1, b = 2);
+    default_args(1, b = 2);
+
+    vargs_proc(1, 2, 3, 4);
+    vargs_proc(1);
+
+    assert(node.i == 1);
+    assert(node.l.i == 2);
+    assert(node.r.i == 3);
+    assert(node.r.l.i == 4);
+
+    :Node{2}.i = 2;
+    assert(:Node{2}.i == 2);
+    thing(1,2,3);
+    assert(thingp()[0] == 0);
+    thingp()[0] = 0;
+    *thingp() = 0;
+
+    return 0;
+}

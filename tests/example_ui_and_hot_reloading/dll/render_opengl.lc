@@ -1,0 +1,545 @@
+R_CommandBufferSize :: 1024 * 1024;
+
+R_Atlas :: struct {
+    bitmap                     : *u32;
+    sizei                      : V2I;
+    size                       : V2;
+    inverse_size               : V2;
+    cursor                     : V2I;
+    biggest_height             : i32;
+    white_texture_bounding_box : R2P;
+    texture_id                 : u32;
+    padding                    : V2I;
+}
+
+R_FontGlyph :: struct {
+    size               : V2;
+    offset             : V2;
+    x_advance          : f32;
+    left_side_bearing  : f32;
+    atlas_bounding_box : R2P;
+}
+
+R_Font :: struct {
+    atlas                      : *R_Atlas;
+    glyphs                     : [96]R_FontGlyph;
+    glyph_count                : i32;
+
+    first_char                 : i32;
+    last_char                  : i32;
+
+    // This is for oversampling
+    // 0.5 = we draw the font as 2 times smaller then it is.
+    // Should lead to better quality result.
+    scaling_transform          : f32;
+
+    // scaling transform is applied to these
+    size                       : f32;
+    ascent                     : f32;
+    descent                    : f32;
+    line_gap                   : f32;
+
+    // scaling factor not applied, not sure if these will be useful
+    scale                      : f32;
+    em_scale                   : f32;
+
+    white_texture_bounding_box : R2P;
+}
+
+R_Vertex2D :: struct {
+    pos  : V2;
+    tex  : V2;
+    color: V4;
+}
+
+R_CommandKind            :: typedef int;
+R_CommandKind_Null       :: 0;
+R_CommandKind_Triangle   :: ^;
+R_CommandKind_Triangle2D :: ^;
+
+R_Command :: struct {
+    kind: R_CommandKind;
+    next: *R_Command;
+
+    out : *R_Vertex2D; // user write
+    data: *R_Vertex2D;
+    count: i32;
+    max_count: i32;
+}
+
+R_Shader :: struct {
+    pipeline: u32;
+    fragment: u32;
+    vertex  : u32;
+}
+
+R_Render :: struct {
+    first_command2d: *R_Command;
+    last_command2d : *R_Command;
+    total_vertex_count: u64;
+
+    vbo: u32;
+    vao: u32;
+    shader2d: R_Shader;
+
+    atlas: R_Atlas;
+    font_medium: R_Font;
+    font: *R_Font;
+}
+
+R_Text2DDesc :: struct {
+    pos: V2;
+    text: S8_String;
+    color: V4;
+    scale: f32;
+
+    do_draw: bool;
+    rects_arena: *MA_Arena;
+}
+
+R_StringMeasure :: struct {
+    first_rect: *R_RectNode;
+    last_rect : *R_RectNode;
+    rect: R2P;
+}
+
+R_RectNode :: struct {
+    next: *R_RectNode;
+    rect: R2P;
+    utf8_codepoint_byte_size: i32;
+}
+
+R_PackType               :: typedef int;
+R_PackType_MonoColorFont :: 0;
+R_PackType_RGBABitmap    :: ^;
+
+R_CreateAtlas :: proc(arena: *MA_Arena, size: V2I, padding: V2I): R_Atlas {
+    result: R_Atlas;
+    result.padding = padding;
+    result.sizei = size;
+    result.size = V2_FromV2I(size);
+    result.inverse_size.x = 1.0 / result.size.x;
+    result.inverse_size.y = 1.0 / result.size.y;
+    result.bitmap = MA_PushSize(arena, :usize(:i32(sizeof(:u32)) * size.x * size.y));
+
+    // Add a whitebox first for rectangle rendering
+    for y: i32 = 0; y < 16; y += 1 {
+        for x: i32 = 0; x < 16; x += 1 {
+            dst := &result.bitmap[x + y * result.sizei.x];
+            *dst = 0xffffffff;
+        }
+    }
+    // Skipping some pixels to avoid linear interpolation on edges
+    result.white_texture_bounding_box = :R2P{
+        {2.0 * result.inverse_size.x, 2.0 / result.size.y},
+        {14.0 * result.inverse_size.x, 14.0 / result.size.y},
+    };
+    result.cursor.x += 16 + padding.x;
+    result.biggest_height += 16 + padding.y;
+    return result;
+}
+
+R_PackBitmapInvertY :: proc(atlas: *R_Atlas, pack_type: R_PackType, bitmap: *u8, width: i32, height: i32): R2P {
+    // Packing into a texture atlas
+    // @Inefficient The algorithm is a simplest thing I had in mind, first we advance
+    // through the atlas in X packing consecutive glyphs. After we get to the end of the row
+    // we advance to the next row by the Y size of the biggest packed glyph. If we get to the
+    // end of atlas and fail to pack everything the app panics.
+
+    if (atlas.cursor.x + width > atlas.sizei.x) {
+        if (atlas.cursor.y + height < atlas.sizei.y) {
+            atlas.cursor.x = 0;
+            atlas.cursor.y += atlas.biggest_height + atlas.padding.y;
+        }
+        else {
+            IO_FatalErrorf("Error while packing a font into atlas. Atlas size for this font scale is a bit too small");
+        }
+    }
+
+    // Write the bitmap with inverted Y
+    src := bitmap;
+    // @todo: ambigious syntax, expression parsing doesn't stop at '{', error in wrong place
+    // for y := atlas.cursor.y + height - 1; y >= atlas.cursor.y; y++ {
+    for y := atlas.cursor.y + height - 1; y >= atlas.cursor.y; y -= 1 {
+        for x := atlas.cursor.x; x < atlas.cursor.x + width; x += 1 {
+            if (pack_type == R_PackType_RGBABitmap) {
+                atlas.bitmap[x + y * atlas.sizei.x] = *:*u32(src);
+                src = &src[4];
+                continue;
+            }
+            if (pack_type == R_PackType_MonoColorFont) {
+                dst := :*u8(&atlas.bitmap[x + y * atlas.sizei.x]);
+                dst[0] = 0xFF;
+                dst[1] = 0xFF;
+                dst[2] = 0xFF;
+                dst[3] = *src;
+                src = &src[1];
+                continue;
+            }
+            IO_InvalidCodepath();
+        }
+    }
+
+    size := :V2{:f32(width) * atlas.inverse_size.x, :f32(height) * atlas.inverse_size.y};
+    cursor := V2_FromV2I(atlas.cursor);
+    pos := V2_Mul(cursor, atlas.inverse_size);
+    result := R2P_Size(pos, size);
+
+    atlas.cursor.x += width + atlas.padding.x;
+    atlas.biggest_height = I32_Max(atlas.biggest_height, height);
+
+    return result;
+}
+
+Font_Create :: proc(atlas: *R_Atlas, size: f32, path: S8_String, oversampling: f32): R_Font {
+    scratch := MA_GetScratch();
+    font_file := OS_ReadFile(scratch.arena, path);
+
+    result: R_Font;
+    result.scaling_transform = 1.0 / oversampling;
+    result.size = oversampling * size;
+
+    result.first_char = ' ';
+    result.last_char = '~';
+    stb_font: stbtt_fontinfo;
+    if (font_file.len) {
+        success := stbtt_InitFont(&stb_font, :*uchar(font_file.str), 0);
+        if (success) {
+            ascent: int;
+            descent: int;
+            gap: int;
+            stbtt_GetFontVMetrics(&stb_font, &ascent, &descent, &gap);
+            result.scale = stbtt_ScaleForPixelHeight(&stb_font, result.size);
+            result.em_scale = stbtt_ScaleForMappingEmToPixels(&stb_font, result.size);
+            result.ascent = :f32(ascent) * result.scale;
+            result.descent = :f32(descent) * result.scale;
+            result.line_gap = :f32(gap) * result.scale;
+            result.white_texture_bounding_box = atlas.white_texture_bounding_box;
+
+            for ascii_symbol := result.first_char; ascii_symbol <= result.last_char; ascii_symbol+=1 {
+                width: int;
+                height: int;
+                xoff: int;
+                yoff: int;
+                bitmap := :*u8(stbtt_GetCodepointBitmap(&stb_font, 0, result.scale, :int(ascii_symbol), &width, &height, &xoff, &yoff));
+
+                x_advance: int;
+                left_side_bearing: int;
+                stbtt_GetCodepointHMetrics(&stb_font, :int(ascii_symbol), &x_advance, &left_side_bearing);
+
+                g := &result.glyphs[result.glyph_count];
+                result.glyph_count += 1;
+
+                g.atlas_bounding_box = R_PackBitmapInvertY(atlas, R_PackType_MonoColorFont, bitmap, :i32(width), :i32(height));
+                g.size = :V2{:f32(width), :f32(height)};
+
+                // Offset y needs to be inverted cause bitmap has inverted Y
+                g.offset = :V2{:f32(xoff), -(g.size.y + :f32(yoff))};
+                g.x_advance = :f32(x_advance) * result.scale;
+                g.left_side_bearing = :f32(left_side_bearing) * result.scale;
+
+                // Apply scaling transform
+                g.offset = V2_MulF(g.offset, result.scaling_transform);
+                g.x_advance = g.x_advance * result.scaling_transform;
+                g.left_side_bearing = g.left_side_bearing * result.scaling_transform;
+                g.size = V2_MulF(g.size, result.scaling_transform);
+
+                stbtt_FreeBitmap(:*uchar(bitmap), nil);
+            }
+
+            result.ascent *= result.scaling_transform;
+            result.descent *= result.scaling_transform;
+            result.size *= result.scaling_transform;
+            result.line_gap *= result.scaling_transform;
+        }
+    }
+
+    MA_EndTemp(scratch);
+    return result;
+}
+
+Font_GetGlyph :: proc(font: *R_Font, codepoint: i32): *R_FontGlyph {
+    is_in_range := codepoint >= font.first_char && codepoint <= font.last_char;
+    if (is_in_range) {
+        index := codepoint - font.first_char;
+        return &font.glyphs[index];
+    }
+    else {
+        index := '?' - font.first_char;
+        return &font.glyphs[index];
+    }
+}
+
+GL_DebugCallback :: proc(source: GLenum @unused, type: GLenum @unused, id: GLuint @unused, severity: GLenum, length: GLsizei @unused, message: *GLchar, user: *void @unused) {
+    IO_Printf("%s\n", message);
+    if (severity == GL_DEBUG_SEVERITY_HIGH || severity == GL_DEBUG_SEVERITY_MEDIUM) {
+        IO_FatalErrorf("%s", message);
+    }
+}
+
+GL_SetProcAddress :: proc(p: *void, name: *char) {
+    pp := :**void(p);
+    *pp = Mu.gl_get_proc_address(name);
+}
+
+GL_LoadProcs :: proc() {
+    load_up_to(4, 5, :*void(GL_SetProcAddress));
+    glDebugMessageCallback(:*void(GL_DebugCallback), nil);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+}
+
+R_Reload :: proc() {
+    GL_LoadProcs();
+}
+
+R_Init :: proc(render: *R_Render) {
+    R = render;
+    GL_LoadProcs();
+    atlas := R_CreateAtlas(Temp, :V2I{1024, 1024}, :V2I{4, 4});
+    R.font_medium = Font_Create(&atlas, 32, S8_Lit("C:/windows/fonts/Calibri.ttf"), 1.0);
+    {
+        glCreateTextures(GL_TEXTURE_2D, 1, &atlas.texture_id);
+        glTextureParameteri(atlas.texture_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(atlas.texture_id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureParameteri(atlas.texture_id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(atlas.texture_id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTextureStorage2D(atlas.texture_id, 1, GL_RGBA8, :i32(atlas.sizei.x), :i32(atlas.sizei.y));
+        glTextureSubImage2D(atlas.texture_id, 0, 0, 0, :i32(atlas.sizei.x), :i32(atlas.sizei.y), GL_RGBA, GL_UNSIGNED_BYTE, atlas.bitmap);
+    }
+    R.atlas = atlas;
+    R.font_medium.atlas = &R.atlas;
+    R.font = &R.font_medium;
+
+    glCreateBuffers(1, &R.vbo);
+    glNamedBufferStorage(R.vbo, R_CommandBufferSize, nil, GL_DYNAMIC_STORAGE_BIT);
+
+    {
+        glCreateVertexArrays(1, &R.vao);
+
+        vbuf_index: u32 = 0;
+        glVertexArrayVertexBuffer(R.vao, vbuf_index, R.vbo, 0, :i32(sizeof(:R_Vertex2D)));
+
+        a_pos: u32 = 0;
+        pos_offset: u32 = #`offsetof(R_Vertex2D, pos)`;
+        glVertexArrayAttribFormat(R.vao, a_pos, 2, GL_FLOAT, GL_FALSE, pos_offset);
+        glVertexArrayAttribBinding(R.vao, a_pos, vbuf_index);
+        glEnableVertexArrayAttrib(R.vao, a_pos);
+
+        a_tex: u32 = 1;
+        tex_offset: u32 = #`offsetof(R_Vertex2D, tex)`;
+        glVertexArrayAttribFormat(R.vao, a_tex, 2, GL_FLOAT, GL_FALSE, tex_offset);
+        glVertexArrayAttribBinding(R.vao, a_tex, vbuf_index);
+        glEnableVertexArrayAttrib(R.vao, a_tex);
+
+        a_color: u32 = 2;
+        color_offset: u32 = #`offsetof(R_Vertex2D, color)`; // @todo
+        glVertexArrayAttribFormat(R.vao, a_color, 4, GL_FLOAT, GL_FALSE, color_offset);
+        glVertexArrayAttribBinding(R.vao, a_color, vbuf_index);
+        glEnableVertexArrayAttrib(R.vao, a_color);
+    }
+
+    vshader := `#version 450 core
+        layout(location=0) uniform vec2 U_InvHalfScreenSize;
+        layout(location=0) in vec2 IN_Pos;
+        layout(location=1) in vec2 IN_Tex;
+        layout(location=2) in vec4 IN_Color;
+
+        out gl_PerVertex { vec4 gl_Position; }; // required because of ARB_separate_shader_objects
+        out vec2 OUT_UV;
+        out vec4 OUT_Color;
+        void main() {
+            vec2 pos = IN_Pos * U_InvHalfScreenSize;
+            pos -= vec2(1, 1);
+            gl_Position = vec4(pos, 0, 1);
+            OUT_UV = IN_Tex;
+            OUT_Color = IN_Color;
+        }
+    `;
+
+    fshader := `#version 450 core
+        in vec2 IN_UV;
+        in vec4 IN_Color;
+        layout (binding=0) uniform sampler2D S_Texture;
+        layout (location=0) out vec4 OUT_Color;
+        void main() {
+            vec4 c = IN_Color;
+            vec4 texture_color = texture(S_Texture, IN_UV);
+            OUT_Color = c * texture_color;
+        }
+    `;
+
+    R.shader2d = R_CreateShader(vshader, fshader);
+}
+
+
+R_CreateShader :: proc(glsl_vshader: *char, glsl_fshader: *char): R_Shader {
+    result: R_Shader;
+    result.vertex = glCreateShaderProgramv(GL_VERTEX_SHADER, 1, &glsl_vshader);
+    result.fragment = glCreateShaderProgramv(GL_FRAGMENT_SHADER, 1, &glsl_fshader);
+
+    linked: i32;
+    glGetProgramiv(result.vertex, GL_LINK_STATUS, &linked);
+    if (!linked) {
+        message: [1024]char;
+        glGetProgramInfoLog(result.vertex, :i32(sizeof(message)), nil, :*u8(&message[0]));
+        IO_FatalErrorf("[GL] Failed to create vertex shader! %s", message);
+    }
+
+    glGetProgramiv(result.fragment, GL_LINK_STATUS, &linked);
+    if (!linked) {
+        message: [1024]char;
+        glGetProgramInfoLog(result.fragment, :i32(sizeof(message)), nil, :*u8(&message[0]));
+        IO_FatalErrorf("[GL] Failed to create fragment shader! %s", message);
+    }
+
+    glGenProgramPipelines(1, &result.pipeline);
+    glUseProgramStages(result.pipeline, GL_VERTEX_SHADER_BIT, result.vertex);
+    glUseProgramStages(result.pipeline, GL_FRAGMENT_SHADER_BIT, result.fragment);
+    return result;
+}
+
+R_GetCommand :: proc(kind: R_CommandKind, vcount_to_add: i32): *R_Command {
+    make_new := R.last_command2d == 0 ||
+                R.last_command2d.kind != kind ||
+                R.last_command2d.count + vcount_to_add > R.last_command2d.max_count;
+
+    if make_new {
+        sizeof_r_command: usize = #`sizeof(R_Command)`;
+        c: *R_Command = MA_PushSize(Temp, sizeof_r_command);
+        c.kind = kind;
+        c.data = MA_PushSizeNonZeroed(Temp, R_CommandBufferSize);
+        if (kind == R_CommandKind_Triangle2D) {
+            c.max_count = R_CommandBufferSize / :i32(sizeof(:R_Vertex2D));
+            SLL_QUEUE_ADD(R.first_command2d, R.last_command2d, c);
+        }
+        else IO_InvalidCodepath();
+    }
+
+    c := R.last_command2d;
+    c.out = &c.data[c.count];
+    c.count += vcount_to_add;
+    R.total_vertex_count += :u64(vcount_to_add);
+    return c;
+}
+
+R_Rect2D :: proc(rect: R2P, tex: R2P, color: V4) {
+    c := R_GetCommand(R_CommandKind_Triangle2D, 6);
+    c.out[0].pos = :V2{rect.min.x, rect.max.y};
+    c.out[0].tex = :V2{tex.min.x, tex.max.y};
+    c.out[0].color = color;
+    c.out[1].pos = :V2{rect.max.x, rect.max.y};
+    c.out[1].tex = :V2{tex.max.x, tex.max.y};
+    c.out[1].color = color;
+    c.out[2].pos = :V2{rect.min.x, rect.min.y};
+    c.out[2].tex = :V2{tex.min.x, tex.min.y};
+    c.out[2].color = color;
+    c.out[3].pos = :V2{rect.min.x, rect.min.y};
+    c.out[3].tex = :V2{tex.min.x, tex.min.y};
+    c.out[3].color = color;
+    c.out[4].pos = :V2{rect.max.x, rect.max.y};
+    c.out[4].tex = :V2{tex.max.x, tex.max.y};
+    c.out[4].color = color;
+    c.out[5].pos = :V2{rect.max.x, rect.min.y};
+    c.out[5].tex = :V2{tex.max.x, tex.min.y};
+    c.out[5].color = color;
+}
+
+R_Text2D :: proc(params: R_Text2DDesc): R_StringMeasure {
+    result: R_StringMeasure;
+
+    original_pos := params.pos;
+    max_pos      := params.pos;
+    pos          := params.pos;
+    scale        := params.scale;
+    for iter := UTF8_IterateEx(params.text.str, :int(params.text.len)); iter.item /*;UTF8_Advance(&iter)@todo*/ {
+        it: u32 = iter.item;
+        if it == '\n' {
+            pos.x = original_pos.x;
+            pos.y -= R.font.size * scale;
+            if (pos.x > max_pos.x) max_pos.x = pos.x;
+            if (pos.y < max_pos.y) max_pos.y = pos.y; // @warning: min position y actually
+            continue;
+        }
+        g: *R_FontGlyph = Font_GetGlyph(R.font, :i32(it));
+
+        sym_pos := pos;
+        pos.x += g.x_advance * scale;
+        if (pos.x > max_pos.x) max_pos.x = pos.x;
+        if (pos.y < max_pos.y) max_pos.y = pos.y; // @warning: min position y actually
+
+        sym_pos.x += g.offset.x * scale;
+        sym_pos.y += g.offset.y * scale;
+
+        minp: V2 = {sym_pos.x, sym_pos.y};
+        rect: R2P = R2P_Size(minp, V2_MulF(g.size, scale));
+        if (params.do_draw) {
+            R_Rect2D(rect, g.atlas_bounding_box, params.color);
+        }
+        if (params.rects_arena) {
+            node: *R_RectNode = MA_PushSize(params.rects_arena, :usize(sizeof(:R_RectNode)));
+            node.rect = rect;
+            node.utf8_codepoint_byte_size = :i32(iter.utf8_codepoint_byte_size);
+            SLL_QUEUE_ADD(result.first_rect, result.last_rect, node);
+        }
+        UTF8_Advance(&iter); // @todo
+    }
+
+    result.rect = {
+        {original_pos.x, max_pos.y + R.font.descent * scale}, /* @warning: min position y actually */
+        {max_pos.x, original_pos.y + R.font.ascent * scale},
+    };
+
+    return result;
+}
+
+
+R_GetTextSize :: proc(text: S8_String): f32 {
+    m := R_Text2D({text = text, scale = 1.0});
+    size := R2P_GetSize(m.rect).x;
+    return size;
+}
+
+R_ColorWhite: V4 = {1,1,1,1};
+R_ColorBlack: V4 = {0,0,0,1};
+
+R_DrawText :: proc(text: S8_String, pos: V2, color: V4): R_StringMeasure {
+    result := R_Text2D({text = text, color = color, pos = pos, do_draw = true, scale = 1.0});
+    return result;
+}
+
+R_EndFrame :: proc() {
+    ws  := :V2{:f32(Mu.window.size.x), :f32(Mu.window.size.y)};
+    wsi := :V2I{:i32(Mu.window.size.x), :i32(Mu.window.size.y)};
+    x: f32 = 1 / (ws.x / 2);
+    y: f32 = 1 / (ws.y / 2);
+
+    glViewport(0, 0, wsi.x, wsi.y);
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+
+    // Default draw using the font texture
+    {
+        glBindProgramPipeline(R.shader2d.pipeline);
+        glProgramUniform2f(R.shader2d.vertex, 0, x, y);
+        for it := R.first_command2d; it; it = it.next {
+            if (it.kind == R_CommandKind_Triangle2D) {
+                glNamedBufferSubData(R.vbo, 0, :int(it.count) * :int(sizeof(:R_Vertex2D)), it.data);
+                glBindVertexArray(R.vao);
+                s_texture: u32 = 0; // texture unit that sampler2D will use in GLSL code
+                glBindTextureUnit(s_texture, R.font.atlas.texture_id);
+                glDrawArrays(GL_TRIANGLES, 0, it.count);
+                continue;
+            }
+            IO_InvalidCodepath();
+        }
+    }
+
+    R.first_command2d = nil;
+    R.last_command2d = nil;
+    R.total_vertex_count = 0;
+}

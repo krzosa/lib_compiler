@@ -1,0 +1,342 @@
+Ui: UI_State;
+
+UI_TextAlign :: typedef int;
+UI_TextAlign_Center     :: 0;
+UI_TextAlign_CenterLeft :: ^;
+
+
+UI_Layout :: struct {
+    rect: R2P;
+}
+
+UI_Widget :: struct {
+    next: *UI_Widget;
+    id: u64;
+    last_touched_frame_index: u64;
+}
+
+UI_Cut :: typedef int;
+UI_Cut_Left   :: 0;
+UI_Cut_Right  :: ^;
+UI_Cut_Top    :: ^;
+UI_Cut_Bottom :: ^;
+
+UI_Style :: struct {
+    cut_size: V2;
+    text_align: UI_TextAlign;
+    scroll: V2;
+    absolute: bool;
+    absolute_rect: R2P;
+    button_background_color: V4;
+    hot_button_background_color: V4;
+    interacting_with_button_background_color: V4;
+    active_button_background_color: V4;
+    text_color: V4;
+    button_border_color: V4;
+    checked_checkbox_button_background_color: V4;
+    draw_text_shadow: bool;
+}
+
+UI_BaseButtonDesc :: struct {
+    text: S8_String;
+    draw_text: bool;
+    draw_border: bool;
+    draw_background: bool;
+    use_checked_checkbox_button_background_colors: bool;
+}
+
+UI_Result :: struct {
+    pressed: bool;
+    interacting_with: bool;
+    hot: bool;
+    drag: V2;
+}
+
+UI_LayoutStack :: struct {
+    data: [256]UI_Layout;
+    len : i32;
+}
+
+UI_State :: struct {
+    cut: UI_Cut;
+    s: UI_Style; // current style
+    base_style: UI_Style;
+
+    // @todo: add stack id concept
+    cached_widgets: LC_Map; // @todo: add removing widgets at end of frame
+    layouts: UI_LayoutStack;
+
+    font: *R_Font;
+
+    hot: u64;
+    interacting_with: u64;
+    id: u64;
+    inside_begin_end_pair: bool;
+
+    // next cut output
+    text_width: f32;
+    text_size: V2;
+}
+
+UI_AddLayout :: proc(s: *UI_LayoutStack, layout: UI_Layout) {
+    if s.len + 1 > lengthof(s.data) {
+        IO_FatalErrorf("layout stack overflow reached max item count: %d", lengthof(s.data));
+    }
+
+    s.data[s.len] = layout;
+    s.len += 1;
+}
+
+UI_GetLastLayout :: proc(s: *UI_LayoutStack): *UI_Layout {
+    if (s.len == 0) IO_FatalErrorf("error, trying to get last layout but there are none");
+
+    return &s.data[s.len - 1];
+}
+
+UI_Begin :: proc() {
+    IO_Assert(Ui.inside_begin_end_pair == false);
+    Ui.inside_begin_end_pair = true;
+
+    IO_Assert(Ui.layouts.len == 0 || Ui.layouts.len == 1);
+    Ui.layouts.len = 0;
+    UI_AddLayout(&Ui.layouts, {R2P_SizeF(0, 0, :f32(Mu.window.size.x), :f32(Mu.window.size.y))});
+
+    UI_SetStyle();
+}
+
+UI_SetStyle :: proc() {
+    Ui.font = R.font;
+    Ui.base_style = {
+        cut_size = :V2{-1, Ui.font.size + 4},
+        button_background_color = :V4{0, 0, 0, 1.0},
+        text_color = :V4{1, 1, 1, 1},
+        button_border_color = :V4{1, 1, 1, 1},
+        checked_checkbox_button_background_color = :V4{0.5, 0.5, 0.5, 1.0},
+        hot_button_background_color = :V4{0.5, 0, 0, 1},
+        interacting_with_button_background_color = :V4{1.0, 0, 0, 1},
+        active_button_background_color = :V4{1, 0, 0, 1},
+    };
+    Ui.s = Ui.base_style;
+}
+
+UI_End :: proc() {
+    IO_Assert(Ui.inside_begin_end_pair);
+    Ui.inside_begin_end_pair = false;
+
+    if (Mu.window.mouse.left.unpress) {
+        Ui.interacting_with = NULL;
+    }
+    Ui.hot = NULL;
+}
+
+R_DrawBorder :: proc(r: R2P, color: V4) {
+    r = R2P_Shrink(r, 1);
+    R_Rect2D(R2P_CutLeft(&r, 1), R.atlas.white_texture_bounding_box, color);
+    R_Rect2D(R2P_CutRight(&r, 1), R.atlas.white_texture_bounding_box, color);
+    R_Rect2D(R2P_CutTop(&r, 1), R.atlas.white_texture_bounding_box, color);
+    R_Rect2D(R2P_CutBottom(&r, 1), R.atlas.white_texture_bounding_box, color);
+}
+
+UI_GetNextRect :: proc(text: S8_String): R2P {
+    if (Ui.s.absolute) return Ui.s.absolute_rect;
+    l    := UI_GetLastLayout(&Ui.layouts);
+    cut  := Ui.s.cut_size;
+    font := Ui.font;
+
+    if (text.len) {
+        Ui.text_width = R_GetTextSize(text);
+        Ui.text_size = :V2{Ui.text_width, font.ascent};
+    }
+
+    if (cut.x < 0) {
+        cut.x = Ui.text_width + 32;
+        if (cut.x < 0) {
+            cut.x = 32;
+        }
+    }
+
+    if (cut.y < 0) {
+        cut.y = font.ascent;
+    }
+
+    if (Ui.cut == UI_Cut_Top || Ui.cut == UI_Cut_Bottom) {
+        scroll_y := F32_Clamp(Ui.s.scroll.y, -cut.y, cut.y);
+        cut.y -= scroll_y;
+        Ui.s.scroll.y -= scroll_y;
+    }
+
+    if (Ui.cut == UI_Cut_Left || Ui.cut == UI_Cut_Right) {
+        scrollx := F32_Clamp(Ui.s.scroll.x, -cut.x, cut.x);
+        cut.x -= scrollx;
+        Ui.s.scroll.x -= scrollx;
+    }
+
+    if (Ui.cut == UI_Cut_Left) {
+        return R2P_CutLeft(&l.rect, cut.x);
+    }
+    if (Ui.cut == UI_Cut_Right) {
+        return R2P_CutRight(&l.rect, cut.x);
+    }
+    if (Ui.cut == UI_Cut_Top) {
+        return R2P_CutTop(&l.rect, cut.y);
+    }
+    if (Ui.cut == UI_Cut_Bottom) {
+        return R2P_CutBottom(&l.rect, cut.y);
+    }
+    IO_InvalidCodepath();
+    return :R2P{};
+}
+
+UI_GetWidget :: proc(text: S8_String): *UI_Widget {
+    if (Ui.cached_widgets.allocator.p == NULL) {
+        Ui.cached_widgets.allocator = Perm.allocator;
+    }
+
+    hash := HashBytes(text.str, :u64(text.len));
+    widget: *UI_Widget = LC_MapGetU64(&Ui.cached_widgets, hash);
+    if (!widget) {
+        widget = MA_PushSize(Perm, :usize(sizeof(:UI_Widget)));
+        widget.id = hash;
+        LC_MapInsertU64(&Ui.cached_widgets, hash, widget);
+    }
+    IO_Assert(widget.id == hash);
+    widget.last_touched_frame_index = :u64(Mu.frame);
+    return widget;
+}
+
+UI_BaseButton :: proc(desc: UI_BaseButtonDesc): UI_Result {
+    result: UI_Result;
+    rect := UI_GetNextRect(desc.text);
+
+    mouse_pos: V2 = {:f32(Mu.window.mouse.pos.x), :f32(Mu.window.mouse.pos.y)};
+    delta_mouse_pos: V2 = {:f32(Mu.window.mouse.delta_pos.x), :f32(Mu.window.mouse.delta_pos.y)};
+
+    if (rect.min.x == rect.max.x || rect.min.y == rect.max.y) {
+        return result;
+    }
+
+    widget := UI_GetWidget(desc.text);
+    if (R2P_CollidesV2(rect, mouse_pos)) {
+        Ui.hot = widget.id;
+    }
+
+    if (Ui.hot == widget.id) {
+        result.hot = true;
+        if (Mu.window.mouse.left.press) {
+            Ui.interacting_with = widget.id;
+        }
+    }
+
+    if (Ui.interacting_with == widget.id) {
+        result.interacting_with = true;
+        result.drag = delta_mouse_pos;
+        if (Ui.hot == widget.id && Mu.window.mouse.left.unpress) {
+            result.pressed = true;
+        }
+    }
+
+    text_pos := rect.min;
+    rect_size := R2P_GetSize(rect);
+    centered_text_pos := V2_Add(text_pos, V2_DivF(V2_Sub(rect_size, Ui.text_size), 2.0));
+    if (Ui.s.text_align == UI_TextAlign_Center) {
+        text_pos = centered_text_pos;
+    }
+    if (Ui.s.text_align == UI_TextAlign_CenterLeft) {
+        text_pos.y = centered_text_pos.y;
+        text_pos.x += 4;
+    }
+
+    button_background_color: V4 = Ui.s.button_background_color;
+    text_color: V4 = Ui.s.text_color;
+    button_border_color: V4 = Ui.s.button_border_color;
+
+    if (desc.use_checked_checkbox_button_background_colors) {
+        button_background_color = Ui.s.checked_checkbox_button_background_color;
+    }
+
+    if (Ui.hot == widget.id) {
+        button_background_color = Ui.s.hot_button_background_color;
+    }
+    if (Ui.interacting_with == widget.id) {
+        button_background_color = Ui.s.interacting_with_button_background_color;
+    }
+    if (result.pressed) {
+        button_background_color = Ui.s.active_button_background_color;
+    }
+
+    if (desc.draw_background) {
+        R_Rect2D(rect, R.atlas.white_texture_bounding_box, button_background_color);
+    }
+    if (desc.draw_border) {
+        R_DrawBorder(rect, button_border_color);
+    }
+    if (desc.draw_text) {
+        if (Ui.s.draw_text_shadow) {
+            R_Text2D({
+                text = desc.text,
+                color = R_ColorWhite,
+                pos = :V2{text_pos.x + 2, text_pos.y - 2},
+                do_draw = true,
+                scale = 1.0,
+            });
+        }
+
+        R_DrawText(desc.text, text_pos, text_color);
+    }
+
+    return result;
+}
+
+UI_Button :: proc(str: *char): bool {
+    result := UI_BaseButton({
+        text = S8_MakeFromChar(str),
+        draw_text = true,
+        draw_border = true,
+        draw_background = true,
+    });
+    return result.pressed;
+}
+
+UI_Checkbox :: proc(val: *bool, str: *char): bool {
+    result: UI_Result = UI_BaseButton({
+        text = S8_MakeFromChar(str),
+        draw_text = true,
+        draw_border = true,
+        draw_background = true,
+        use_checked_checkbox_button_background_colors = *val,
+    });
+    if (result.pressed) {
+        *val = !*val;
+    }
+    return *val;
+}
+
+UI_Fill :: proc() {
+    rect := UI_GetNextRect(S8_MakeEmpty());
+    R_Rect2D(rect, R.atlas.white_texture_bounding_box, Ui.s.button_background_color);
+    R_DrawBorder(rect, Ui.s.button_border_color);
+}
+
+UI_PopStyle :: proc() {
+    Ui.s = Ui.base_style;
+}
+
+UI_PopLayout :: proc() {
+    if Ui.layouts.len == 0 {
+        IO_FatalError("tryign to pop a layout but layout stack is empty");
+    }
+    Ui.layouts.len -= 1;
+}
+
+UI_PushLayout :: proc(rect_override: R2P): R2P {
+    rect: R2P;
+    if (rect_override.min.x != 0 || rect_override.min.y != 0 || rect_override.max.x != 0 || rect_override.max.y != 0) {
+        rect = rect_override;
+    }
+    else {
+        rect = UI_GetNextRect(S8_MakeEmpty());
+    }
+
+    UI_AddLayout(&Ui.layouts, {rect});
+    return rect;
+}

@@ -1,0 +1,35 @@
+// #failed: parse
+// #error: statement lacks a semicolon at the end
+// #error: statement lacks a semicolon at the end
+
+A :: proc() {
+    for {
+        for {
+            screen_rect := Rectangle{min_screen.x, min_screen.y, r.width, r.height};
+        }
+    }
+    EndMode2d();
+}
+
+main :: proc(): int {
+    for !WindowShouldClose() {
+        for y_it := 0; y_it < map.y; y_it += 1 {
+            for x_it := 0; x_it < map.x; x_it += 1 {
+                screen_rect := Rectangle{min_screen.x, min_screen.y, r.width, r.height};
+                if tile.value == 1 {
+                    DrawRectangleRec(r, RED);
+                } else {
+                    DrawRectangleRec(r, GREEN);
+                }
+
+                if CheckCollisionPointRec(mouse_p, screen_rect) {
+                    DrawRectangleRec(r, BLUE);
+                }
+            }
+        }
+        EndMode2D();
+    }
+
+    CloseWindow();
+    return 0;
+}

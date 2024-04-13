@@ -1,0 +1,66 @@
+
+ValidProc :: proc(): int {return 1;}
+ProcPointer: proc(): int = ValidProc;
+
+ProcT :: typedef proc(): int; @weak
+ProcP: ProcT;
+
+main :: proc(): int {
+    ProcPointer = ValidProc;
+    ProcPointer = nil;
+
+    ProcP = ValidProc;
+    ProcP = nil;
+
+    v: *void;
+    ProcP = v;
+    ProcPointer = v;
+
+    ProcP = nil;
+
+    ProcPointer = ValidProc;
+    value := ProcPointer(); @unused
+
+    ProcP = ValidProc;
+    ProcP();
+
+    v = ProcPointer;
+    ProcP = ProcPointer;
+    vv := :*void(ProcPointer);
+
+    pv := :ProcT(vv); @unused
+
+    pv2 := :proc(): int(vv); @unused
+
+    a: *int;
+    b := :ProcT(a); @unused
+
+    c := &ProcP; @unused
+
+    return 0;
+}
+
+FP :: typedef proc(i: int = 10);
+
+Thing :: struct {
+    fp: FP;
+    fp2: proc(i: int);
+}
+
+glob0: FP;
+glob1: proc(j: int);
+
+Another :: proc() {
+    thing: Thing;
+    thing.fp();
+    thing.fp2(10);
+
+    var0: FP;
+    var1: proc(j: int);
+
+    var0();
+    var1(j = 10);
+
+    glob0();
+    glob1(j = 10);
+}

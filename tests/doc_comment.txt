@@ -1,0 +1,36 @@
+// #failed: parse
+// #error: got unexpected token: doc comment
+// #error: got unexpected token: doc comment
+
+
+/**
+ * doc comment test
+ *
+**/
+A :: proc() {
+}
+
+/**
+ * doc comment test
+ *
+**/
+
+/**
+ * doc comment test
+ *
+**/
+B :: proc() {
+}
+
+
+/**
+ * doc comment test
+ *
+**/
+
+/**
+ * doc comment test
+ *
+**/
+C :: proc() {
+}

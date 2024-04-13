@@ -1,0 +1,72 @@
+import c "libc";
+
+generation_count :: 5;
+board_x :: 20;
+board_y :: 10;
+board_copy: [board_x * board_y]int;
+board:      [board_x * board_y]int = {
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+};
+
+get_neighbor :: proc(xcol: int, yrow: int): int {
+    x := xcol % board_x;
+    y := yrow % board_y;
+    result := board_copy[x + y * board_x];
+    return result;
+}
+
+get_neighbor_count :: proc(xcol: int, yrow: int): int {
+    result := 0;
+    for dc := -1; dc <= 1; dc += 1 {
+        for dr := -1; dr <= 1; dr += 1 {
+            if (dr || dc) result += get_neighbor(xcol + dc, yrow + dr);
+        }
+    }
+    return result;
+}
+
+main :: proc(): int {
+    for gen := 0; gen < generation_count; gen += 1 {
+        c.printf("generation: %d\n", gen);
+
+        // show cells
+        for y := 0; y < board_y; y += 1 {
+            c.printf("|");
+            for x := 0; x < board_x; x += 1 {
+                cell := board[x + y * board_x];
+                if cell {
+                    c.printf("*");
+                } else {
+                    c.printf(".");
+                }
+            }
+            c.printf("|\n");
+        }
+
+        // update cells
+        c.memcpy(&board_copy[0], &board[0], sizeof(board));
+        for y := 0; y < board_y; y += 1 {
+            for x := 0; x < board_x; x += 1 {
+                src_cell := board_copy[x + y * board_x];
+                dst_cell := addptr(board, x + y * board_x);
+
+                count   := get_neighbor_count(x, y);
+                birth   := !src_cell && count == 3;
+                survive :=  src_cell && (count == 3 || count == 2);
+                dst_cell[0] = birth || survive;
+            }
+        }
+    }
+
+    c.printf("End\n");
+    return 0;
+}

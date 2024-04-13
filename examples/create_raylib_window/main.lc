@@ -1,0 +1,16 @@
+import RL "raylib";
+
+main :: proc(): int {
+    RL.InitWindow(800, 600, "Thing");
+    RL.SetTargetFPS(60);
+
+    for !RL.WindowShouldClose() {
+        RL.BeginDrawing();
+        RL.ClearBackground(RL.RAYWHITE);
+        RL.DrawText("Congrats! You created your first window!", 190, 200, 20, RL.LIGHTGRAY);
+        RL.EndDrawing();
+    }
+
+    RL.CloseWindow();
+    return 0;
+}

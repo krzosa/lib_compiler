@@ -1,0 +1,37 @@
+// #failed: resolve
+
+BUILTIN_sizeof := sizeof(:int);
+BUILTIN_alignof := sizeof(:int);
+BUILTIN_typedef := typeof(F);
+BUILTIN_offsetof := offsetof(:STRUCT, a);
+
+A: int;
+B: *int = &A;
+PROC :: proc(): int {return 10;}
+ARR: [4]int = {1,2,3,4};
+// #error: non constant global declarations are illegal
+ARR_PROC_VAL := :[]int{PROC(),2,3,4};
+
+// #error: non constant global declarations are illegal
+ARR_VAL := ARR[0];
+// #error: non constant global declarations are illegal
+C := *B;
+// #error: non constant global declarations are illegal
+D := B[0];
+//// #error: non constant global declarations are illegal
+//E := B^[0];
+// #error: non constant global declarations are illegal
+VAR := PROC();
+
+// #error: cannot assign, can assign only const integer equal to 0, variable type: '*int' expression type: 'UntypedInt'
+F: *int = 1 - 1;
+// #error: cannot assign, can assign only const integer equal to 0, variable type: '*int' expression type: 'UntypedInt'
+G: *int = -(1-1);
+
+STRUCT :: struct { a: int; b: int; }
+STRUCT_VAL: STRUCT = { 1, 2 };
+
+GG := STRUCT_VAL.a;
+// #error: non constant global declarations are illegal
+STRUCT_VAL_PROC: STRUCT = {PROC()};
+

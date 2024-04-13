@@ -1,0 +1,113 @@
+import "libc";
+
+S1 :: struct {
+    i1: char;
+    i2: int;
+    i3: char;
+    i4: ullong;
+    i5: char;
+} @dont_mangle
+
+S2 :: struct {
+    c: char;
+} @dont_mangle
+
+S3 :: struct {
+    c: uint;
+} @dont_mangle
+
+S4 :: struct {
+    c: uint;
+    s1: S1;
+    s2: S2;
+} @dont_mangle
+
+S5 :: struct {
+    ul: ullong;
+    ui: uint;
+    i: int;
+    c: char;
+    s: short;
+    s2: S2;
+    v: *void;
+    c2: char;
+    s4: S4;
+} @dont_mangle
+
+
+main :: proc(): int {
+    {c_align: int = #`LC_Alignof(S1)`;
+    assert(c_align == alignof(:S1));}
+
+    {c_align: int = #`LC_Alignof(S2)`;
+    assert(c_align == alignof(:S2));}
+
+    {c_align: int = #`LC_Alignof(S3)`;
+    assert(c_align == alignof(:S3));}
+
+    {c_align: int = #`LC_Alignof(S4)`;
+    assert(c_align == alignof(:S4));}
+
+    {c_sizeof: int = #`sizeof(S1)`;
+    assert(c_sizeof == sizeof(:S1));}
+
+    {c_sizeof: int = #`sizeof(S2)`;
+    assert(c_sizeof == sizeof(:S2));}
+
+    {c_sizeof: int = #`sizeof(S3)`;
+    assert(c_sizeof == sizeof(:S3));}
+
+    {c_sizeof: int = #`sizeof(S4)`;
+    assert(c_sizeof == sizeof(:S4));}
+
+    {c_sizeof: int = #`sizeof(S5)`;
+    assert(c_sizeof == sizeof(:S5));}
+
+    {c_alignof: int = #`LC_Alignof(S5)`;
+    assert(c_alignof == alignof(:S5));}
+
+    {c_offsetof: int = #`offsetof(S4, s1)`;
+    assert(c_offsetof == offsetof(:S4, s1));}
+
+    {c_offsetof: int = #`offsetof(S4, s2)`;
+    assert(c_offsetof == offsetof(:S4, s2));}
+
+    {c_offsetof: int = #`offsetof(S1, i1)`;
+    assert(c_offsetof == offsetof(:S1, i1));}
+
+    {c_offsetof: int = #`offsetof(S1, i2)`;
+    assert(c_offsetof == offsetof(:S1, i2));}
+
+    {c_offsetof: int = #`offsetof(S1, i3)`;
+    assert(c_offsetof == offsetof(:S1, i3));}
+
+    {c_offsetof: int = #`offsetof(S1, i4)`;
+    assert(c_offsetof == offsetof(:S1, i4));}
+
+    {c_offsetof: int = #`offsetof(S1, i5)`;
+    assert(c_offsetof == offsetof(:S1, i5));}
+
+    {c_offsetof: int = #`offsetof(S3, c)`;
+    assert(c_offsetof == offsetof(:S3, c));}
+
+    {c_offsetof: int = #`offsetof(S5, ul)`;
+    assert(c_offsetof == offsetof(:S5, ul));}
+    {c_offsetof: int = #`offsetof(S5, ui)`;
+    assert(c_offsetof == offsetof(:S5, ui));}
+    {c_offsetof: int = #`offsetof(S5, i)`;
+    assert(c_offsetof == offsetof(:S5, i));}
+    {c_offsetof: int = #`offsetof(S5, c)`;
+    assert(c_offsetof == offsetof(:S5, c));}
+    {c_offsetof: int = #`offsetof(S5, s)`;
+    assert(c_offsetof == offsetof(:S5, s));}
+    {c_offsetof: int = #`offsetof(S5, s2)`;
+    assert(c_offsetof == offsetof(:S5, s2));}
+    {c_offsetof: int = #`offsetof(S5, v)`;
+    assert(c_offsetof == offsetof(:S5, v));}
+    {c_offsetof: int = #`offsetof(S5, c2)`;
+    assert(c_offsetof == offsetof(:S5, c2));}
+    {c_offsetof: int = #`offsetof(S5, s4)`;
+    assert(c_offsetof == offsetof(:S5, s4));}
+
+    return 0;
+}

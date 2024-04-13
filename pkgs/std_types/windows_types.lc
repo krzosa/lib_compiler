@@ -1,0 +1,9 @@
+#build_if(LC_OS == OS_WINDOWS);
+
+#static_assert(sizeof(:long) == 4);
+
+LONG_MAX :: INT32_MAX;
+LONG_MIN :: INT32_MIN;
+ULONG_MAX :: UINT32_MAX;
+ULONG_MIN :: UINT32_MIN;
+

@@ -1,0 +1,21 @@
+A :: proc() {
+} @build_if(LC_OS == OS_LINUX)
+
+A :: proc() {
+} @build_if(LC_OS == OS_WINDOWS)
+
+A :: proc() {
+} @build_if(LC_OS == OS_MAC)
+
+
+B :: proc() {
+} @build_if(0)
+
+B :: proc() {
+}
+
+main :: proc(): int {
+    A();
+    B();
+    return 0;
+}

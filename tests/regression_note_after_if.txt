@@ -1,0 +1,12 @@
+main :: proc(): int {
+    a := true;
+    if a {
+        a = false;
+    }
+    thing := 10; @unused
+
+    // I had an error once because note got eaten by else clause parse
+    // I have reversed that but if I decided that else if / else could be
+    // tagged then this test is meant to catch that
+    return 0;
+}

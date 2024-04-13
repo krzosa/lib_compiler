@@ -1,0 +1,3 @@
+Thing :: proc(): asd1 {
+    return 0;
+}

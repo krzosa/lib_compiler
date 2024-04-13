@@ -1,0 +1,7 @@
+import "libc";
+
+main :: proc(): int {
+    a: *int = malloc(sizeof(:int));
+    defer free(a);
+    return 0;
+}

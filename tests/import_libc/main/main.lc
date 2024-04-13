@@ -1,0 +1,12 @@
+import "libc";
+
+main :: proc(): int {
+    a := malloc(32);
+    free(a);
+
+    s := sin(32.0); @unused
+    result := ceil(0.7);
+    result -= 1;
+
+    return :int(result);
+}

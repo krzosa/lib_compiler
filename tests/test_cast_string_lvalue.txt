@@ -1,0 +1,8 @@
+A := "Something";
+
+main :: proc(): int {
+    B := &:*char(A)[1]; @unused
+    C := *:*char(A); @unused
+    D := :*char(A)[0]; @unused
+    return 0;
+}

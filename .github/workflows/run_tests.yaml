@@ -1,0 +1,25 @@
+on: [push]
+jobs:
+  run-and-compile-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt install g++
+      - run: sudo apt install clang
+      - run: g++ -o bld src/build_tool/main.cpp -g -lm && ./bld
+  run-and-compile-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install llvm
+      - run: clang++ src/build_tool/main.cpp -std=c++11 -o bld && ./bld
+  run-and-compile-windows:
+    runs-on: windows-latest
+    steps:
+        - name: Setup MSVC Developer Command Prompt
+          uses: TheMrMilchmann/setup-msvc-dev@v3.0.0
+          with:
+            arch: x64
+        - uses: actions/checkout@v4
+        - run: cl.exe src/build_tool/main.cpp /Fe:bld.exe && bld.exe
+          shell: cmd

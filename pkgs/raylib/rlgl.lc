@@ -1,0 +1,173 @@
+rlVertexBuffer :: struct {
+    elementCount: int;
+    vertices: *float;
+    texcoords: *float;
+    colors: *uchar;
+    indices: *uint;
+    vaoId: uint;
+    vboId: [4]uint;
+}
+
+rlDrawCall :: struct {
+    mode: int;
+    vertexCount: int;
+    vertexAlignment: int;
+    textureId: uint;
+}
+
+rlRenderBatch :: struct {
+    bufferCount: int;
+    currentBuffer: int;
+    vertexBuffer: *rlVertexBuffer;
+    draws: *rlDrawCall;
+    drawCounter: int;
+    currentDepth: float;
+}
+
+rlMatrixMode :: proc(mode: int); @dont_mangle @api
+rlPushMatrix :: proc(); @dont_mangle @api
+rlPopMatrix :: proc(); @dont_mangle @api
+rlLoadIdentity :: proc(); @dont_mangle @api
+rlTranslatef :: proc(x: float, y: float, z: float); @dont_mangle @api
+rlRotatef :: proc(angle: float, x: float, y: float, z: float); @dont_mangle @api
+rlScalef :: proc(x: float, y: float, z: float); @dont_mangle @api
+rlMultMatrixf :: proc(matf: *float); @dont_mangle @api
+rlFrustum :: proc(left: double, right: double, bottom: double, top: double, znear: double, zfar: double); @dont_mangle @api
+rlOrtho :: proc(left: double, right: double, bottom: double, top: double, znear: double, zfar: double); @dont_mangle @api
+rlViewport :: proc(x: int, y: int, width: int, height: int); @dont_mangle @api
+rlBegin :: proc(mode: int); @dont_mangle @api
+rlEnd :: proc(); @dont_mangle @api
+rlVertex2i :: proc(x: int, y: int); @dont_mangle @api
+rlVertex2f :: proc(x: float, y: float); @dont_mangle @api
+rlVertex3f :: proc(x: float, y: float, z: float); @dont_mangle @api
+rlTexCoord2f :: proc(x: float, y: float); @dont_mangle @api
+rlNormal3f :: proc(x: float, y: float, z: float); @dont_mangle @api
+rlColor4ub :: proc(r: uchar, g: uchar, b: uchar, a: uchar); @dont_mangle @api
+rlColor3f :: proc(x: float, y: float, z: float); @dont_mangle @api
+rlColor4f :: proc(x: float, y: float, z: float, w: float); @dont_mangle @api
+rlEnableVertexArray :: proc(vaoId: uint): bool; @dont_mangle @api
+rlDisableVertexArray :: proc(); @dont_mangle @api
+rlEnableVertexBuffer :: proc(id: uint); @dont_mangle @api
+rlDisableVertexBuffer :: proc(); @dont_mangle @api
+rlEnableVertexBufferElement :: proc(id: uint); @dont_mangle @api
+rlDisableVertexBufferElement :: proc(); @dont_mangle @api
+rlEnableVertexAttribute :: proc(index: uint); @dont_mangle @api
+rlDisableVertexAttribute :: proc(index: uint); @dont_mangle @api
+rlActiveTextureSlot :: proc(slot: int); @dont_mangle @api
+rlEnableTexture :: proc(id: uint); @dont_mangle @api
+rlDisableTexture :: proc(); @dont_mangle @api
+rlEnableTextureCubemap :: proc(id: uint); @dont_mangle @api
+rlDisableTextureCubemap :: proc(); @dont_mangle @api
+rlTextureParameters :: proc(id: uint, param: int, value: int); @dont_mangle @api
+rlCubemapParameters :: proc(id: uint, param: int, value: int); @dont_mangle @api
+rlEnableShader :: proc(id: uint); @dont_mangle @api
+rlDisableShader :: proc(); @dont_mangle @api
+rlEnableFramebuffer :: proc(id: uint); @dont_mangle @api
+rlDisableFramebuffer :: proc(); @dont_mangle @api
+rlActiveDrawBuffers :: proc(count: int); @dont_mangle @api
+rlBlitFramebuffer :: proc(srcX: int, srcY: int, srcWidth: int, srcHeight: int, dstX: int, dstY: int, dstWidth: int, dstHeight: int, bufferMask: int); @dont_mangle @api
+rlEnableColorBlend :: proc(); @dont_mangle @api
+rlDisableColorBlend :: proc(); @dont_mangle @api
+rlEnableDepthTest :: proc(); @dont_mangle @api
+rlDisableDepthTest :: proc(); @dont_mangle @api
+rlEnableDepthMask :: proc(); @dont_mangle @api
+rlDisableDepthMask :: proc(); @dont_mangle @api
+rlEnableBackfaceCulling :: proc(); @dont_mangle @api
+rlDisableBackfaceCulling :: proc(); @dont_mangle @api
+rlSetCullFace :: proc(mode: int); @dont_mangle @api
+rlEnableScissorTest :: proc(); @dont_mangle @api
+rlDisableScissorTest :: proc(); @dont_mangle @api
+rlScissor :: proc(x: int, y: int, width: int, height: int); @dont_mangle @api
+rlEnableWireMode :: proc(); @dont_mangle @api
+rlEnablePointMode :: proc(); @dont_mangle @api
+rlDisableWireMode :: proc(); @dont_mangle @api
+rlSetLineWidth :: proc(width: float); @dont_mangle @api
+rlGetLineWidth :: proc(): float; @dont_mangle @api
+rlEnableSmoothLines :: proc(); @dont_mangle @api
+rlDisableSmoothLines :: proc(); @dont_mangle @api
+rlEnableStereoRender :: proc(); @dont_mangle @api
+rlDisableStereoRender :: proc(); @dont_mangle @api
+rlIsStereoRenderEnabled :: proc(): bool; @dont_mangle @api
+rlClearColor :: proc(r: uchar, g: uchar, b: uchar, a: uchar); @dont_mangle @api
+rlClearScreenBuffers :: proc(); @dont_mangle @api
+rlCheckErrors :: proc(); @dont_mangle @api
+rlSetBlendMode :: proc(mode: int); @dont_mangle @api
+rlSetBlendFactors :: proc(glSrcFactor: int, glDstFactor: int, glEquation: int); @dont_mangle @api
+rlSetBlendFactorsSeparate :: proc(glSrcRGB: int, glDstRGB: int, glSrcAlpha: int, glDstAlpha: int, glEqRGB: int, glEqAlpha: int); @dont_mangle @api
+rlglInit :: proc(width: int, height: int); @dont_mangle @api
+rlglClose :: proc(); @dont_mangle @api
+rlLoadExtensions :: proc(loader: *void); @dont_mangle @api
+rlGetVersion :: proc(): int; @dont_mangle @api
+rlSetFramebufferWidth :: proc(width: int); @dont_mangle @api
+rlGetFramebufferWidth :: proc(): int; @dont_mangle @api
+rlSetFramebufferHeight :: proc(height: int); @dont_mangle @api
+rlGetFramebufferHeight :: proc(): int; @dont_mangle @api
+rlGetTextureIdDefault :: proc(): uint; @dont_mangle @api
+rlGetShaderIdDefault :: proc(): uint; @dont_mangle @api
+rlGetShaderLocsDefault :: proc(): *int; @dont_mangle @api
+rlLoadRenderBatch :: proc(numBuffers: int, bufferElements: int): rlRenderBatch; @dont_mangle @api
+rlUnloadRenderBatch :: proc(batch: rlRenderBatch); @dont_mangle @api
+rlDrawRenderBatch :: proc(batch: *rlRenderBatch); @dont_mangle @api
+rlSetRenderBatchActive :: proc(batch: *rlRenderBatch); @dont_mangle @api
+rlDrawRenderBatchActive :: proc(); @dont_mangle @api
+rlCheckRenderBatchLimit :: proc(vCount: int): bool; @dont_mangle @api
+rlSetTexture :: proc(id: uint); @dont_mangle @api
+rlLoadVertexArray :: proc(): uint; @dont_mangle @api
+rlLoadVertexBuffer :: proc(buffer: *void, size: int, dynamic: bool): uint; @dont_mangle @api
+rlLoadVertexBufferElement :: proc(buffer: *void, size: int, dynamic: bool): uint; @dont_mangle @api
+rlUpdateVertexBuffer :: proc(bufferId: uint, data: *void, dataSize: int, offset: int); @dont_mangle @api
+rlUpdateVertexBufferElements :: proc(id: uint, data: *void, dataSize: int, offset: int); @dont_mangle @api
+rlUnloadVertexArray :: proc(vaoId: uint); @dont_mangle @api
+rlUnloadVertexBuffer :: proc(vboId: uint); @dont_mangle @api
+rlSetVertexAttribute :: proc(index: uint, compSize: int, type: int, normalized: bool, stride: int, pointer: *void); @dont_mangle @api
+rlSetVertexAttributeDivisor :: proc(index: uint, divisor: int); @dont_mangle @api
+rlSetVertexAttributeDefault :: proc(locIndex: int, value: *void, attribType: int, count: int); @dont_mangle @api
+rlDrawVertexArray :: proc(offset: int, count: int); @dont_mangle @api
+rlDrawVertexArrayElements :: proc(offset: int, count: int, buffer: *void); @dont_mangle @api
+rlDrawVertexArrayInstanced :: proc(offset: int, count: int, instances: int); @dont_mangle @api
+rlDrawVertexArrayElementsInstanced :: proc(offset: int, count: int, buffer: *void, instances: int); @dont_mangle @api
+rlLoadTexture :: proc(data: *void, width: int, height: int, format: int, mipmapCount: int): uint; @dont_mangle @api
+rlLoadTextureDepth :: proc(width: int, height: int, useRenderBuffer: bool): uint; @dont_mangle @api
+rlLoadTextureCubemap :: proc(data: *void, size: int, format: int): uint; @dont_mangle @api
+rlUpdateTexture :: proc(id: uint, offsetX: int, offsetY: int, width: int, height: int, format: int, data: *void); @dont_mangle @api
+rlGetGlTextureFormats :: proc(format: int, glInternalFormat: *uint, glFormat: *uint, glType: *uint); @dont_mangle @api
+rlGetPixelFormatName :: proc(format: uint): *char; @dont_mangle @api
+rlUnloadTexture :: proc(id: uint); @dont_mangle @api
+rlGenTextureMipmaps :: proc(id: uint, width: int, height: int, format: int, mipmaps: *int); @dont_mangle @api
+rlReadTexturePixels :: proc(id: uint, width: int, height: int, format: int): *void; @dont_mangle @api
+rlReadScreenPixels :: proc(width: int, height: int): *uchar; @dont_mangle @api
+rlLoadFramebuffer :: proc(width: int, height: int): uint; @dont_mangle @api
+rlFramebufferAttach :: proc(fboId: uint, texId: uint, attachType: int, texType: int, mipLevel: int); @dont_mangle @api
+rlFramebufferComplete :: proc(id: uint): bool; @dont_mangle @api
+rlUnloadFramebuffer :: proc(id: uint); @dont_mangle @api
+rlLoadShaderCode :: proc(vsCode: *char, fsCode: *char): uint; @dont_mangle @api
+rlCompileShader :: proc(shaderCode: *char, type: int): uint; @dont_mangle @api
+rlLoadShaderProgram :: proc(vShaderId: uint, fShaderId: uint): uint; @dont_mangle @api
+rlUnloadShaderProgram :: proc(id: uint); @dont_mangle @api
+rlGetLocationUniform :: proc(shaderId: uint, uniformName: *char): int; @dont_mangle @api
+rlGetLocationAttrib :: proc(shaderId: uint, attribName: *char): int; @dont_mangle @api
+rlSetUniform :: proc(locIndex: int, value: *void, uniformType: int, count: int); @dont_mangle @api
+rlSetUniformMatrix :: proc(locIndex: int, mat: Matrix); @dont_mangle @api
+rlSetUniformSampler :: proc(locIndex: int, textureId: uint); @dont_mangle @api
+rlSetShader :: proc(id: uint, locs: *int); @dont_mangle @api
+rlLoadComputeShaderProgram :: proc(shaderId: uint): uint; @dont_mangle @api
+rlComputeShaderDispatch :: proc(groupX: uint, groupY: uint, groupZ: uint); @dont_mangle @api
+rlLoadShaderBuffer :: proc(size: uint, data: *void, usageHint: int): uint; @dont_mangle @api
+rlUnloadShaderBuffer :: proc(ssboId: uint); @dont_mangle @api
+rlUpdateShaderBuffer :: proc(id: uint, data: *void, dataSize: uint, offset: uint); @dont_mangle @api
+rlBindShaderBuffer :: proc(id: uint, index: uint); @dont_mangle @api
+rlReadShaderBuffer :: proc(id: uint, dest: *void, count: uint, offset: uint); @dont_mangle @api
+rlCopyShaderBuffer :: proc(destId: uint, srcId: uint, destOffset: uint, srcOffset: uint, count: uint); @dont_mangle @api
+rlGetShaderBufferSize :: proc(id: uint): uint; @dont_mangle @api
+rlBindImageTexture :: proc(id: uint, index: uint, format: int, readonly: bool); @dont_mangle @api
+rlGetMatrixModelview :: proc(): Matrix; @dont_mangle @api
+rlGetMatrixProjection :: proc(): Matrix; @dont_mangle @api
+rlGetMatrixTransform :: proc(): Matrix; @dont_mangle @api
+rlGetMatrixProjectionStereo :: proc(eye: int): Matrix; @dont_mangle @api
+rlGetMatrixViewOffsetStereo :: proc(eye: int): Matrix; @dont_mangle @api
+rlSetMatrixProjection :: proc(proj: Matrix); @dont_mangle @api
+rlSetMatrixModelview :: proc(view: Matrix); @dont_mangle @api
+rlSetMatrixProjectionStereo :: proc(right: Matrix, left: Matrix); @dont_mangle @api
+rlSetMatrixViewOffsetStereo :: proc(right: Matrix, left: Matrix); @dont_mangle @api
+rlLoadDrawCube :: proc(); @dont_mangle @api
+rlLoadDrawQuad :: proc(); @dont_mangle @api

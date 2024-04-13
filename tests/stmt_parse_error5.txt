@@ -1,0 +1,11 @@
+// #failed: parse
+// #error: got invalid token: semicolon
+// #error: got unexpected token: open brace
+A :: proc() {
+    a := ; @unused
+    asd := 10;
+
+    }
+    {
+
+}

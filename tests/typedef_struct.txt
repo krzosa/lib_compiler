@@ -1,0 +1,24 @@
+STRUCT :: struct { a: int; b: int; }
+AnotherStruct :: typedef STRUCT;
+AnotherAnotherStruct :: typedef AnotherStruct;
+
+U :: union { a: int; b: float; }
+TU :: typedef U;
+TTU :: typedef TU;
+
+TP :: typedef *U;
+TTP :: typedef TP;
+
+main :: proc(): int {
+    a: AnotherStruct;
+    a.b = 0;
+    b: AnotherAnotherStruct = { a = 0, b = 1 };
+    tu: TU = { a = 10 };
+    ttu: TTU = { b = 10 }; @unused
+    tp: TP = :TP(&tu);
+    tpf := tp.a; @unused
+    ttp: TTP = :TTP(&tu);
+    ttpf := ttp.a; @unused
+
+    return a.b + b.a;
+}

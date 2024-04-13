@@ -1,0 +1,12 @@
+// #failed: resolve
+// #expected_error_count: 6
+
+main :: proc(): int {
+    sizeof(:int, a = 10);
+    sizeof(a = 10);
+    sizeof(10);
+
+    alignof(:int, a = 10);
+    alignof(a = 10);
+    alignof(10);
+}

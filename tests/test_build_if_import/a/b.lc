@@ -1,0 +1,5 @@
+#build_if(0);
+
+A :: proc(): int {
+    return 1;
+}

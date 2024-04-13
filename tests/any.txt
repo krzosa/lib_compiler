@@ -1,0 +1,106 @@
+import "libc";
+
+/**
+ * doc comment test
+ *
+**/
+print :: proc(v: Any) {
+    switch(v.type) {
+        case typeof(:int): {
+            val := :*int(v.data);
+            assert(*val == 4);
+        }
+        default: assert(0);
+    }
+}
+
+modify_any :: proc(v: Any) {
+    switch v.type {
+        case typeof(:int): {
+            val := :*int(v.data);
+            val[0] += 1;
+        }
+        case typeof(:*int): {
+            val := *:**int(v.data);
+            val[0] += 1;
+        }
+        default: assert(0);
+    }
+}
+
+any_vargs :: proc(fmt: *char, ...Any) {
+    va: va_list;
+    va_start(va, fmt);
+
+    for i := 0; fmt[i]; i += 1 {
+        if fmt[i] == '%' {
+            val := va_arg_any(va);
+            assert(val.type == typeof(:int) ||
+                 val.type == typeof(:float) ||
+                 val.type == typeof(:double)||
+                 val.type == typeof(:*char) ||
+                 val.type == typeof(:char) ||
+                 val.type == typeof(:String));
+        }
+    }
+
+    va_end(va);
+}
+
+main :: proc(): int {
+    {
+        i: int;
+        modify_any(i);
+        assert(i == 0);
+
+        modify_any(&i);
+        assert(i == 1);
+    }
+
+    {
+        i: int = 4;
+        ii: *int = &i;
+        a: Any = {typeof(&i), &ii};
+        b: Any = &i;
+        c: Any = a;
+
+        assert(*:**int(a.data) == *:**int(b.data));
+        assert(a.type == b.type);
+
+        assert(a.data == c.data);
+        assert(a.type == c.type);
+    }
+
+    {
+        a: Any = 32;
+        b: Any = 33;
+
+        assert(*:*int(a.data) + 1 == *:*int(b.data));
+    }
+
+    {
+        c: Any = "thing";
+        d: Any = 32.5232;
+        e: Any = :float(32);
+        f: Any = :String("another_thing");
+
+        assert(c.type == typeof(:*char));
+        assert(d.type == typeof(:double));
+        assert(e.type == typeof(:float));
+        assert(f.type == typeof(:String));
+    }
+
+    {
+        a: String = "asd";
+        b: Any = a;
+
+        assert(:*String(b.data).len == 3);
+    }
+
+    {
+        any_vargs("% % %", "asd", 32, 32.042);
+        any_vargs("% % %", :String("asd"), :char(32), :float(32.042));
+    }
+
+    return 0;
+}

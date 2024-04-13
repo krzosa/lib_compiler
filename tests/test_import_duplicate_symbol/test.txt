@@ -1,0 +1,5 @@
+// #failed: package
+// #error: there are 2 decls with the same name 'B'
+
+// I don't know why matching 'B' on empty decl line works here but's that's good
+// #error: B

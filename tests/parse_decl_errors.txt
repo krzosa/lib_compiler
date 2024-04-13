@@ -1,0 +1,22 @@
+
+
+ASDF;
+
+
+Something :: proc() {
+}
+
+
+^Memes;
+
+Some_Struct :: struct {
+    i: int;
+}
+
+
+Another_One
+
+// #failed: parse
+// #error: got unexpected token
+// #error: got unexpected token
+// #error: got unexpected token

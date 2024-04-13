@@ -1,0 +1,11 @@
+#build_if(LC_GEN != GEN_C);
+
+i8  :: typedef char;
+i16 :: typedef short;
+i32 :: typedef int;
+i64 :: typedef llong;
+
+u8  :: typedef uchar;
+u16 :: typedef ushort;
+u32 :: typedef uint;
+u64 :: typedef ullong;

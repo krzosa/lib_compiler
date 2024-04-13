@@ -1,0 +1,13 @@
+#`#include <assert.h>`;
+@foreign assert :: proc(b: bool); @foreign
+
+#`
+#if defined(_MSC_VER)
+    #define lc_assertion_debug_break() (__debugbreak(), 0)
+#else
+    #define lc_assertion_debug_break() (__builtin_trap(), 0)
+#endif
+`;
+
+
+debug_break :: proc(): int; @foreign(lc_assertion_debug_break)

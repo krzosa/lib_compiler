@@ -1,0 +1,5 @@
+// #failed: package
+// #error: duplicate import
+
+I don't know what I'm matching but this works
+// #error: a

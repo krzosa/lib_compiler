@@ -1,0 +1,4 @@
+// #failed: parse
+// #error: invalid usage
+A :: ^;
+B :: 1;

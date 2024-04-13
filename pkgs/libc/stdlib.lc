@@ -1,0 +1,48 @@
+#`#include<stdlib.h>`;
+
+wchar_t :: typedef std_types.u16; @foreign
+div_t   :: struct { quot: int; rem: int; } @foreign
+ldiv_t  :: struct { quot: long; rem: long; } @foreign
+lldiv_t :: struct { quot: llong; rem: llong; } @foreign
+
+atof          :: proc(nptr: *char): double; @foreign
+atoi          :: proc(nptr: *char): int; @foreign
+atol          :: proc(nptr: *char): long; @foreign
+atoll         :: proc(nptr: *char): llong; @foreign
+strtod        :: proc(nptr: *char, endptr: **char): double; @foreign
+strtof        :: proc(nptr: *char, endptr: **char): float; @foreign
+strtol        :: proc(nptr: *char, endptr: **char, base: int): long; @foreign
+strtoll       :: proc(nptr: *char, endptr: **char, base: int): llong; @foreign
+strtoul       :: proc(nptr: *char, endptr: **char, base: int): ulong; @foreign
+strtoull      :: proc(nptr: *char, endptr: **char, base: int): ullong; @foreign
+
+rand          :: proc(): int; @foreign
+srand         :: proc(seed: uint); @foreign
+
+calloc        :: proc(nmemb: size_t, size: size_t): *void; @foreign
+free          :: proc(ptr: *void); @foreign
+malloc        :: proc(size: size_t): *void; @foreign
+realloc       :: proc(ptr: *void, size: size_t): *void; @foreign
+
+abort         :: proc(); @foreign
+atexit        :: proc(func: proc()): int; @foreign
+at_quick_exit :: proc(func: proc()): int; @foreign
+exit          :: proc(status: int); @foreign
+_Exit         :: proc(status: int); @foreign
+getenv        :: proc(name: *char): *char; @foreign
+quick_exit    :: proc(status: int); @foreign
+system        :: proc(cmd: *char): int; @foreign
+
+abs           :: proc(j: int): int; @foreign
+labs          :: proc(j: long): long; @foreign
+llabs         :: proc(j: llong): llong; @foreign
+div           :: proc(numer: int, denom: int): div_t; @foreign
+ldiv          :: proc(numer: long, denom: long): ldiv_t; @foreign
+lldiv         :: proc(numer: llong, denom: llong): lldiv_t; @foreign
+
+mblen         :: proc(s: *char, n: size_t): int; @foreign
+mbtowc        :: proc(pwc: *wchar_t, s: *char, n: size_t): int; @foreign
+wctomb        :: proc(s: *char, wc: wchar_t): int; @foreign
+
+mbstowcs      :: proc(pwcs: *wchar_t, s: *char, n: size_t): size_t; @foreign
+wcstombs      :: proc(s: *char, pwcs: *wchar_t, n: size_t): size_t; @foreign

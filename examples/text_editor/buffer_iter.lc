@@ -1,0 +1,54 @@
+GO_FORWARD  ::  1;
+GO_BACKWARD :: -1;
+
+BufferIter :: struct {
+    buffer: *Buffer;
+    pos:     int;
+    end:     int;
+    item:    u32;
+
+    utf8_codepoint_size: int;
+    direction:           int;
+    codepoint_index:     int;
+}
+
+IsValid :: proc(iter: BufferIter): bool {
+    assert(iter.direction == GO_FORWARD || iter.direction == GO_BACKWARD);
+
+    result := false;
+    if iter.direction == GO_BACKWARD {
+        result = iter.pos >= iter.end;
+    } else {
+        result = iter.pos <  iter.end;
+    }
+
+    if result {
+        assert(!IsUTF8ContinuationByte(GetChar(iter.buffer, iter.pos)));
+        assert(IsPosInBounds(iter.buffer, iter.pos));
+    }
+    return result;
+}
+
+Advance :: proc(iter: *BufferIter) {
+    assert(iter.direction == GO_FORWARD || iter.direction == GO_BACKWARD);
+
+    iter.codepoint_index += 1;
+    if iter.direction == GO_FORWARD {
+        iter.pos += iter.utf8_codepoint_size;
+    } else {
+        iter.pos = AdjustUTF8PosUnsafe(iter.buffer, iter.pos - 1, GO_BACKWARD);
+    }
+
+    if !IsValid(*iter) return;
+    iter.item = GetUTF32(iter.buffer, iter.pos, &iter.utf8_codepoint_size);
+}
+
+Iterate :: proc(buffer: *Buffer, pos: int, end: int, direction: int = GO_FORWARD): BufferIter {
+    assert(!IsUTF8ContinuationByte(GetChar(buffer, pos)));
+    assert(!IsUTF8ContinuationByte(GetChar(buffer, end)));
+    assert(direction == GO_FORWARD || direction == GO_BACKWARD);
+
+    result: BufferIter = {buffer = buffer, pos = pos, end = end, direction = direction, codepoint_index = -1};
+    Advance(&result);
+    return result;
+}

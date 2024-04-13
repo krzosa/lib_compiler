@@ -1,0 +1,17 @@
+/** package
+* package doc comment
+*/
+
+/** file
+* file doc comment
+*/
+
+/**
+* normal doc comment
+*/
+something :: proc() {
+}
+
+main :: proc(): int {
+    return 0;
+}

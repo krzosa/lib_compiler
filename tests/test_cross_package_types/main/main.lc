@@ -1,0 +1,17 @@
+import T "type";
+
+main :: proc(): int {
+    a := :T.A{1, 2}; @unused
+    b: T.A = {0}; @unused
+    e := T.AVAL.b; @unused
+    g := T.AVAL.c.a; @unused
+    h := T.AVAL.c.d.a; @unused
+    i := (T.AVAL.c).d.a; @unused
+    j := (T.AVAL).c.d.a; @unused
+    k := T.AVAL.c.d.a; @unused
+    l := T.AVALP.c.d.a; @unused
+    m := T.AVALP[0].c.d.a; @unused
+    n := offsetof(:T.A, b); @unused
+
+    return T.AVAL.a;
+}

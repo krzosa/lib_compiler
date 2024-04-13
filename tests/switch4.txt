@@ -1,0 +1,15 @@
+// #failed: resolve
+// #error: value '9999999999
+main :: proc(): int {
+
+    value := 1;
+    switch value {
+        case 0, 999999999999999999999999999: {
+            return 1;
+        }
+        case 1, 2: {
+            return 2;
+        }
+    }
+    return 0;
+}

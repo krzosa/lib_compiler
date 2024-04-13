@@ -1,0 +1,8 @@
+// #failed: resolve
+// #error: void is non indexable
+
+main :: proc(): int {
+    a: *void = nil;
+    r := a[10];
+    return 1;
+}

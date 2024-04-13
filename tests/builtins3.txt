@@ -1,0 +1,21 @@
+// #failed: resolve
+
+A :: struct {
+    a: int;
+    b: int;
+}
+
+main :: proc(): int {
+    offsetof(:A, b);
+
+// #error: first argument should be a type
+    offsetof(A, b);
+
+// #error: expected 2 arguments to builtin procedure 'offsetof', got: 3
+    offsetof(:A, b, b);
+
+// #error: named arguments in this builtin procedure are illegal
+    offsetof(a = :A, b);
+
+    return 0;
+}

@@ -1,0 +1,25 @@
+// #failed: parse
+
+S :: struct { i: int; }
+A :: struct { i: int; }
+
+main :: proc(): int {
+    s: S;
+
+// #error: expected identifier got instead integer literal
+    a := s.32;
+
+// #error: expected identifier got instead string literal
+    b := s."asd";
+
+// #error: expected identifier got instead open paren
+    d := s.("asd");
+
+
+    val := 32;
+// #error: expected identifier got instead open paren
+    e := s.(24 + val);
+// #error: expected identifier got instead open paren
+    f := s.(24 + 24);
+}
+

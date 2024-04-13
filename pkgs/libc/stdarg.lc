@@ -1,0 +1,12 @@
+#`
+#include <stdarg.h>
+#define lc_va_arg_any(va) va_arg(va, LC_Any)
+`;
+
+va_list :: struct { a: ullong; } @foreign
+va_start :: proc(args: va_list, arg: *void); @foreign
+va_end :: proc(args: va_list); @foreign
+va_copy :: proc(args: va_list, src: va_list); @foreign
+// va_arg :: proc(args: va_list, arg: *void); @foreign
+
+va_arg_any :: proc(args: va_list): Any; @foreign(lc_va_arg_any)

@@ -1,0 +1,76 @@
+Monosize: Vector2;
+ScreenSize: Vector2;
+Scroll: Vector2;
+
+Vec2I :: struct {
+    x: int;
+    y: int;
+}
+
+MoveLeft :: proc(buffer: *Buffer, pos: int): int {
+    pos -= 1;
+    pos  = AdjustUTF8Pos(buffer, pos, direction = -1);
+    return pos;
+}
+
+MoveRight :: proc(buffer: *Buffer, pos: int): int {
+    pos += 1;
+    pos  = AdjustUTF8Pos(buffer, pos, direction = +1);
+    return pos;
+}
+
+CalculateVisualPos :: proc(buffer: *Buffer, pos: int): Vec2I {
+    line: LineInfo = FindLineOfPos(buffer, pos);
+
+    iter := Iterate(buffer, line.range.min, line.range.max);
+    for IsValid(iter); Advance(&iter) {
+        if iter.pos == pos {
+            break;
+        }
+    }
+
+    result: Vec2I = {iter.codepoint_index, line.number};
+    return result;
+}
+
+CalculatePosFromVisualPos :: proc(buffer: *Buffer, vpos: Vec2I): int {
+    line := GetLine(buffer, vpos.y);
+    iter := Iterate(buffer, line.range.min, line.range.max);
+    for IsValid(iter); Advance(&iter) {
+        if iter.codepoint_index == vpos.x {
+            break;
+        }
+    }
+    return iter.pos;
+}
+
+CalculateWorldPosUnscrolled :: proc(vpos: Vec2I): Vector2 {
+    result: Vector2 = {Monosize.x * :f32(vpos.x), Monosize.y * :f32(vpos.y)};
+    return result;
+}
+
+CalculateWorldPos :: proc(vpos: Vec2I): Vector2 {
+    result: Vector2 = {Monosize.x * :f32(vpos.x) - Scroll.x, Monosize.y * :f32(vpos.y) - Scroll.y};
+    return result;
+}
+
+MoveDown :: proc(buffer: *Buffer, pos: int): int {
+    vpos := CalculateVisualPos(buffer, pos);
+    if !IsLineValid(buffer, vpos.y + 1) return pos;
+
+    result := CalculatePosFromVisualPos(buffer, {vpos.x, vpos.y + 1});
+    return result;
+}
+
+MoveUp :: proc(buffer: *Buffer, pos: int): int {
+    vpos := CalculateVisualPos(buffer, pos);
+    if !IsLineValid(buffer, vpos.y - 1) return pos;
+
+    result := CalculatePosFromVisualPos(buffer, {vpos.x, vpos.y - 1});
+    return result;
+}
+
+DrawRect :: proc(rec: Rect2P, color: Color) {
+    rectangle := Rect2PToRectangle(rec);
+    DrawRectangleRec(rectangle, color);
+}

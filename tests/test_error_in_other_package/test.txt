@@ -1,0 +1,4 @@
+// #failed: package
+// #error: undeclared identifier 'asd1'
+// #error: undeclared identifier 'asd2'
+// #error: undeclared identifier 'asd_local'

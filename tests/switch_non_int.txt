@@ -1,0 +1,12 @@
+// #failed: resolve
+// #error: invalid type in switch condition '*int', it should be an integer
+
+main :: proc(): int {
+    i: *int = nil;
+    switch i {
+        case 0: {}
+        default: {}
+    }
+
+    return 0;
+}

@@ -1,0 +1,46 @@
+import "libc";
+
+main :: proc(): int {
+
+    empty_string: String = "";
+    assert(empty_string.len == 0);
+    empty_string = ``;
+    assert(empty_string.len == 0);
+
+    empty_char: *char = "";
+    assert(*empty_char == 0);
+
+    A: String = "testing";
+    assert(A.str[0] == 't');
+
+    assert(7 == "\a"[0]);
+    assert(8 == "\b"[0]);
+    assert(9 == "\t"[0]);
+    assert(10 == "\n"[0]);
+    assert(11 == "\v"[0]);
+    assert(12 == "\f"[0]);
+    assert(13 == "\r"[0]);
+    assert(0x1b == "\e"[0]);
+
+    assert(7 == '\a');
+    assert(8 == '\b');
+    assert(9 == '\t');
+    assert(10 == '\n');
+    assert(11 == '\v');
+    assert(12 == '\f');
+    assert(13 == '\r');
+    assert(0x1b == '\e');
+
+    assert(0 == "\0"[0]);
+    assert(1 == lengthof("0"));
+
+    assert(97 == "abc"[0]);
+    assert(98 == "abc"[1]);
+    assert(99 == "abc"[2]);
+    assert(0 == "abc"[3]);
+    assert(3 == lengthof("abc"));
+    assert(1 == lengthof("\r"));
+    assert(7 == lengthof("\r\nThing"));
+
+    return 0;
+}

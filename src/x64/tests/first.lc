@@ -1,0 +1,31 @@
+S :: struct {
+    a: llong;
+    b: llong;
+    c: llong;
+}
+
+main :: proc(): llong {
+    a: [5]llong;
+    a[2] = 1;
+    a[2] -= 1;
+    s: S;
+    i4: llong = 4;
+    i8: llong = i4 + i4;
+    i12: llong = i4 + i4 + i4;
+    @unused other_type: llong = 10;
+
+
+    p    := &i4;
+    *p   -= 1;
+    *&i4 -= 1;
+    pp   := &p;
+    **pp += 2;
+
+    @unused ret := second_proc();
+
+    return i12 - i8 - i4 + s.c + a[2];
+}
+
+second_proc :: proc(): int {
+    return 0;
+}

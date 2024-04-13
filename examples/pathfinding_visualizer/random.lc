@@ -1,0 +1,22 @@
+RandomSeedValue: RandomSeed = {121521923492};
+RandomSeed :: struct {
+    a: u64;
+}
+
+GetRandomU64 :: proc(s: *RandomSeed): u64 {
+    x := s.a;
+    x ^= x << 13;
+    x ^= x >> 7;
+    x ^= x << 17;
+    s.a = x;
+    return x;
+}
+
+GetRandomInt :: proc(min: int, max: int): int {
+    random := GetRandomU64(&RandomSeedValue);
+    range_size: u64 = :u64(max - min) + 1;
+
+    result := :int(random % range_size);
+    result  = result + min;
+    return result;
+}

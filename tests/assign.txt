@@ -1,0 +1,173 @@
+// #failed: resolve
+// #expected_error_count: 41
+
+E :: typedef int;
+EA :: 0;
+EB :: ^;
+
+S :: struct {a: int;}
+Ts :: typedef int;
+@weak T :: typedef int;
+
+main :: proc(): int {
+    {
+        a: int;
+        a = EB;
+        a /= 1;
+        a *= 1;
+        a %= 1;
+        a -= 1;
+        a += 1;
+        a &= 1;
+        a |= 1;
+        a <<= 1;
+        a >>= 1;
+    }
+
+    {
+        a: float;
+        a = 1;
+        a /= 1;
+        a *= 1;
+        a -= 1;
+        a += 1;
+        {a %= 1;}
+        {a &= 1;}
+        {a |= 1;}
+        {a <<= 1;}
+        {a >>= 1;}
+    }
+
+    {
+        a: E;
+        a = 1;
+        a /= 1;
+        a *= 1;
+        a %= 1;
+        a -= 1;
+        a += 1;
+        a &= 1;
+        a |= 1;
+        a <<= 1;
+        a >>= 1;
+
+        a = EB;
+        a /= EB;
+        a *= EB;
+        a %= EB;
+        a -= EB;
+        a += EB;
+        a &= EB;
+        a |= EB;
+        a <<= EB;
+        a >>= EB;
+    }
+
+    {
+        b: int;
+        a: *int;
+        a = &b;
+        {a /= &b;}
+        {a *= &b;}
+        {a %= &b;}
+        {a -= &b;}
+        {a += &b;}
+        {a &= &b;}
+        {a |= &b;}
+        {a <<= &b;}
+        {a >>= &b;}
+    }
+
+    {
+        a: S;
+        b: S;
+        a = b;
+        {a /= b;}
+        {a *= b;}
+        {a %= b;}
+        {a -= b;}
+        {a += b;}
+        {a &= b;}
+        {a |= b;}
+        {a <<= b;}
+        {a >>= b;}
+    }
+
+    {
+        a: Ts;
+        b: Ts;
+        a = 1;
+        a /= 1;
+        a *= 1;
+        a %= 1;
+        a -= 1;
+        a += 1;
+        a &= 1;
+        a |= 1;
+        a <<= 1;
+        a >>= 1;
+        a = b;
+        a /= b;
+        a *= b;
+        a %= b;
+        a -= b;
+        a += b;
+        a &= b;
+        a |= b;
+        a <<= b;
+        a >>= b;
+    }
+
+    {
+        a: T;
+        b: T;
+        a = 1;
+        a /= 1;
+        a *= 1;
+        a %= 1;
+        a -= 1;
+        a += 1;
+        a &= 1;
+        a |= 1;
+        a <<= 1;
+        a >>= 1;
+        a = b;
+        a /= b;
+        a *= b;
+        a %= b;
+        a -= b;
+        a += b;
+        a &= b;
+        a |= b;
+        a <<= b;
+        a >>= b;
+    }
+
+    {
+        a: String = "memes";
+        b: String = "memes";
+        a = "something_else";
+        a /= "something_else";
+        a *= "something_else";
+        a %= "something_else";
+        a -= "something_else";
+        a += "something_else";
+        a &= "something_else";
+        a |= "something_else";
+        a <<= "something_else";
+        a >>= "something_else";
+        a = b;
+        a /= b;
+        a *= b;
+        a %= b;
+        a -= b;
+        a += b;
+        a &= b;
+        a |= b;
+        a <<= b;
+        a >>= b;
+    }
+
+    return 0;
+}
+

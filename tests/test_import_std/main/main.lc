@@ -1,0 +1,14 @@
+import "std_types";
+import "libc";
+
+#`
+#include <limits.h>
+#include <stdint.h>
+#include <stddef.h>
+`;
+
+main :: proc(): int {
+    TestSizes();
+    a: u64 = 0;
+    return :int(a);
+}

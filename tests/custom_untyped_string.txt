@@ -1,0 +1,37 @@
+import "libc";
+
+
+S :: struct { s: String; }
+
+main :: proc(): int {
+    using_const: String = "Something";
+    str := using_const.str;
+    len := using_const.len;
+
+    assert(str[0] == 'S');
+    assert(typeof(str) == typeof(:*char));
+    assert(typeof(len) == typeof(:int));
+
+    cast_string := :String("Something");
+    assert(typeof(cast_string) == typeof(:String));
+    assert(cast_string.str[0] == 'S');
+    assert(cast_string.len == 9);
+
+    new_line: String = "\n";
+    assert(new_line.len == 1);
+    assert(*new_line.str == '\n');
+
+    ss: S = { "Thing" }; @unused
+    ss2: S = { {str = "asd", len = 3} }; @unused
+
+    proc_call("Memes");
+
+    constant :: "string";
+    from_constant: String = constant; @unused
+
+    return 0;
+}
+
+global_string: String = "Something";
+global_s: S = { "Thing" };
+proc_call :: proc(s: String @unused) {}

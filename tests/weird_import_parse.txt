@@ -1,0 +1,12 @@
+// #failed: parse
+// #error: expected string after an import
+// #error: expected open paren
+// #error: unclosed open brace
+
+import a :: "thing";
+
+b :: proc) {
+}
+
+
+c :: proc() {

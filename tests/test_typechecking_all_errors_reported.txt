@@ -1,0 +1,37 @@
+// #failed: resolve
+
+// #error: duplicate field 'a' in aggregate type 'A'
+A :: struct {
+    a: int;
+    a: int;
+}
+
+// #error: duplicate field 'a' in aggregate type 'B'
+B :: struct {
+    a: int;
+    a: int;
+}
+
+C :: struct {
+    c: A;
+}
+
+// #error: duplicate field 'a' in aggregate type 'D'
+D :: struct {
+    a: int;
+    a: int;
+}
+
+E :: struct {
+    a: int;
+}
+
+PROC :: proc() {
+    a: A;
+    b: B;
+    c: C = {1};
+    d: D;
+    e: E;
+// #error: undeclared identifier 'b'
+    f := e.b;
+}

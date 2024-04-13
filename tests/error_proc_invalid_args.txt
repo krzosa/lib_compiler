@@ -1,0 +1,41 @@
+// #failed: resolve
+// #error: unknown argument to a procedure call, couldn't match it with any of the declared arguments
+// #error: unknown argument to a procedure call, couldn't match it with any of the declared arguments
+// #error: unknown argument to a procedure call, couldn't match it with any of the declared arguments
+// #error: mixing named and positional arguments is illegal
+// #error: mixing named and positional arguments is illegal
+
+// #error: invalid argument count passed in to procedure call
+// #error: invalid argument count passed in to procedure call
+// #error: invalid argument count passed in to procedure call
+// #error: invalid argument count passed in to procedure call
+// #error: unknown argument to a procedure call, couldn't match it with any of the declared arguments
+
+// #error: cannot assign void expression to a variable
+
+default_args :: proc(a: int = 10, b: int = 10): int {
+    return a + b;
+}
+
+no_default :: proc(a: int @unused, b: int @unused) {
+
+}
+
+main :: proc(): int {
+    def0 := default_args(1,2,3);
+    def1 := default_args(c = 10);
+    def2 := default_args(1, a = 1, b = 2);
+    def3 := default_args(a = 1, 2);
+    def4 := default_args(b = 1, 2);
+
+    no_default();
+    no_default(1);
+    no_default(a = 1);
+    no_default(b = 1);
+    no_default(a = 2, c = 1);
+
+    assign_void := no_default(1, 2);
+
+    return 0;
+}
+

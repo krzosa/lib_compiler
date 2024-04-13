@@ -1,0 +1,4 @@
+// #failed: resolve
+// #error: cannot assign, types require explicit cast, variable type: '[6]int' expression type: '[5]int'
+
+d: [6]int = :[5]int{1, 2, 3, 4};

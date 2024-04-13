@@ -1,0 +1,15 @@
+#build_if(LC_ARCH == ARCH_X64);
+
+usize :: typedef u64; @foreign(size_t)
+isize :: typedef i64; @foreign(intptr_t)
+intptr :: typedef i64; @foreign(intptr_t)
+uintptr :: typedef u64; @foreign(uintptr_t)
+
+INTPTR_MAX  :: INT64_MAX;
+INTPTR_MIN  :: INT64_MIN;
+UINTPTR_MAX :: UINT64_MAX;
+UINTPTR_MIN :: UINT64_MIN;
+ISIZE_MAX   :: INT64_MAX;
+ISIZE_MIN   :: INT64_MIN;
+USIZE_MAX   :: UINT64_MAX;
+USIZE_MIN   :: UINT64_MIN;

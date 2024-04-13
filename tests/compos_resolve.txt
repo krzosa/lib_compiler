@@ -1,0 +1,48 @@
+// #failed: resolve
+
+Vals :: struct {a:int;b:int;}
+
+vv0: Vals = {1, 2};
+vv1: Vals = {1};
+vv2: Vals = {a = 1};
+vv3: Vals = {a = 1, b = 2};
+vv4: Vals = {};
+
+v0 := :Vals {1, 2};
+v1 := :Vals {1};
+v2 := :Vals {a = 1};
+v3 := :Vals {a = 1, b = 2};
+v4 := :Vals {};
+
+// #error: too many struct initializers, expected less then 2 got instead 3
+e0 := :Vals {1, 2, 3};
+// #error: too many struct initializers, expected less then 2 got instead 3
+e1 := :Vals {a = 1, b = 2, c = 3};
+// #error: no matching declaration with name 'c' in type 'Vals'
+e2 := :Vals {c = 3};
+// #error: mixing named and positional arguments is illegal
+e3 := :Vals {a = 2, 2};
+// #error: mixing named and positional arguments is illegal
+e4 := :Vals {b = 2, 2};
+// #error: mixing named and positional arguments is illegal
+e5 := :Vals {c = 2, 2};
+
+Node :: struct {
+    l: *Node;
+    r: *Node;
+    i: int;
+}
+
+// #error: cannot assign, can assign only const integer equal to 0, variable type: '*Node' expression type: 'UntypedInt'
+n0: Node = {i = 10, l = &:Node{1, 2, 3}}; // this is legal, do we do something about this?
+
+a: int;
+// #error: cannot assign, types require explicit cast, variable type: '*Node' expression type: '*int'
+ne0: Node = {i = 10, l = &:Node{&a}};
+// #error: too many struct initializers, expected less then 3 got instead 4
+ne1: Node = {i = 10, l = &:Node{1, 2, 3, 4}};
+// #error: no matching declaration with name 'c' in type 'Node'
+ne2: Node = {i = 10, l = &:Node{c = 2}};
+// #error: mixing named and positional arguments is illegal
+ne3: Node = {i = 10, l = &:Node{l = 0, r = 0, 2}};
+

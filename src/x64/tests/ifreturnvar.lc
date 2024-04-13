@@ -1,0 +1,11 @@
+a := 10;
+b := 20;
+
+main :: proc(): int {
+    a = 0;
+    b = 0;
+    if (a == b) {
+        return 0;
+    }
+    return 1;
+}

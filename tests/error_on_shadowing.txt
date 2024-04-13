@@ -1,0 +1,12 @@
+// #failed: resolve
+main :: proc(): int {
+
+// #error: there are 2 decls with the same name 'a'
+// #error: a
+    a: int;
+    {
+        a: int;
+    }
+
+    return 1;
+}

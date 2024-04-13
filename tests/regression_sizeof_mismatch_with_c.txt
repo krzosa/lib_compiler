@@ -1,0 +1,19 @@
+import "libc";
+
+TEST_R_CommandKind :: typedef int;
+
+TEST_R_Command :: struct {
+    kind: TEST_R_CommandKind;
+    next: *TEST_R_Command;
+
+    out : *int;
+    data: *int;
+    count: int;
+    max_count: int;
+} @dont_mangle
+
+main :: proc(): int {
+    sizeof_in_c: ullong = #`sizeof(TEST_R_Command)`;
+    assert(sizeof_in_c == sizeof(:TEST_R_Command));
+    return 0;
+}

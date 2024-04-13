@@ -1,0 +1,32 @@
+
+/* Nesting 0
+    /* Nesting 1
+
+
+    */
+
+    /* Nesting 1
+        /* Nesting 2
+
+
+        */
+    */
+*/
+
+main :: proc(): int {
+    /* Nesting 0
+        /* Nesting 1
+
+
+        */
+
+        /* Nesting 1
+            /* Nesting 2
+                /* Nesting 3 */
+                /* Nesting 3 */
+                /* Nesting 3 */
+            */
+        */
+    */
+    return 0;
+}

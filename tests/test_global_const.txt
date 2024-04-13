@@ -1,0 +1,10 @@
+arr: [100]int;
+pointer_indexing1 := addptr(arr, 0);
+
+iconst :: 1;
+pointer_indexing2 := addptr(arr, iconst);
+
+
+main :: proc(): int {
+    return *pointer_indexing1 + *pointer_indexing2;
+}

@@ -1,0 +1,93 @@
+import "raylib";
+
+Tile :: struct {
+    value: int;
+}
+
+Map :: struct {
+    tiles: *Tile;
+    x: int;
+    y: int;
+}
+
+CreateMap :: proc(x: int, y: int, map: *int): Map {
+    result: Map = {x = x, y = y};
+    result.tiles = MemAlloc(:uint(x*y) * sizeof(:Tile));
+
+    for i := 0; i < x*y; i += 1 {
+        result.tiles[i].value = map[i];
+    }
+    return result;
+}
+
+main :: proc(): int {
+    TestArena();
+    return 0;
+    InitWindow(800, 600, "Thing");
+    SetTargetFPS(60);
+
+    XPIX :: 32;
+    YPIX :: 32;
+
+    camera: Camera2D = {
+        zoom = 1.0,
+    };
+
+    _map_x :: 8;
+    _map_y :: 8;
+    map := CreateMap(_map_x, _map_y, &:[_map_x * _map_y]int{
+        1,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        1,0,0,0,0,0,0,1,
+        0,0,0,0,1,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+    }[0]);
+
+    for !WindowShouldClose() {
+        if IsMouseButtonDown(MOUSE_BUTTON_LEFT) {
+            delta := GetMouseDelta();
+            camera.offset = Vector2Add(camera.offset, delta);
+        }
+
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+
+        BeginMode2D(camera);
+        for y_it := 0; y_it < map.y; y_it += 1 {
+            for x_it := 0; x_it < map.x; x_it += 1 {
+                tile := &map.tiles[x_it + y_it * map.x];
+                original_rect := RectFromSize({XPIX * :float(x_it), YPIX * :float(y_it)}, {XPIX, YPIX});
+                rect := Shrink(original_rect, 2);
+
+                r := RectToRectangle(rect);
+
+                min_screen := GetWorldToScreen2D(original_rect.min, camera);
+                size := GetRectSize(original_rect);
+
+                screen_rect: Rectangle = {min_screen.x, min_screen.y, size.x, size.y};
+                mouse_p := GetMousePosition();
+
+                if tile.value == 1 {
+                    DrawRectangleRec(r, RED);
+                } else {
+                    DrawRectangleRec(r, GREEN);
+                }
+
+                if CheckCollisionPointRec(mouse_p, screen_rect) {
+                    DrawRectangleRec(r, BLUE);
+                }
+            }
+        }
+        EndMode2D();
+
+        // DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+        EndDrawing();
+    }
+
+    CloseWindow();
+    return 0;
+}
+

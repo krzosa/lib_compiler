@@ -1,0 +1,13 @@
+
+StructMem_Members := :[]StructMem{
+    {name = "name", offset = 0},
+    {name = "offset", offset = 8},
+};
+Typeinfo_Members := :[]StructMem{
+    {name = "kind", offset = 0},
+    {name = "name", offset = 8},
+    {name = "size", offset = 16},
+    {name = "align", offset = 20},
+    {name = "child_count", offset = 24},
+    {name = "struct_mems", offset = 32},
+};

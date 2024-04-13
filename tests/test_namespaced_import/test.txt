@@ -1,0 +1,3 @@
+// #failed: package
+// #error: undeclared identifier 'A'
+// #error: declaration is import

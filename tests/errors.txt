@@ -1,0 +1,43 @@
+// #failed: resolve
+
+// #error: declaration is type, unexpected inside expression
+i0 := typeof(int);
+// #error: declaration is type, unexpected inside expression
+i1 := sizeof(double);
+
+p0: *int;
+// #error: non constant global declarations are illegal
+p1: int = p0[0];
+// #error: invalid binary operation for type '*int'
+p2 := p0 + 1;
+
+Tint :: typedef int;
+t0: int;
+t1: Tint;
+// #error: cannot perform binary operation, types are incompatible, left: 'Tint' right: 'int'
+t2 := t1 + t0;
+
+// #error: #static_assert cant be used as variable initializer
+AssertInitializer: int = #static_assert(1 == 1);
+
+// #error: cannot assign, can assign only const integer equal to 0, variable type: '*int' expression type: 'UntypedInt'
+pi0: *int = 1;
+pi1: *int = nil;
+// #error: cannot assign, can assign only const integer equal to 0, variable type: '*int' expression type: 'UntypedInt'
+pi2: *int = 1-1;
+
+_pi3: *char;
+// #error: cannot assign, types require explicit cast, variable type: '*int' expression type: '*char'
+pi3: *int = _pi3;
+
+
+_pi4: char;
+// #error: cannot assign, types require explicit cast, variable type: '*int' expression type: '*char'
+pi4: *int = &_pi4;
+
+// #error: cannot create a variable of type void
+pi5: void = 0;
+// #error: cannot create a variable of type void
+pi6: void;
+// #error: cannot cast, types are incompatible, left: 'void' right: 'UntypedInt'
+pi7 := :void(0);

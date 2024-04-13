@@ -1,0 +1,12 @@
+#build_if(LC_GEN == GEN_C);
+#`#include <stdint.h>`;
+
+i8  :: typedef char;  @foreign(int8_t)
+i16 :: typedef short; @foreign(int16_t)
+i32 :: typedef int;   @foreign(int32_t)
+i64 :: typedef llong; @foreign(int64_t)
+
+u8  :: typedef uchar;  @foreign(uint8_t)
+u16 :: typedef ushort; @foreign(uint16_t)
+u32 :: typedef uint;   @foreign(uint32_t)
+u64 :: typedef ullong; @foreign(uint64_t)

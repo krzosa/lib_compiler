@@ -1,0 +1,7 @@
+Idea behind this test is that we want to make sure all imports are looked into regardless of errors.
+
+// #failed: package
+// #error: there are 2 decls
+// #error: there are 2 decls
+// #error: circular import
+// #error: you can get through this procedure without

@@ -1,0 +1,9 @@
+main :: proc(): int {
+    i: int;
+
+    a: [32]int;
+    b := addptr(a, 4); @unused
+
+    val := i ^ i; @unused
+    return i;
+}

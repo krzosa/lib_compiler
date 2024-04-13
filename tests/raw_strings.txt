@@ -1,0 +1,46 @@
+import "libc";
+
+A :: `THING
+THING`;
+
+B: String = `THING
+THING`;
+
+main :: proc(): int {
+    a :: `
+    Something
+    Other thing
+    Another thing
+    `;
+
+    b := `
+    Something
+    Other thing
+    Another thing
+    `; @unused
+
+
+    c: String = `
+    Something
+    Other thing
+    Another thing
+    `;
+
+    d := a; @unused
+    e := A; @unused
+
+    has_new_lines: bool;
+    for i := 0; i < c.len; i += 1 {
+        if c.str[i] == '\n' {
+            has_new_lines = true;
+        }
+        assert(c.str[i] != 0);
+    }
+    assert(has_new_lines);
+
+    lena := lengthof(A); @unused
+    assert(lengthof(A) == 11 || lengthof(A) == 12); // either CRLF or LF
+    assert(B.len == 11 || B.len == 12);
+
+    return 0;
+}

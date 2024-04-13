@@ -1,0 +1,1012 @@
+import "std_types";
+
+Vector2 :: struct {
+    x: float;
+    y: float;
+}
+
+Vector3 :: struct {
+    x: float;
+    y: float;
+    z: float;
+}
+
+Vector4 :: struct {
+    x: float;
+    y: float;
+    z: float;
+    w: float;
+}
+
+Matrix :: struct {
+    m0: float;
+    m4: float;
+    m8: float;
+    m12: float;
+    m1: float;
+    m5: float;
+    m9: float;
+    m13: float;
+    m2: float;
+    m6: float;
+    m10: float;
+    m14: float;
+    m3: float;
+    m7: float;
+    m11: float;
+    m15: float;
+}
+
+Color :: struct {
+    r: uchar;
+    g: uchar;
+    b: uchar;
+    a: uchar;
+}
+
+Rectangle :: struct {
+    x: float;
+    y: float;
+    width: float;
+    height: float;
+}
+
+Image :: struct {
+    data: *void;
+    width: int;
+    height: int;
+    mipmaps: int;
+    format: int;
+}
+
+Texture :: struct {
+    id: uint;
+    width: int;
+    height: int;
+    mipmaps: int;
+    format: int;
+}
+
+RenderTexture :: struct {
+    id: uint;
+    texture: Texture;
+    depth: Texture;
+}
+
+NPatchInfo :: struct {
+    source: Rectangle;
+    left: int;
+    top: int;
+    right: int;
+    bottom: int;
+    layout: int;
+}
+
+GlyphInfo :: struct {
+    value: int;
+    offsetX: int;
+    offsetY: int;
+    advanceX: int;
+    image: Image;
+}
+
+Font :: struct {
+    baseSize: int;
+    glyphCount: int;
+    glyphPadding: int;
+    texture: Texture2D;
+    recs: *Rectangle;
+    glyphs: *GlyphInfo;
+}
+
+Camera3D :: struct {
+    position: Vector3;
+    target: Vector3;
+    up: Vector3;
+    fovy: float;
+    projection: int;
+}
+
+Camera2D :: struct {
+    offset: Vector2;
+    target: Vector2;
+    rotation: float;
+    zoom: float;
+}
+
+Mesh :: struct {
+    vertexCount: int;
+    triangleCount: int;
+    vertices: *float;
+    texcoords: *float;
+    texcoords2: *float;
+    normals: *float;
+    tangents: *float;
+    colors: *uchar;
+    indices: *ushort;
+    animVertices: *float;
+    animNormals: *float;
+    boneIds: *uchar;
+    boneWeights: *float;
+    vaoId: uint;
+    vboId: *uint;
+}
+
+Shader :: struct {
+    id: uint;
+    locs: *int;
+}
+
+MaterialMap :: struct {
+    texture: Texture2D;
+    color: Color;
+    value: float;
+}
+
+Material :: struct {
+    shader: Shader;
+    maps: *MaterialMap;
+    params: [4]float;
+}
+
+Transform :: struct {
+    translation: Vector3;
+    rotation: Quaternion;
+    scale: Vector3;
+}
+
+BoneInfo :: struct {
+    name: [32]char;
+    parent: int;
+}
+
+Model :: struct {
+    transform: Matrix;
+    meshCount: int;
+    materialCount: int;
+    meshes: *Mesh;
+    materials: *Material;
+    meshMaterial: *int;
+    boneCount: int;
+    bones: *BoneInfo;
+    bindPose: *Transform;
+}
+
+ModelAnimation :: struct {
+    boneCount: int;
+    frameCount: int;
+    bones: *BoneInfo;
+    framePoses: **Transform;
+    name: [32]char;
+}
+
+Ray :: struct {
+    position: Vector3;
+    direction: Vector3;
+}
+
+RayCollision :: struct {
+    hit: bool;
+    distance: float;
+    point: Vector3;
+    normal: Vector3;
+}
+
+BoundingBox :: struct {
+    min: Vector3;
+    max: Vector3;
+}
+
+Wave :: struct {
+    frameCount: uint;
+    sampleRate: uint;
+    sampleSize: uint;
+    channels: uint;
+    data: *void;
+}
+
+AudioStream :: struct {
+    buffer: *rAudioBuffer;
+    processor: *rAudioProcessor;
+    sampleRate: uint;
+    sampleSize: uint;
+    channels: uint;
+}
+
+Sound :: struct {
+    stream: AudioStream;
+    frameCount: uint;
+}
+
+Music :: struct {
+    stream: AudioStream;
+    frameCount: uint;
+    looping: bool;
+    ctxType: int;
+    ctxData: *void;
+}
+
+VrDeviceInfo :: struct {
+    hResolution: int;
+    vResolution: int;
+    hScreenSize: float;
+    vScreenSize: float;
+    vScreenCenter: float;
+    eyeToScreenDistance: float;
+    lensSeparationDistance: float;
+    interpupillaryDistance: float;
+    lensDistortionValues: [4]float;
+    chromaAbCorrection: [4]float;
+}
+
+VrStereoConfig :: struct {
+    projection: [2]Matrix;
+    viewOffset: [2]Matrix;
+    leftLensCenter: [2]float;
+    rightLensCenter: [2]float;
+    leftScreenCenter: [2]float;
+    rightScreenCenter: [2]float;
+    scale: [2]float;
+    scaleIn: [2]float;
+}
+
+FilePathList :: struct {
+    capacity: uint;
+    count: uint;
+    paths: **char;
+}
+
+AutomationEvent :: struct {
+    frame: uint;
+    type: uint;
+    params: [4]int;
+}
+
+AutomationEventList :: struct {
+    capacity: uint;
+    count: uint;
+    events: *AutomationEvent;
+}
+
+Quaternion :: typedef Vector4;
+Texture2D :: typedef Texture;
+TextureCubemap :: typedef Texture;
+RenderTexture2D :: typedef RenderTexture;
+Camera :: typedef Camera3D;
+rAudioBuffer :: typedef void;
+rAudioProcessor :: typedef void;
+//TraceLogCallback :: typedef proc(a: int, b: *char, c: va_list): void;
+LoadFileDataCallback :: typedef proc(a: *char, b: *int): *uchar;
+SaveFileDataCallback :: typedef proc(a: *char, b: *void, c: int): bool;
+LoadFileTextCallback :: typedef proc(a: *char): *char;
+SaveFileTextCallback :: typedef proc(a: *char, b: *char): bool;
+AudioCallback :: typedef proc(a: *void, b: uint): void;
+
+InitWindow :: proc(width: int, height: int, title: *char); @api
+CloseWindow :: proc(); @api
+WindowShouldClose :: proc(): bool; @api
+IsWindowReady :: proc(): bool; @api
+IsWindowFullscreen :: proc(): bool; @api
+IsWindowHidden :: proc(): bool; @api
+IsWindowMinimized :: proc(): bool; @api
+IsWindowMaximized :: proc(): bool; @api
+IsWindowFocused :: proc(): bool; @api
+IsWindowResized :: proc(): bool; @api
+IsWindowState :: proc(flag: uint): bool; @api
+SetWindowState :: proc(flags: uint); @api
+ClearWindowState :: proc(flags: uint); @api
+ToggleFullscreen :: proc(); @api
+ToggleBorderlessWindowed :: proc(); @api
+MaximizeWindow :: proc(); @api
+MinimizeWindow :: proc(); @api
+RestoreWindow :: proc(); @api
+SetWindowIcon :: proc(image: Image); @api
+SetWindowIcons :: proc(images: *Image, count: int); @api
+SetWindowTitle :: proc(title: *char); @api
+SetWindowPosition :: proc(x: int, y: int); @api
+SetWindowMonitor :: proc(monitor: int); @api
+SetWindowMinSize :: proc(width: int, height: int); @api
+SetWindowMaxSize :: proc(width: int, height: int); @api
+SetWindowSize :: proc(width: int, height: int); @api
+SetWindowOpacity :: proc(opacity: float); @api
+SetWindowFocused :: proc(); @api
+GetWindowHandle :: proc(): *void; @api
+GetScreenWidth :: proc(): int; @api
+GetScreenHeight :: proc(): int; @api
+GetRenderWidth :: proc(): int; @api
+GetRenderHeight :: proc(): int; @api
+GetMonitorCount :: proc(): int; @api
+GetCurrentMonitor :: proc(): int; @api
+GetMonitorPosition :: proc(monitor: int): Vector2; @api
+GetMonitorWidth :: proc(monitor: int): int; @api
+GetMonitorHeight :: proc(monitor: int): int; @api
+GetMonitorPhysicalWidth :: proc(monitor: int): int; @api
+GetMonitorPhysicalHeight :: proc(monitor: int): int; @api
+GetMonitorRefreshRate :: proc(monitor: int): int; @api
+GetWindowPosition :: proc(): Vector2; @api
+GetWindowScaleDPI :: proc(): Vector2; @api
+GetMonitorName :: proc(monitor: int): *char; @api
+SetClipboardText :: proc(text: *char); @api
+GetClipboardText :: proc(): *char; @api
+EnableEventWaiting :: proc(); @api
+DisableEventWaiting :: proc(); @api
+ShowCursor :: proc(); @api
+HideCursor :: proc(); @api
+IsCursorHidden :: proc(): bool; @api
+EnableCursor :: proc(); @api
+DisableCursor :: proc(); @api
+IsCursorOnScreen :: proc(): bool; @api
+ClearBackground :: proc(color: Color); @api
+BeginDrawing :: proc(); @api
+EndDrawing :: proc(); @api
+BeginMode2D :: proc(camera: Camera2D); @api
+EndMode2D :: proc(); @api
+BeginMode3D :: proc(camera: Camera3D); @api
+EndMode3D :: proc(); @api
+BeginTextureMode :: proc(target: RenderTexture2D); @api
+EndTextureMode :: proc(); @api
+BeginShaderMode :: proc(shader: Shader); @api
+EndShaderMode :: proc(); @api
+BeginBlendMode :: proc(mode: int); @api
+EndBlendMode :: proc(); @api
+BeginScissorMode :: proc(x: int, y: int, width: int, height: int); @api
+EndScissorMode :: proc(); @api
+BeginVrStereoMode :: proc(config: VrStereoConfig); @api
+EndVrStereoMode :: proc(); @api
+LoadVrStereoConfig :: proc(device: VrDeviceInfo): VrStereoConfig; @api
+UnloadVrStereoConfig :: proc(config: VrStereoConfig); @api
+LoadShader :: proc(vsFileName: *char, fsFileName: *char): Shader; @api
+LoadShaderFromMemory :: proc(vsCode: *char, fsCode: *char): Shader; @api
+IsShaderReady :: proc(shader: Shader): bool; @api
+GetShaderLocation :: proc(shader: Shader, uniformName: *char): int; @api
+GetShaderLocationAttrib :: proc(shader: Shader, attribName: *char): int; @api
+SetShaderValue :: proc(shader: Shader, locIndex: int, value: *void, uniformType: int); @api
+SetShaderValueV :: proc(shader: Shader, locIndex: int, value: *void, uniformType: int, count: int); @api
+SetShaderValueMatrix :: proc(shader: Shader, locIndex: int, mat: Matrix); @api
+SetShaderValueTexture :: proc(shader: Shader, locIndex: int, texture: Texture2D); @api
+UnloadShader :: proc(shader: Shader); @api
+GetMouseRay :: proc(mousePosition: Vector2, camera: Camera): Ray; @api
+GetCameraMatrix :: proc(camera: Camera): Matrix; @api
+GetCameraMatrix2D :: proc(camera: Camera2D): Matrix; @api
+GetWorldToScreen :: proc(position: Vector3, camera: Camera): Vector2; @api
+GetScreenToWorld2D :: proc(position: Vector2, camera: Camera2D): Vector2; @api
+GetWorldToScreenEx :: proc(position: Vector3, camera: Camera, width: int, height: int): Vector2; @api
+GetWorldToScreen2D :: proc(position: Vector2, camera: Camera2D): Vector2; @api
+SetTargetFPS :: proc(fps: int); @api
+GetFrameTime :: proc(): float; @api
+GetTime :: proc(): double; @api
+GetFPS :: proc(): int; @api
+SwapScreenBuffer :: proc(); @api
+PollInputEvents :: proc(); @api
+WaitTime :: proc(seconds: double); @api
+SetRandomSeed :: proc(seed: uint); @api
+GetRandomValue :: proc(min: int, max: int): int; @api
+LoadRandomSequence :: proc(count: uint, min: int, max: int): *int; @api
+UnloadRandomSequence :: proc(sequence: *int); @api
+TakeScreenshot :: proc(fileName: *char); @api
+SetConfigFlags :: proc(flags: uint); @api
+OpenURL :: proc(url: *char); @api
+TraceLog :: proc(logLevel: int, text: *char, ...); @api
+SetTraceLogLevel :: proc(logLevel: int); @api
+MemAlloc :: proc(size: uint): *void; @api
+MemRealloc :: proc(ptr: *void, size: uint): *void; @api
+MemFree :: proc(ptr: *void); @api
+//SetTraceLogCallback :: proc(callback: TraceLogCallback); @api
+SetLoadFileDataCallback :: proc(callback: LoadFileDataCallback); @api
+SetSaveFileDataCallback :: proc(callback: SaveFileDataCallback); @api
+SetLoadFileTextCallback :: proc(callback: LoadFileTextCallback); @api
+SetSaveFileTextCallback :: proc(callback: SaveFileTextCallback); @api
+LoadFileData :: proc(fileName: *char, dataSize: *int): *uchar; @api
+UnloadFileData :: proc(data: *uchar); @api
+SaveFileData :: proc(fileName: *char, data: *void, dataSize: int): bool; @api
+ExportDataAsCode :: proc(data: *uchar, dataSize: int, fileName: *char): bool; @api
+LoadFileText :: proc(fileName: *char): *char; @api
+UnloadFileText :: proc(text: *char); @api
+SaveFileText :: proc(fileName: *char, text: *char): bool; @api
+FileExists :: proc(fileName: *char): bool; @api
+DirectoryExists :: proc(dirPath: *char): bool; @api
+IsFileExtension :: proc(fileName: *char, ext: *char): bool; @api
+GetFileLength :: proc(fileName: *char): int; @api
+GetFileExtension :: proc(fileName: *char): *char; @api
+GetFileName :: proc(filePath: *char): *char; @api
+GetFileNameWithoutExt :: proc(filePath: *char): *char; @api
+GetDirectoryPath :: proc(filePath: *char): *char; @api
+GetPrevDirectoryPath :: proc(dirPath: *char): *char; @api
+GetWorkingDirectory :: proc(): *char; @api
+GetApplicationDirectory :: proc(): *char; @api
+ChangeDirectory :: proc(dir: *char): bool; @api
+IsPathFile :: proc(path: *char): bool; @api
+LoadDirectoryFiles :: proc(dirPath: *char): FilePathList; @api
+LoadDirectoryFilesEx :: proc(basePath: *char, filter: *char, scanSubdirs: bool): FilePathList; @api
+UnloadDirectoryFiles :: proc(files: FilePathList); @api
+IsFileDropped :: proc(): bool; @api
+LoadDroppedFiles :: proc(): FilePathList; @api
+UnloadDroppedFiles :: proc(files: FilePathList); @api
+GetFileModTime :: proc(fileName: *char): long; @api
+CompressData :: proc(data: *uchar, dataSize: int, compDataSize: *int): *uchar; @api
+DecompressData :: proc(compData: *uchar, compDataSize: int, dataSize: *int): *uchar; @api
+EncodeDataBase64 :: proc(data: *uchar, dataSize: int, outputSize: *int): *char; @api
+DecodeDataBase64 :: proc(data: *uchar, outputSize: *int): *uchar; @api
+LoadAutomationEventList :: proc(fileName: *char): AutomationEventList; @api
+UnloadAutomationEventList :: proc(list: *AutomationEventList); @api
+ExportAutomationEventList :: proc(list: AutomationEventList, fileName: *char): bool; @api
+SetAutomationEventList :: proc(list: *AutomationEventList); @api
+SetAutomationEventBaseFrame :: proc(frame: int); @api
+StartAutomationEventRecording :: proc(); @api
+StopAutomationEventRecording :: proc(); @api
+PlayAutomationEvent :: proc(event: AutomationEvent); @api
+IsKeyPressed :: proc(key: int): bool; @api
+IsKeyPressedRepeat :: proc(key: int): bool; @api
+IsKeyDown :: proc(key: int): bool; @api
+IsKeyReleased :: proc(key: int): bool; @api
+IsKeyUp :: proc(key: int): bool; @api
+GetKeyPressed :: proc(): int; @api
+GetCharPressed :: proc(): int; @api
+SetExitKey :: proc(key: int); @api
+IsGamepadAvailable :: proc(gamepad: int): bool; @api
+GetGamepadName :: proc(gamepad: int): *char; @api
+IsGamepadButtonPressed :: proc(gamepad: int, button: int): bool; @api
+IsGamepadButtonDown :: proc(gamepad: int, button: int): bool; @api
+IsGamepadButtonReleased :: proc(gamepad: int, button: int): bool; @api
+IsGamepadButtonUp :: proc(gamepad: int, button: int): bool; @api
+GetGamepadButtonPressed :: proc(): int; @api
+GetGamepadAxisCount :: proc(gamepad: int): int; @api
+GetGamepadAxisMovement :: proc(gamepad: int, axis: int): float; @api
+SetGamepadMappings :: proc(mappings: *char): int; @api
+IsMouseButtonPressed :: proc(button: int): bool; @api
+IsMouseButtonDown :: proc(button: int): bool; @api
+IsMouseButtonReleased :: proc(button: int): bool; @api
+IsMouseButtonUp :: proc(button: int): bool; @api
+GetMouseX :: proc(): int; @api
+GetMouseY :: proc(): int; @api
+GetMousePosition :: proc(): Vector2; @api
+GetMouseDelta :: proc(): Vector2; @api
+SetMousePosition :: proc(x: int, y: int); @api
+SetMouseOffset :: proc(offsetX: int, offsetY: int); @api
+SetMouseScale :: proc(scaleX: float, scaleY: float); @api
+GetMouseWheelMove :: proc(): float; @api
+GetMouseWheelMoveV :: proc(): Vector2; @api
+SetMouseCursor :: proc(cursor: int); @api
+GetTouchX :: proc(): int; @api
+GetTouchY :: proc(): int; @api
+GetTouchPosition :: proc(index: int): Vector2; @api
+GetTouchPointId :: proc(index: int): int; @api
+GetTouchPointCount :: proc(): int; @api
+SetGesturesEnabled :: proc(flags: uint); @api
+IsGestureDetected :: proc(gesture: uint): bool; @api
+GetGestureDetected :: proc(): int; @api
+GetGestureHoldDuration :: proc(): float; @api
+GetGestureDragVector :: proc(): Vector2; @api
+GetGestureDragAngle :: proc(): float; @api
+GetGesturePinchVector :: proc(): Vector2; @api
+GetGesturePinchAngle :: proc(): float; @api
+UpdateCamera :: proc(camera: *Camera, mode: int); @api
+UpdateCameraPro :: proc(camera: *Camera, movement: Vector3, rotation: Vector3, zoom: float); @api
+SetShapesTexture :: proc(texture: Texture2D, source: Rectangle); @api
+DrawPixel :: proc(posX: int, posY: int, color: Color); @api
+DrawPixelV :: proc(position: Vector2, color: Color); @api
+DrawLine :: proc(startPosX: int, startPosY: int, endPosX: int, endPosY: int, color: Color); @api
+DrawLineV :: proc(startPos: Vector2, endPos: Vector2, color: Color); @api
+DrawLineEx :: proc(startPos: Vector2, endPos: Vector2, thick: float, color: Color); @api
+DrawLineStrip :: proc(points: *Vector2, pointCount: int, color: Color); @api
+DrawLineBezier :: proc(startPos: Vector2, endPos: Vector2, thick: float, color: Color); @api
+DrawCircle :: proc(centerX: int, centerY: int, radius: float, color: Color); @api
+DrawCircleSector :: proc(center: Vector2, radius: float, startAngle: float, endAngle: float, segments: int, color: Color); @api
+DrawCircleSectorLines :: proc(center: Vector2, radius: float, startAngle: float, endAngle: float, segments: int, color: Color); @api
+DrawCircleGradient :: proc(centerX: int, centerY: int, radius: float, color1: Color, color2: Color); @api
+DrawCircleV :: proc(center: Vector2, radius: float, color: Color); @api
+DrawCircleLines :: proc(centerX: int, centerY: int, radius: float, color: Color); @api
+DrawCircleLinesV :: proc(center: Vector2, radius: float, color: Color); @api
+DrawEllipse :: proc(centerX: int, centerY: int, radiusH: float, radiusV: float, color: Color); @api
+DrawEllipseLines :: proc(centerX: int, centerY: int, radiusH: float, radiusV: float, color: Color); @api
+DrawRing :: proc(center: Vector2, innerRadius: float, outerRadius: float, startAngle: float, endAngle: float, segments: int, color: Color); @api
+DrawRingLines :: proc(center: Vector2, innerRadius: float, outerRadius: float, startAngle: float, endAngle: float, segments: int, color: Color); @api
+DrawRectangle :: proc(posX: int, posY: int, width: int, height: int, color: Color); @api
+DrawRectangleV :: proc(position: Vector2, size: Vector2, color: Color); @api
+DrawRectangleRec :: proc(rec: Rectangle, color: Color); @api
+DrawRectanglePro :: proc(rec: Rectangle, origin: Vector2, rotation: float, color: Color); @api
+DrawRectangleGradientV :: proc(posX: int, posY: int, width: int, height: int, color1: Color, color2: Color); @api
+DrawRectangleGradientH :: proc(posX: int, posY: int, width: int, height: int, color1: Color, color2: Color); @api
+DrawRectangleGradientEx :: proc(rec: Rectangle, col1: Color, col2: Color, col3: Color, col4: Color); @api
+DrawRectangleLines :: proc(posX: int, posY: int, width: int, height: int, color: Color); @api
+DrawRectangleLinesEx :: proc(rec: Rectangle, lineThick: float, color: Color); @api
+DrawRectangleRounded :: proc(rec: Rectangle, roundness: float, segments: int, color: Color); @api
+DrawRectangleRoundedLines :: proc(rec: Rectangle, roundness: float, segments: int, lineThick: float, color: Color); @api
+DrawTriangle :: proc(v1: Vector2, v2: Vector2, v3: Vector2, color: Color); @api
+DrawTriangleLines :: proc(v1: Vector2, v2: Vector2, v3: Vector2, color: Color); @api
+DrawTriangleFan :: proc(points: *Vector2, pointCount: int, color: Color); @api
+DrawTriangleStrip :: proc(points: *Vector2, pointCount: int, color: Color); @api
+DrawPoly :: proc(center: Vector2, sides: int, radius: float, rotation: float, color: Color); @api
+DrawPolyLines :: proc(center: Vector2, sides: int, radius: float, rotation: float, color: Color); @api
+DrawPolyLinesEx :: proc(center: Vector2, sides: int, radius: float, rotation: float, lineThick: float, color: Color); @api
+DrawSplineLinear :: proc(points: *Vector2, pointCount: int, thick: float, color: Color); @api
+DrawSplineBasis :: proc(points: *Vector2, pointCount: int, thick: float, color: Color); @api
+DrawSplineCatmullRom :: proc(points: *Vector2, pointCount: int, thick: float, color: Color); @api
+DrawSplineBezierQuadratic :: proc(points: *Vector2, pointCount: int, thick: float, color: Color); @api
+DrawSplineBezierCubic :: proc(points: *Vector2, pointCount: int, thick: float, color: Color); @api
+DrawSplineSegmentLinear :: proc(p1: Vector2, p2: Vector2, thick: float, color: Color); @api
+DrawSplineSegmentBasis :: proc(p1: Vector2, p2: Vector2, p3: Vector2, p4: Vector2, thick: float, color: Color); @api
+DrawSplineSegmentCatmullRom :: proc(p1: Vector2, p2: Vector2, p3: Vector2, p4: Vector2, thick: float, color: Color); @api
+DrawSplineSegmentBezierQuadratic :: proc(p1: Vector2, c2: Vector2, p3: Vector2, thick: float, color: Color); @api
+DrawSplineSegmentBezierCubic :: proc(p1: Vector2, c2: Vector2, c3: Vector2, p4: Vector2, thick: float, color: Color); @api
+GetSplinePointLinear :: proc(startPos: Vector2, endPos: Vector2, t: float): Vector2; @api
+GetSplinePointBasis :: proc(p1: Vector2, p2: Vector2, p3: Vector2, p4: Vector2, t: float): Vector2; @api
+GetSplinePointCatmullRom :: proc(p1: Vector2, p2: Vector2, p3: Vector2, p4: Vector2, t: float): Vector2; @api
+GetSplinePointBezierQuad :: proc(p1: Vector2, c2: Vector2, p3: Vector2, t: float): Vector2; @api
+GetSplinePointBezierCubic :: proc(p1: Vector2, c2: Vector2, c3: Vector2, p4: Vector2, t: float): Vector2; @api
+CheckCollisionRecs :: proc(rec1: Rectangle, rec2: Rectangle): bool; @api
+CheckCollisionCircles :: proc(center1: Vector2, radius1: float, center2: Vector2, radius2: float): bool; @api
+CheckCollisionCircleRec :: proc(center: Vector2, radius: float, rec: Rectangle): bool; @api
+CheckCollisionPointRec :: proc(point: Vector2, rec: Rectangle): bool; @api
+CheckCollisionPointCircle :: proc(point: Vector2, center: Vector2, radius: float): bool; @api
+CheckCollisionPointTriangle :: proc(point: Vector2, p1: Vector2, p2: Vector2, p3: Vector2): bool; @api
+CheckCollisionPointPoly :: proc(point: Vector2, points: *Vector2, pointCount: int): bool; @api
+CheckCollisionLines :: proc(startPos1: Vector2, endPos1: Vector2, startPos2: Vector2, endPos2: Vector2, collisionPoint: *Vector2): bool; @api
+CheckCollisionPointLine :: proc(point: Vector2, p1: Vector2, p2: Vector2, threshold: int): bool; @api
+GetCollisionRec :: proc(rec1: Rectangle, rec2: Rectangle): Rectangle; @api
+LoadImage :: proc(fileName: *char): Image; @api
+LoadImageRaw :: proc(fileName: *char, width: int, height: int, format: int, headerSize: int): Image; @api
+LoadImageSvg :: proc(fileNameOrString: *char, width: int, height: int): Image; @api
+LoadImageAnim :: proc(fileName: *char, frames: *int): Image; @api
+LoadImageFromMemory :: proc(fileType: *char, fileData: *uchar, dataSize: int): Image; @api
+LoadImageFromTexture :: proc(texture: Texture2D): Image; @api
+LoadImageFromScreen :: proc(): Image; @api
+IsImageReady :: proc(image: Image): bool; @api
+UnloadImage :: proc(image: Image); @api
+ExportImage :: proc(image: Image, fileName: *char): bool; @api
+ExportImageToMemory :: proc(image: Image, fileType: *char, fileSize: *int): *uchar; @api
+ExportImageAsCode :: proc(image: Image, fileName: *char): bool; @api
+GenImageColor :: proc(width: int, height: int, color: Color): Image; @api
+GenImageGradientLinear :: proc(width: int, height: int, direction: int, start: Color, end: Color): Image; @api
+GenImageGradientRadial :: proc(width: int, height: int, density: float, inner: Color, outer: Color): Image; @api
+GenImageGradientSquare :: proc(width: int, height: int, density: float, inner: Color, outer: Color): Image; @api
+GenImageChecked :: proc(width: int, height: int, checksX: int, checksY: int, col1: Color, col2: Color): Image; @api
+GenImageWhiteNoise :: proc(width: int, height: int, factor: float): Image; @api
+GenImagePerlinNoise :: proc(width: int, height: int, offsetX: int, offsetY: int, scale: float): Image; @api
+GenImageCellular :: proc(width: int, height: int, tileSize: int): Image; @api
+GenImageText :: proc(width: int, height: int, text: *char): Image; @api
+ImageCopy :: proc(image: Image): Image; @api
+ImageFromImage :: proc(image: Image, rec: Rectangle): Image; @api
+ImageText :: proc(text: *char, fontSize: int, color: Color): Image; @api
+ImageTextEx :: proc(font: Font, text: *char, fontSize: float, spacing: float, tint: Color): Image; @api
+ImageFormat :: proc(image: *Image, newFormat: int); @api
+ImageToPOT :: proc(image: *Image, fill: Color); @api
+ImageCrop :: proc(image: *Image, crop: Rectangle); @api
+ImageAlphaCrop :: proc(image: *Image, threshold: float); @api
+ImageAlphaClear :: proc(image: *Image, color: Color, threshold: float); @api
+ImageAlphaMask :: proc(image: *Image, alphaMask: Image); @api
+ImageAlphaPremultiply :: proc(image: *Image); @api
+ImageBlurGaussian :: proc(image: *Image, blurSize: int); @api
+ImageResize :: proc(image: *Image, newWidth: int, newHeight: int); @api
+ImageResizeNN :: proc(image: *Image, newWidth: int, newHeight: int); @api
+ImageResizeCanvas :: proc(image: *Image, newWidth: int, newHeight: int, offsetX: int, offsetY: int, fill: Color); @api
+ImageMipmaps :: proc(image: *Image); @api
+ImageDither :: proc(image: *Image, rBpp: int, gBpp: int, bBpp: int, aBpp: int); @api
+ImageFlipVertical :: proc(image: *Image); @api
+ImageFlipHorizontal :: proc(image: *Image); @api
+ImageRotate :: proc(image: *Image, degrees: int); @api
+ImageRotateCW :: proc(image: *Image); @api
+ImageRotateCCW :: proc(image: *Image); @api
+ImageColorTint :: proc(image: *Image, color: Color); @api
+ImageColorInvert :: proc(image: *Image); @api
+ImageColorGrayscale :: proc(image: *Image); @api
+ImageColorContrast :: proc(image: *Image, contrast: float); @api
+ImageColorBrightness :: proc(image: *Image, brightness: int); @api
+ImageColorReplace :: proc(image: *Image, color: Color, replace: Color); @api
+LoadImageColors :: proc(image: Image): *Color; @api
+LoadImagePalette :: proc(image: Image, maxPaletteSize: int, colorCount: *int): *Color; @api
+UnloadImageColors :: proc(colors: *Color); @api
+UnloadImagePalette :: proc(colors: *Color); @api
+GetImageAlphaBorder :: proc(image: Image, threshold: float): Rectangle; @api
+GetImageColor :: proc(image: Image, x: int, y: int): Color; @api
+ImageClearBackground :: proc(dst: *Image, color: Color); @api
+ImageDrawPixel :: proc(dst: *Image, posX: int, posY: int, color: Color); @api
+ImageDrawPixelV :: proc(dst: *Image, position: Vector2, color: Color); @api
+ImageDrawLine :: proc(dst: *Image, startPosX: int, startPosY: int, endPosX: int, endPosY: int, color: Color); @api
+ImageDrawLineV :: proc(dst: *Image, start: Vector2, end: Vector2, color: Color); @api
+ImageDrawCircle :: proc(dst: *Image, centerX: int, centerY: int, radius: int, color: Color); @api
+ImageDrawCircleV :: proc(dst: *Image, center: Vector2, radius: int, color: Color); @api
+ImageDrawCircleLines :: proc(dst: *Image, centerX: int, centerY: int, radius: int, color: Color); @api
+ImageDrawCircleLinesV :: proc(dst: *Image, center: Vector2, radius: int, color: Color); @api
+ImageDrawRectangle :: proc(dst: *Image, posX: int, posY: int, width: int, height: int, color: Color); @api
+ImageDrawRectangleV :: proc(dst: *Image, position: Vector2, size: Vector2, color: Color); @api
+ImageDrawRectangleRec :: proc(dst: *Image, rec: Rectangle, color: Color); @api
+ImageDrawRectangleLines :: proc(dst: *Image, rec: Rectangle, thick: int, color: Color); @api
+ImageDraw :: proc(dst: *Image, src: Image, srcRec: Rectangle, dstRec: Rectangle, tint: Color); @api
+ImageDrawText :: proc(dst: *Image, text: *char, posX: int, posY: int, fontSize: int, color: Color); @api
+ImageDrawTextEx :: proc(dst: *Image, font: Font, text: *char, position: Vector2, fontSize: float, spacing: float, tint: Color); @api
+LoadTexture :: proc(fileName: *char): Texture2D; @api
+LoadTextureFromImage :: proc(image: Image): Texture2D; @api
+LoadTextureCubemap :: proc(image: Image, layout: int): TextureCubemap; @api
+LoadRenderTexture :: proc(width: int, height: int): RenderTexture2D; @api
+IsTextureReady :: proc(texture: Texture2D): bool; @api
+UnloadTexture :: proc(texture: Texture2D); @api
+IsRenderTextureReady :: proc(target: RenderTexture2D): bool; @api
+UnloadRenderTexture :: proc(target: RenderTexture2D); @api
+UpdateTexture :: proc(texture: Texture2D, pixels: *void); @api
+UpdateTextureRec :: proc(texture: Texture2D, rec: Rectangle, pixels: *void); @api
+GenTextureMipmaps :: proc(texture: *Texture2D); @api
+SetTextureFilter :: proc(texture: Texture2D, filter: int); @api
+SetTextureWrap :: proc(texture: Texture2D, wrap: int); @api
+DrawTexture :: proc(texture: Texture2D, posX: int, posY: int, tint: Color); @api
+DrawTextureV :: proc(texture: Texture2D, position: Vector2, tint: Color); @api
+DrawTextureEx :: proc(texture: Texture2D, position: Vector2, rotation: float, scale: float, tint: Color); @api
+DrawTextureRec :: proc(texture: Texture2D, source: Rectangle, position: Vector2, tint: Color); @api
+DrawTexturePro :: proc(texture: Texture2D, source: Rectangle, dest: Rectangle, origin: Vector2, rotation: float, tint: Color); @api
+DrawTextureNPatch :: proc(texture: Texture2D, nPatchInfo: NPatchInfo, dest: Rectangle, origin: Vector2, rotation: float, tint: Color); @api
+Fade :: proc(color: Color, alpha: float): Color; @api
+ColorToInt :: proc(color: Color): int; @api
+ColorNormalize :: proc(color: Color): Vector4; @api
+ColorFromNormalized :: proc(normalized: Vector4): Color; @api
+ColorToHSV :: proc(color: Color): Vector3; @api
+ColorFromHSV :: proc(hue: float, saturation: float, value: float): Color; @api
+ColorTint :: proc(color: Color, tint: Color): Color; @api
+ColorBrightness :: proc(color: Color, factor: float): Color; @api
+ColorContrast :: proc(color: Color, contrast: float): Color; @api
+ColorAlpha :: proc(color: Color, alpha: float): Color; @api
+ColorAlphaBlend :: proc(dst: Color, src: Color, tint: Color): Color; @api
+GetColor :: proc(hexValue: uint): Color; @api
+GetPixelColor :: proc(srcPtr: *void, format: int): Color; @api
+SetPixelColor :: proc(dstPtr: *void, color: Color, format: int); @api
+GetPixelDataSize :: proc(width: int, height: int, format: int): int; @api
+GetFontDefault :: proc(): Font; @api
+LoadFont :: proc(fileName: *char): Font; @api
+LoadFontEx :: proc(fileName: *char, fontSize: int, codepoints: *int, codepointCount: int): Font; @api
+LoadFontFromImage :: proc(image: Image, key: Color, firstChar: int): Font; @api
+LoadFontFromMemory :: proc(fileType: *char, fileData: *uchar, dataSize: int, fontSize: int, codepoints: *int, codepointCount: int): Font; @api
+IsFontReady :: proc(font: Font): bool; @api
+LoadFontData :: proc(fileData: *uchar, dataSize: int, fontSize: int, codepoints: *int, codepointCount: int, type: int): *GlyphInfo; @api
+GenImageFontAtlas :: proc(glyphs: *GlyphInfo, glyphRecs: **Rectangle, glyphCount: int, fontSize: int, padding: int, packMethod: int): Image; @api
+UnloadFontData :: proc(glyphs: *GlyphInfo, glyphCount: int); @api
+UnloadFont :: proc(font: Font); @api
+ExportFontAsCode :: proc(font: Font, fileName: *char): bool; @api
+DrawFPS :: proc(posX: int, posY: int); @api
+DrawText :: proc(text: *char, posX: int, posY: int, fontSize: int, color: Color); @api
+DrawTextEx :: proc(font: Font, text: *char, position: Vector2, fontSize: float, spacing: float, tint: Color); @api
+DrawTextPro :: proc(font: Font, text: *char, position: Vector2, origin: Vector2, rotation: float, fontSize: float, spacing: float, tint: Color); @api
+DrawTextCodepoint :: proc(font: Font, codepoint: int, position: Vector2, fontSize: float, tint: Color); @api
+DrawTextCodepoints :: proc(font: Font, codepoints: *int, codepointCount: int, position: Vector2, fontSize: float, spacing: float, tint: Color); @api
+SetTextLineSpacing :: proc(spacing: int); @api
+MeasureText :: proc(text: *char, fontSize: int): int; @api
+MeasureTextEx :: proc(font: Font, text: *char, fontSize: float, spacing: float): Vector2; @api
+GetGlyphIndex :: proc(font: Font, codepoint: int): int; @api
+GetGlyphInfo :: proc(font: Font, codepoint: int): GlyphInfo; @api
+GetGlyphAtlasRec :: proc(font: Font, codepoint: int): Rectangle; @api
+LoadUTF8 :: proc(codepoints: *int, length: int): *char; @api
+UnloadUTF8 :: proc(text: *char); @api
+LoadCodepoints :: proc(text: *char, count: *int): *int; @api
+UnloadCodepoints :: proc(codepoints: *int); @api
+GetCodepointCount :: proc(text: *char): int; @api
+GetCodepoint :: proc(text: *char, codepointSize: *int): int; @api
+GetCodepointNext :: proc(text: *char, codepointSize: *int): int; @api
+GetCodepointPrevious :: proc(text: *char, codepointSize: *int): int; @api
+CodepointToUTF8 :: proc(codepoint: int, utf8Size: *int): *char; @api
+TextCopy :: proc(dst: *char, src: *char): int; @api
+TextIsEqual :: proc(text1: *char, text2: *char): bool; @api
+TextLength :: proc(text: *char): uint; @api
+TextFormat :: proc(text: *char, ...): *char; @api
+TextSubtext :: proc(text: *char, position: int, length: int): *char; @api
+TextReplace :: proc(text: *char, replace: *char, by: *char): *char; @api
+TextInsert :: proc(text: *char, insert: *char, position: int): *char; @api
+TextJoin :: proc(textList: **char, count: int, delimiter: *char): *char; @api
+TextSplit :: proc(text: *char, delimiter: char, count: *int): **char; @api
+TextAppend :: proc(text: *char, append: *char, position: *int); @api
+TextFindIndex :: proc(text: *char, find: *char): int; @api
+TextToUpper :: proc(text: *char): *char; @api
+TextToLower :: proc(text: *char): *char; @api
+TextToPascal :: proc(text: *char): *char; @api
+TextToInteger :: proc(text: *char): int; @api
+DrawLine3D :: proc(startPos: Vector3, endPos: Vector3, color: Color); @api
+DrawPoint3D :: proc(position: Vector3, color: Color); @api
+DrawCircle3D :: proc(center: Vector3, radius: float, rotationAxis: Vector3, rotationAngle: float, color: Color); @api
+DrawTriangle3D :: proc(v1: Vector3, v2: Vector3, v3: Vector3, color: Color); @api
+DrawTriangleStrip3D :: proc(points: *Vector3, pointCount: int, color: Color); @api
+DrawCube :: proc(position: Vector3, width: float, height: float, length: float, color: Color); @api
+DrawCubeV :: proc(position: Vector3, size: Vector3, color: Color); @api
+DrawCubeWires :: proc(position: Vector3, width: float, height: float, length: float, color: Color); @api
+DrawCubeWiresV :: proc(position: Vector3, size: Vector3, color: Color); @api
+DrawSphere :: proc(centerPos: Vector3, radius: float, color: Color); @api
+DrawSphereEx :: proc(centerPos: Vector3, radius: float, rings: int, slices: int, color: Color); @api
+DrawSphereWires :: proc(centerPos: Vector3, radius: float, rings: int, slices: int, color: Color); @api
+DrawCylinder :: proc(position: Vector3, radiusTop: float, radiusBottom: float, height: float, slices: int, color: Color); @api
+DrawCylinderEx :: proc(startPos: Vector3, endPos: Vector3, startRadius: float, endRadius: float, sides: int, color: Color); @api
+DrawCylinderWires :: proc(position: Vector3, radiusTop: float, radiusBottom: float, height: float, slices: int, color: Color); @api
+DrawCylinderWiresEx :: proc(startPos: Vector3, endPos: Vector3, startRadius: float, endRadius: float, sides: int, color: Color); @api
+DrawCapsule :: proc(startPos: Vector3, endPos: Vector3, radius: float, slices: int, rings: int, color: Color); @api
+DrawCapsuleWires :: proc(startPos: Vector3, endPos: Vector3, radius: float, slices: int, rings: int, color: Color); @api
+DrawPlane :: proc(centerPos: Vector3, size: Vector2, color: Color); @api
+DrawRay :: proc(ray: Ray, color: Color); @api
+DrawGrid :: proc(slices: int, spacing: float); @api
+LoadModel :: proc(fileName: *char): Model; @api
+LoadModelFromMesh :: proc(mesh: Mesh): Model; @api
+IsModelReady :: proc(model: Model): bool; @api
+UnloadModel :: proc(model: Model); @api
+GetModelBoundingBox :: proc(model: Model): BoundingBox; @api
+DrawModel :: proc(model: Model, position: Vector3, scale: float, tint: Color); @api
+DrawModelEx :: proc(model: Model, position: Vector3, rotationAxis: Vector3, rotationAngle: float, scale: Vector3, tint: Color); @api
+DrawModelWires :: proc(model: Model, position: Vector3, scale: float, tint: Color); @api
+DrawModelWiresEx :: proc(model: Model, position: Vector3, rotationAxis: Vector3, rotationAngle: float, scale: Vector3, tint: Color); @api
+DrawBoundingBox :: proc(box: BoundingBox, color: Color); @api
+DrawBillboard :: proc(camera: Camera, texture: Texture2D, position: Vector3, size: float, tint: Color); @api
+DrawBillboardRec :: proc(camera: Camera, texture: Texture2D, source: Rectangle, position: Vector3, size: Vector2, tint: Color); @api
+DrawBillboardPro :: proc(camera: Camera, texture: Texture2D, source: Rectangle, position: Vector3, up: Vector3, size: Vector2, origin: Vector2, rotation: float, tint: Color); @api
+UploadMesh :: proc(mesh: *Mesh, dynamic: bool); @api
+UpdateMeshBuffer :: proc(mesh: Mesh, index: int, data: *void, dataSize: int, offset: int); @api
+UnloadMesh :: proc(mesh: Mesh); @api
+DrawMesh :: proc(mesh: Mesh, material: Material, transform: Matrix); @api
+DrawMeshInstanced :: proc(mesh: Mesh, material: Material, transforms: *Matrix, instances: int); @api
+ExportMesh :: proc(mesh: Mesh, fileName: *char): bool; @api
+GetMeshBoundingBox :: proc(mesh: Mesh): BoundingBox; @api
+GenMeshTangents :: proc(mesh: *Mesh); @api
+GenMeshPoly :: proc(sides: int, radius: float): Mesh; @api
+GenMeshPlane :: proc(width: float, length: float, resX: int, resZ: int): Mesh; @api
+GenMeshCube :: proc(width: float, height: float, length: float): Mesh; @api
+GenMeshSphere :: proc(radius: float, rings: int, slices: int): Mesh; @api
+GenMeshHemiSphere :: proc(radius: float, rings: int, slices: int): Mesh; @api
+GenMeshCylinder :: proc(radius: float, height: float, slices: int): Mesh; @api
+GenMeshCone :: proc(radius: float, height: float, slices: int): Mesh; @api
+GenMeshTorus :: proc(radius: float, size: float, radSeg: int, sides: int): Mesh; @api
+GenMeshKnot :: proc(radius: float, size: float, radSeg: int, sides: int): Mesh; @api
+GenMeshHeightmap :: proc(heightmap: Image, size: Vector3): Mesh; @api
+GenMeshCubicmap :: proc(cubicmap: Image, cubeSize: Vector3): Mesh; @api
+LoadMaterials :: proc(fileName: *char, materialCount: *int): *Material; @api
+LoadMaterialDefault :: proc(): Material; @api
+IsMaterialReady :: proc(material: Material): bool; @api
+UnloadMaterial :: proc(material: Material); @api
+SetMaterialTexture :: proc(material: *Material, mapType: int, texture: Texture2D); @api
+SetModelMeshMaterial :: proc(model: *Model, meshId: int, materialId: int); @api
+LoadModelAnimations :: proc(fileName: *char, animCount: *int): *ModelAnimation; @api
+UpdateModelAnimation :: proc(model: Model, anim: ModelAnimation, frame: int); @api
+UnloadModelAnimation :: proc(anim: ModelAnimation); @api
+UnloadModelAnimations :: proc(animations: *ModelAnimation, animCount: int); @api
+IsModelAnimationValid :: proc(model: Model, anim: ModelAnimation): bool; @api
+CheckCollisionSpheres :: proc(center1: Vector3, radius1: float, center2: Vector3, radius2: float): bool; @api
+CheckCollisionBoxes :: proc(box1: BoundingBox, box2: BoundingBox): bool; @api
+CheckCollisionBoxSphere :: proc(box: BoundingBox, center: Vector3, radius: float): bool; @api
+GetRayCollisionSphere :: proc(ray: Ray, center: Vector3, radius: float): RayCollision; @api
+GetRayCollisionBox :: proc(ray: Ray, box: BoundingBox): RayCollision; @api
+GetRayCollisionMesh :: proc(ray: Ray, mesh: Mesh, transform: Matrix): RayCollision; @api
+GetRayCollisionTriangle :: proc(ray: Ray, p1: Vector3, p2: Vector3, p3: Vector3): RayCollision; @api
+GetRayCollisionQuad :: proc(ray: Ray, p1: Vector3, p2: Vector3, p3: Vector3, p4: Vector3): RayCollision; @api
+InitAudioDevice :: proc(); @api
+CloseAudioDevice :: proc(); @api
+IsAudioDeviceReady :: proc(): bool; @api
+SetMasterVolume :: proc(volume: float); @api
+GetMasterVolume :: proc(): float; @api
+LoadWave :: proc(fileName: *char): Wave; @api
+LoadWaveFromMemory :: proc(fileType: *char, fileData: *uchar, dataSize: int): Wave; @api
+IsWaveReady :: proc(wave: Wave): bool; @api
+LoadSound :: proc(fileName: *char): Sound; @api
+LoadSoundFromWave :: proc(wave: Wave): Sound; @api
+LoadSoundAlias :: proc(source: Sound): Sound; @api
+IsSoundReady :: proc(sound: Sound): bool; @api
+UpdateSound :: proc(sound: Sound, data: *void, sampleCount: int); @api
+UnloadWave :: proc(wave: Wave); @api
+UnloadSound :: proc(sound: Sound); @api
+UnloadSoundAlias :: proc(alias: Sound); @api
+ExportWave :: proc(wave: Wave, fileName: *char): bool; @api
+ExportWaveAsCode :: proc(wave: Wave, fileName: *char): bool; @api
+PlaySound :: proc(sound: Sound); @api
+StopSound :: proc(sound: Sound); @api
+PauseSound :: proc(sound: Sound); @api
+ResumeSound :: proc(sound: Sound); @api
+IsSoundPlaying :: proc(sound: Sound): bool; @api
+SetSoundVolume :: proc(sound: Sound, volume: float); @api
+SetSoundPitch :: proc(sound: Sound, pitch: float); @api
+SetSoundPan :: proc(sound: Sound, pan: float); @api
+WaveCopy :: proc(wave: Wave): Wave; @api
+WaveCrop :: proc(wave: *Wave, initSample: int, finalSample: int); @api
+WaveFormat :: proc(wave: *Wave, sampleRate: int, sampleSize: int, channels: int); @api
+LoadWaveSamples :: proc(wave: Wave): *float; @api
+UnloadWaveSamples :: proc(samples: *float); @api
+LoadMusicStream :: proc(fileName: *char): Music; @api
+LoadMusicStreamFromMemory :: proc(fileType: *char, data: *uchar, dataSize: int): Music; @api
+IsMusicReady :: proc(music: Music): bool; @api
+UnloadMusicStream :: proc(music: Music); @api
+PlayMusicStream :: proc(music: Music); @api
+IsMusicStreamPlaying :: proc(music: Music): bool; @api
+UpdateMusicStream :: proc(music: Music); @api
+StopMusicStream :: proc(music: Music); @api
+PauseMusicStream :: proc(music: Music); @api
+ResumeMusicStream :: proc(music: Music); @api
+SeekMusicStream :: proc(music: Music, position: float); @api
+SetMusicVolume :: proc(music: Music, volume: float); @api
+SetMusicPitch :: proc(music: Music, pitch: float); @api
+SetMusicPan :: proc(music: Music, pan: float); @api
+GetMusicTimeLength :: proc(music: Music): float; @api
+GetMusicTimePlayed :: proc(music: Music): float; @api
+LoadAudioStream :: proc(sampleRate: uint, sampleSize: uint, channels: uint): AudioStream; @api
+IsAudioStreamReady :: proc(stream: AudioStream): bool; @api
+UnloadAudioStream :: proc(stream: AudioStream); @api
+UpdateAudioStream :: proc(stream: AudioStream, data: *void, frameCount: int); @api
+IsAudioStreamProcessed :: proc(stream: AudioStream): bool; @api
+PlayAudioStream :: proc(stream: AudioStream); @api
+PauseAudioStream :: proc(stream: AudioStream); @api
+ResumeAudioStream :: proc(stream: AudioStream); @api
+IsAudioStreamPlaying :: proc(stream: AudioStream): bool; @api
+StopAudioStream :: proc(stream: AudioStream); @api
+SetAudioStreamVolume :: proc(stream: AudioStream, volume: float); @api
+SetAudioStreamPitch :: proc(stream: AudioStream, pitch: float); @api
+SetAudioStreamPan :: proc(stream: AudioStream, pan: float); @api
+SetAudioStreamBufferSizeDefault :: proc(size: int); @api
+SetAudioStreamCallback :: proc(stream: AudioStream, callback: AudioCallback); @api
+AttachAudioStreamProcessor :: proc(stream: AudioStream, processor: AudioCallback); @api
+DetachAudioStreamProcessor :: proc(stream: AudioStream, processor: AudioCallback); @api
+AttachAudioMixedProcessor :: proc(processor: AudioCallback); @api
+DetachAudioMixedProcessor :: proc(processor: AudioCallback); @api
+
+
+// Some Basic Colors
+// NOTE: Custom raylib color palette for amazing visuals on WHITE background
+LIGHTGRAY :=  :Color{ 200, 200, 200, 255 };   // Light Gray
+GRAY :=       :Color{ 130, 130, 130, 255 };   // Gray
+DARKGRAY :=   :Color{ 80, 80, 80, 255 };      // Dark Gray
+YELLOW :=     :Color{ 253, 249, 0, 255 };     // Yellow
+GOLD :=       :Color{ 255, 203, 0, 255 };     // Gold
+ORANGE :=     :Color{ 255, 161, 0, 255 };     // Orange
+PINK :=       :Color{ 255, 109, 194, 255 };   // Pink
+RED :=        :Color{ 230, 41, 55, 255 };     // Red
+MAROON :=     :Color{ 190, 33, 55, 255 };     // Maroon
+GREEN :=      :Color{ 0, 228, 48, 255 };      // Green
+LIME :=       :Color{ 0, 158, 47, 255 };      // Lime
+DARKGREEN :=  :Color{ 0, 117, 44, 255 };      // Dark Green
+SKYBLUE :=    :Color{ 102, 191, 255, 255 };   // Sky Blue
+BLUE :=       :Color{ 0, 121, 241, 255 };     // Blue
+DARKBLUE :=   :Color{ 0, 82, 172, 255 };      // Dark Blue
+PURPLE :=     :Color{ 200, 122, 255, 255 };   // Purple
+VIOLET :=     :Color{ 135, 60, 190, 255 };    // Violet
+DARKPURPLE := :Color{ 112, 31, 126, 255 };    // Dark Purple
+BEIGE :=      :Color{ 211, 176, 131, 255 };   // Beige
+BROWN :=      :Color{ 127, 106, 79, 255 };    // Brown
+DARKBROWN :=  :Color{ 76, 63, 47, 255 };      // Dark Brown
+WHITE :=      :Color{ 255, 255, 255, 255 };   // White
+BLACK :=      :Color{ 0, 0, 0, 255 };         // Black
+BLANK :=      :Color{ 0, 0, 0, 0 };           // Blank (Transparent)
+MAGENTA :=    :Color{ 255, 0, 255, 255 };     // Magenta
+RAYWHITE :=   :Color{ 245, 245, 245, 255 };   // My own White (raylib logo)
+
+
+// Keyboard keys (US keyboard layout)
+// NOTE: Use GetKeyPressed() to allow redefining
+// required keys for alternative layouts
+KEY_NULL            :: 0;        // Key: NULL, used for no key pressed
+// Alphanumeric keys
+KEY_APOSTROPHE      :: 39;       // Key: '
+KEY_COMMA           :: 44;       // Key: ,
+KEY_MINUS           :: 45;       // Key: -
+KEY_PERIOD          :: 46;       // Key: .
+KEY_SLASH           :: 47;       // Key: /
+KEY_ZERO            :: 48;       // Key: 0
+KEY_ONE             :: 49;       // Key: 1
+KEY_TWO             :: 50;       // Key: 2
+KEY_THREE           :: 51;       // Key: 3
+KEY_FOUR            :: 52;       // Key: 4
+KEY_FIVE            :: 53;       // Key: 5
+KEY_SIX             :: 54;       // Key: 6
+KEY_SEVEN           :: 55;       // Key: 7
+KEY_EIGHT           :: 56;       // Key: 8
+KEY_NINE            :: 57;       // Key: 9
+KEY_SEMICOLON       :: 59;       // Key: ;
+KEY_EQUAL           :: 61;       // Key: =
+KEY_A               :: 65;       // Key: A | a
+KEY_B               :: 66;       // Key: B | b
+KEY_C               :: 67;       // Key: C | c
+KEY_D               :: 68;       // Key: D | d
+KEY_E               :: 69;       // Key: E | e
+KEY_F               :: 70;       // Key: F | f
+KEY_G               :: 71;       // Key: G | g
+KEY_H               :: 72;       // Key: H | h
+KEY_I               :: 73;       // Key: I | i
+KEY_J               :: 74;       // Key: J | j
+KEY_K               :: 75;       // Key: K | k
+KEY_L               :: 76;       // Key: L | l
+KEY_M               :: 77;       // Key: M | m
+KEY_N               :: 78;       // Key: N | n
+KEY_O               :: 79;       // Key: O | o
+KEY_P               :: 80;       // Key: P | p
+KEY_Q               :: 81;       // Key: Q | q
+KEY_R               :: 82;       // Key: R | r
+KEY_S               :: 83;       // Key: S | s
+KEY_T               :: 84;       // Key: T | t
+KEY_U               :: 85;       // Key: U | u
+KEY_V               :: 86;       // Key: V | v
+KEY_W               :: 87;       // Key: W | w
+KEY_X               :: 88;       // Key: X | x
+KEY_Y               :: 89;       // Key: Y | y
+KEY_Z               :: 90;       // Key: Z | z
+KEY_LEFT_BRACKET    :: 91;       // Key: [
+KEY_BACKSLASH       :: 92;       // Key: '\'
+KEY_RIGHT_BRACKET   :: 93;       // Key: ]
+KEY_GRAVE           :: 96;       // Key: `
+// Function keys
+KEY_SPACE           :: 32;       // Key: Space
+KEY_ESCAPE          :: 256;      // Key: Esc
+KEY_ENTER           :: 257;      // Key: Enter
+KEY_TAB             :: 258;      // Key: Tab
+KEY_BACKSPACE       :: 259;      // Key: Backspace
+KEY_INSERT          :: 260;      // Key: Ins
+KEY_DELETE          :: 261;      // Key: Del
+KEY_RIGHT           :: 262;      // Key: Cursor right
+KEY_LEFT            :: 263;      // Key: Cursor left
+KEY_DOWN            :: 264;      // Key: Cursor down
+KEY_UP              :: 265;      // Key: Cursor up
+KEY_PAGE_UP         :: 266;      // Key: Page up
+KEY_PAGE_DOWN       :: 267;      // Key: Page down
+KEY_HOME            :: 268;      // Key: Home
+KEY_END             :: 269;      // Key: End
+KEY_CAPS_LOCK       :: 280;      // Key: Caps lock
+KEY_SCROLL_LOCK     :: 281;      // Key: Scroll down
+KEY_NUM_LOCK        :: 282;      // Key: Num lock
+KEY_PRINT_SCREEN    :: 283;      // Key: Print screen
+KEY_PAUSE           :: 284;      // Key: Pause
+KEY_F1              :: 290;      // Key: F1
+KEY_F2              :: 291;      // Key: F2
+KEY_F3              :: 292;      // Key: F3
+KEY_F4              :: 293;      // Key: F4
+KEY_F5              :: 294;      // Key: F5
+KEY_F6              :: 295;      // Key: F6
+KEY_F7              :: 296;      // Key: F7
+KEY_F8              :: 297;      // Key: F8
+KEY_F9              :: 298;      // Key: F9
+KEY_F10             :: 299;      // Key: F10
+KEY_F11             :: 300;      // Key: F11
+KEY_F12             :: 301;      // Key: F12
+KEY_LEFT_SHIFT      :: 340;      // Key: Shift left
+KEY_LEFT_CONTROL    :: 341;      // Key: Control left
+KEY_LEFT_ALT        :: 342;      // Key: Alt left
+KEY_LEFT_SUPER      :: 343;      // Key: Super left
+KEY_RIGHT_SHIFT     :: 344;      // Key: Shift right
+KEY_RIGHT_CONTROL   :: 345;      // Key: Control right
+KEY_RIGHT_ALT       :: 346;      // Key: Alt right
+KEY_RIGHT_SUPER     :: 347;      // Key: Super right
+KEY_KB_MENU         :: 348;      // Key: KB menu
+// Keypad keys
+KEY_KP_0            :: 320;      // Key: Keypad 0
+KEY_KP_1            :: 321;      // Key: Keypad 1
+KEY_KP_2            :: 322;      // Key: Keypad 2
+KEY_KP_3            :: 323;      // Key: Keypad 3
+KEY_KP_4            :: 324;      // Key: Keypad 4
+KEY_KP_5            :: 325;      // Key: Keypad 5
+KEY_KP_6            :: 326;      // Key: Keypad 6
+KEY_KP_7            :: 327;      // Key: Keypad 7
+KEY_KP_8            :: 328;      // Key: Keypad 8
+KEY_KP_9            :: 329;      // Key: Keypad 9
+KEY_KP_DECIMAL      :: 330;      // Key: Keypad .
+KEY_KP_DIVIDE       :: 331;      // Key: Keypad /
+KEY_KP_MULTIPLY     :: 332;      // Key: Keypad *
+KEY_KP_SUBTRACT     :: 333;      // Key: Keypad -
+KEY_KP_ADD          :: 334;      // Key: Keypad +
+KEY_KP_ENTER        :: 335;      // Key: Keypad Enter
+KEY_KP_EQUAL        :: 336;      // Key: Keypad =
+// Android key buttons
+KEY_BACK            :: 4;        // Key: Android back button
+KEY_MENU            :: 82;       // Key: Android menu button
+KEY_VOLUME_UP       :: 24;       // Key: Android volume up button
+KEY_VOLUME_DOWN     :: 25;       // Key: Android volume down button
+
+// Add backwards compatibility support for deprecated names
+MOUSE_LEFT_BUTTON ::   MOUSE_BUTTON_LEFT;
+MOUSE_RIGHT_BUTTON ::  MOUSE_BUTTON_RIGHT;
+MOUSE_MIDDLE_BUTTON :: MOUSE_BUTTON_MIDDLE;
+
+// Mouse buttons
+MOUSE_BUTTON_LEFT    :: 0;       // Mouse button left
+MOUSE_BUTTON_RIGHT   :: ^;       // Mouse button right
+MOUSE_BUTTON_MIDDLE  :: ^;       // Mouse button middle (pressed wheel)
+MOUSE_BUTTON_SIDE    :: ^;       // Mouse button side (advanced mouse device)
+MOUSE_BUTTON_EXTRA   :: ^;       // Mouse button extra (advanced mouse device)
+MOUSE_BUTTON_FORWARD :: ^;       // Mouse button forward (advanced mouse device)
+MOUSE_BUTTON_BACK    :: ^;       // Mouse button back (advanced mouse device)
+
+MOUSE_CURSOR_DEFAULT       :: 0;     // Default pointer shape
+MOUSE_CURSOR_ARROW         :: ^;     // Arrow shape
+MOUSE_CURSOR_IBEAM         :: ^;     // Text writing cursor shape
+MOUSE_CURSOR_CROSSHAIR     :: ^;     // Cross shape
+MOUSE_CURSOR_POINTING_HAND :: ^;     // Pointing hand cursor
+MOUSE_CURSOR_RESIZE_EW     :: ^;     // Horizontal resize/move arrow shape
+MOUSE_CURSOR_RESIZE_NS     :: ^;     // Vertical resize/move arrow shape
+MOUSE_CURSOR_RESIZE_NWSE   :: ^;     // Top-left to bottom-right diagonal resize/move arrow shape
+MOUSE_CURSOR_RESIZE_NESW   :: ^;     // The top-right to bottom-left diagonal resize/move arrow shape
+MOUSE_CURSOR_RESIZE_ALL    :: ^;     // The omnidirectional resize/move cursor shape
+MOUSE_CURSOR_NOT_ALLOWED   :: ^;     // The operation-not-allowed shape
+

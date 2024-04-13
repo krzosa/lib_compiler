@@ -1,0 +1,19 @@
+import "libc";
+
+main :: proc(): int {
+    i4: llong = 4;
+
+    p    := &i4;
+    assert(*p == i4);
+
+    *p   -= 1;
+    *&i4 -= 1;
+    assert(*&i4 == 2);
+
+    pp   := &p;
+    **pp += 2;
+    assert(i4 == 4);
+    assert(**pp == 4);
+
+    return 0;
+}

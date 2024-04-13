@@ -1,0 +1,10 @@
+A :: struct { i: int; }
+
+thing :: proc(): *A {
+    return nil;
+}
+
+main :: proc(): int {
+    result := :int(:ullong(thing()));
+    return result;
+}

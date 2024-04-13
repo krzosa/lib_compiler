@@ -1,0 +1,18 @@
+// #failed: parse
+// #error: unregistered note name: 'something'
+// #error: unregistered note name: 'other'
+// #error: unregistered note name: 'another'
+// #error: unregistered note name: 'and_other'
+// #error: unregistered note name: 'andd'
+
+#something;
+@other
+A :: proc() {
+}
+
+#another;
+
+@and_other
+@andd
+B :: proc() {
+}

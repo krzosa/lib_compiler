@@ -1,0 +1,3 @@
+import std_types "std_types";
+
+size_t :: typedef std_types.usize; @foreign @weak

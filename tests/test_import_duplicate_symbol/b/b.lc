@@ -1,0 +1,4 @@
+/*@api*/
+B :: struct {
+    a: int;
+}

@@ -1,0 +1,8 @@
+#build_if((LC_OS == OS_MAC || LC_OS == OS_LINUX) && LC_ARCH == ARCH_X64);
+
+#static_assert(sizeof(:long) == 8);
+
+LONG_MAX :: INT64_MAX;
+LONG_MIN :: INT64_MIN;
+ULONG_MAX :: UINT64_MAX;
+ULONG_MIN :: UINT64_MIN;

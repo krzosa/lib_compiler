@@ -1,0 +1,8 @@
+// #failed: resolve
+// #expected_error_count: 4
+m :: proc(); @api
+m :: proc(); @api
+m :: proc(); @api
+    @api
+
+@api

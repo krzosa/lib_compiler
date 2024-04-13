@@ -1,0 +1,27 @@
+// #failed: parse
+
+// #error: failed to parse typespec, invalid token assignment '='
+// #error: failed to parse typespec, invalid token assignment '='
+// #error: failed to parse typespec, invalid token assignment '='
+main :: proc(): int {
+    a();
+    :=;
+    :=;
+    {
+    }
+    :=
+
+    awsd
+    asd
+}
+
+// #error: expected close paren ')' got instead close brace '}'
+A :: proc() {
+    for A( {
+    }
+}
+
+// #error: statement lacks a semicolon
+B :: proc() {
+    asd
+}

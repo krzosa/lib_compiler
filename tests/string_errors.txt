@@ -1,0 +1,19 @@
+// #failed: resolve
+
+main :: proc(): int {
+    indexing_const := "something"[0];
+
+    string: String = "something other";
+    indexing_string := string[0];
+    indexing_string2 := string + indexing_const;
+
+    str: *char = :String("Something");
+    other_str: String = :*char("Something");
+
+    return 0;
+}
+
+// #error: trying to index non indexable type 'String'
+// #error: cannot perform binary operation, types don't qualify for it, left: 'String' right: 'char'
+// #error: cannot assign, types are incompatible, variable type: '*char' expression type: 'String'
+// #error: cannot assign, types are incompatible, variable type: 'String' expression type: '*char'

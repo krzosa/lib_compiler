@@ -1,0 +1,18 @@
+// #dont_run
+#static_assert(sizeof(:A) == 8);
+A :: struct {
+    a: int;
+    b: int;
+}
+
+#static_assert(offsetof(:B, a) == 0);
+B :: struct {
+    a: int;
+    b: int;
+}
+
+#static_assert(alignof(:C) != 0);
+C :: struct {
+    a: int;
+    b: int;
+}

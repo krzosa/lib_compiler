@@ -1,0 +1,183 @@
+#`#include "vendor/stb_truetype.c"`;
+
+@foreign stbrp_rect :: struct {f: int;}
+
+@foreign
+stbtt__buf :: struct {
+    data: *uchar;
+    cursor: int;
+    size: int;
+}
+
+@foreign
+stbtt_bakedchar :: struct {
+    x0: ushort;
+    y0: ushort;
+    x1: ushort;
+    y1: ushort;
+    xoff: float;
+    yoff: float;
+    xadvance: float;
+}
+
+@foreign stbtt_BakeFontBitmap :: proc(data: *uchar, offset: int, pixel_height: float, pixels: *uchar, pw: int, ph: int, first_char: int, num_chars: int, chardata: *stbtt_bakedchar): int;
+@foreign
+stbtt_aligned_quad :: struct {
+    x0: float;
+    y0: float;
+    s0: float;
+    t0: float;
+    x1: float;
+    y1: float;
+    s1: float;
+    t1: float;
+}
+
+@foreign stbtt_GetBakedQuad :: proc(chardata: *stbtt_bakedchar, pw: int, ph: int, char_index: int, xpos: *float, ypos: *float, q: *stbtt_aligned_quad, opengl_fillrule: int);
+@foreign stbtt_GetScaledFontVMetrics :: proc(fontdata: *uchar, index: int, size: float, ascent: *float, descent: *float, lineGap: *float);
+@foreign
+stbtt_packedchar :: struct {
+    x0: ushort;
+    y0: ushort;
+    x1: ushort;
+    y1: ushort;
+    xoff: float;
+    yoff: float;
+    xadvance: float;
+    xoff2: float;
+    yoff2: float;
+}
+
+@foreign stbtt_PackBegin :: proc(spc: *stbtt_pack_context, pixels: *uchar, width: int, height: int, stride_in_bytes: int, padding: int, alloc_context: *void): int;
+@foreign stbtt_PackEnd :: proc(spc: *stbtt_pack_context);
+@foreign stbtt_PackFontRange :: proc(spc: *stbtt_pack_context, fontdata: *uchar, font_index: int, font_size: float, first_unicode_char_in_range: int, num_chars_in_range: int, chardata_for_range: *stbtt_packedchar): int;
+@foreign
+stbtt_pack_range :: struct {
+    font_size: float;
+    first_unicode_codepoint_in_range: int;
+    array_of_unicode_codepoints: *int;
+    num_chars: int;
+    chardata_for_range: *stbtt_packedchar;
+    h_oversample: uchar;
+    v_oversample: uchar;
+}
+
+@foreign stbtt_PackFontRanges :: proc(spc: *stbtt_pack_context, fontdata: *uchar, font_index: int, ranges: *stbtt_pack_range, num_ranges: int): int;
+@foreign stbtt_PackSetOversampling :: proc(spc: *stbtt_pack_context, h_oversample: uint, v_oversample: uint);
+@foreign stbtt_PackSetSkipMissingCodepoints :: proc(spc: *stbtt_pack_context, skip: int);
+@foreign stbtt_GetPackedQuad :: proc(chardata: *stbtt_packedchar, pw: int, ph: int, char_index: int, xpos: *float, ypos: *float, q: *stbtt_aligned_quad, align_to_integer: int);
+@foreign stbtt_PackFontRangesGatherRects :: proc(spc: *stbtt_pack_context, info: *stbtt_fontinfo, ranges: *stbtt_pack_range, num_ranges: int, rects: *stbrp_rect): int;
+@foreign stbtt_PackFontRangesPackRects :: proc(spc: *stbtt_pack_context, rects: *stbrp_rect, num_rects: int);
+@foreign stbtt_PackFontRangesRenderIntoRects :: proc(spc: *stbtt_pack_context, info: *stbtt_fontinfo, ranges: *stbtt_pack_range, num_ranges: int, rects: *stbrp_rect): int;
+@foreign
+stbtt_pack_context :: struct {
+    user_allocator_context: *void;
+    pack_info: *void;
+    width: int;
+    height: int;
+    stride_in_bytes: int;
+    padding: int;
+    skip_missing: int;
+    h_oversample: uint;
+    v_oversample: uint;
+    pixels: *uchar;
+    nodes: *void;
+}
+
+@foreign stbtt_GetNumberOfFonts :: proc(data: *uchar): int;
+@foreign stbtt_GetFontOffsetForIndex :: proc(data: *uchar, index: int): int;
+@foreign
+stbtt_fontinfo :: struct {
+    userdata: *void;
+    data: *uchar;
+    fontstart: int;
+    numGlyphs: int;
+    loca: int;
+    head: int;
+    glyf: int;
+    hhea: int;
+    hmtx: int;
+    kern: int;
+    gpos: int;
+    svg: int;
+    index_map: int;
+    indexToLocFormat: int;
+    cff: stbtt__buf;
+    charstrings: stbtt__buf;
+    gsubrs: stbtt__buf;
+    subrs: stbtt__buf;
+    fontdicts: stbtt__buf;
+    fdselect: stbtt__buf;
+}
+
+@foreign stbtt_InitFont :: proc(info: *stbtt_fontinfo, data: *uchar, offset: int): int;
+@foreign stbtt_FindGlyphIndex :: proc(info: *stbtt_fontinfo, unicode_codepoint: int): int;
+@foreign stbtt_ScaleForPixelHeight :: proc(info: *stbtt_fontinfo, pixels: float): float;
+@foreign stbtt_ScaleForMappingEmToPixels :: proc(info: *stbtt_fontinfo, pixels: float): float;
+@foreign stbtt_GetFontVMetrics :: proc(info: *stbtt_fontinfo, ascent: *int, descent: *int, lineGap: *int);
+@foreign stbtt_GetFontVMetricsOS2 :: proc(info: *stbtt_fontinfo, typoAscent: *int, typoDescent: *int, typoLineGap: *int): int;
+@foreign stbtt_GetFontBoundingBox :: proc(info: *stbtt_fontinfo, x0: *int, y0: *int, x1: *int, y1: *int);
+@foreign stbtt_GetCodepointHMetrics :: proc(info: *stbtt_fontinfo, codepoint: int, advanceWidth: *int, leftSideBearing: *int);
+@foreign stbtt_GetCodepointKernAdvance :: proc(info: *stbtt_fontinfo, ch1: int, ch2: int): int;
+@foreign stbtt_GetCodepointBox :: proc(info: *stbtt_fontinfo, codepoint: int, x0: *int, y0: *int, x1: *int, y1: *int): int;
+@foreign stbtt_GetGlyphHMetrics :: proc(info: *stbtt_fontinfo, glyph_index: int, advanceWidth: *int, leftSideBearing: *int);
+@foreign stbtt_GetGlyphKernAdvance :: proc(info: *stbtt_fontinfo, glyph1: int, glyph2: int): int;
+@foreign stbtt_GetGlyphBox :: proc(info: *stbtt_fontinfo, glyph_index: int, x0: *int, y0: *int, x1: *int, y1: *int): int;
+@foreign
+stbtt_kerningentry :: struct {
+    glyph1: int;
+    glyph2: int;
+    advance: int;
+}
+
+@foreign stbtt_GetKerningTableLength :: proc(info: *stbtt_fontinfo): int;
+@foreign stbtt_GetKerningTable :: proc(info: *stbtt_fontinfo, table: *stbtt_kerningentry, table_length: int): int;
+@foreign
+stbtt_vertex :: struct {
+    x: short;
+    y: short;
+    cx: short;
+    cy: short;
+    cx1: short;
+    cy1: short;
+    type: uchar;
+    padding: uchar;
+}
+
+@foreign stbtt_IsGlyphEmpty :: proc(info: *stbtt_fontinfo, glyph_index: int): int;
+@foreign stbtt_GetCodepointShape :: proc(info: *stbtt_fontinfo, unicode_codepoint: int, vertices: **stbtt_vertex): int;
+@foreign stbtt_GetGlyphShape :: proc(info: *stbtt_fontinfo, glyph_index: int, vertices: **stbtt_vertex): int;
+@foreign stbtt_FreeShape :: proc(info: *stbtt_fontinfo, vertices: *stbtt_vertex);
+@foreign stbtt_FindSVGDoc :: proc(info: *stbtt_fontinfo, gl: int): *uchar;
+@foreign stbtt_GetCodepointSVG :: proc(info: *stbtt_fontinfo, unicode_codepoint: int, svg: **char): int;
+@foreign stbtt_GetGlyphSVG :: proc(info: *stbtt_fontinfo, gl: int, svg: **char): int;
+@foreign stbtt_FreeBitmap :: proc(bitmap: *uchar, userdata: *void);
+@foreign stbtt_GetCodepointBitmap :: proc(info: *stbtt_fontinfo, scale_x: float, scale_y: float, codepoint: int, width: *int, height: *int, xoff: *int, yoff: *int): *uchar;
+@foreign stbtt_GetCodepointBitmapSubpixel :: proc(info: *stbtt_fontinfo, scale_x: float, scale_y: float, shift_x: float, shift_y: float, codepoint: int, width: *int, height: *int, xoff: *int, yoff: *int): *uchar;
+@foreign stbtt_MakeCodepointBitmap :: proc(info: *stbtt_fontinfo, output: *uchar, out_w: int, out_h: int, out_stride: int, scale_x: float, scale_y: float, codepoint: int);
+@foreign stbtt_MakeCodepointBitmapSubpixel :: proc(info: *stbtt_fontinfo, output: *uchar, out_w: int, out_h: int, out_stride: int, scale_x: float, scale_y: float, shift_x: float, shift_y: float, codepoint: int);
+@foreign stbtt_MakeCodepointBitmapSubpixelPrefilter :: proc(info: *stbtt_fontinfo, output: *uchar, out_w: int, out_h: int, out_stride: int, scale_x: float, scale_y: float, shift_x: float, shift_y: float, oversample_x: int, oversample_y: int, sub_x: *float, sub_y: *float, codepoint: int);
+@foreign stbtt_GetCodepointBitmapBox :: proc(font: *stbtt_fontinfo, codepoint: int, scale_x: float, scale_y: float, ix0: *int, iy0: *int, ix1: *int, iy1: *int);
+@foreign stbtt_GetCodepointBitmapBoxSubpixel :: proc(font: *stbtt_fontinfo, codepoint: int, scale_x: float, scale_y: float, shift_x: float, shift_y: float, ix0: *int, iy0: *int, ix1: *int, iy1: *int);
+@foreign stbtt_GetGlyphBitmap :: proc(info: *stbtt_fontinfo, scale_x: float, scale_y: float, glyph: int, width: *int, height: *int, xoff: *int, yoff: *int): *uchar;
+@foreign stbtt_GetGlyphBitmapSubpixel :: proc(info: *stbtt_fontinfo, scale_x: float, scale_y: float, shift_x: float, shift_y: float, glyph: int, width: *int, height: *int, xoff: *int, yoff: *int): *uchar;
+@foreign stbtt_MakeGlyphBitmap :: proc(info: *stbtt_fontinfo, output: *uchar, out_w: int, out_h: int, out_stride: int, scale_x: float, scale_y: float, glyph: int);
+@foreign stbtt_MakeGlyphBitmapSubpixel :: proc(info: *stbtt_fontinfo, output: *uchar, out_w: int, out_h: int, out_stride: int, scale_x: float, scale_y: float, shift_x: float, shift_y: float, glyph: int);
+@foreign stbtt_MakeGlyphBitmapSubpixelPrefilter :: proc(info: *stbtt_fontinfo, output: *uchar, out_w: int, out_h: int, out_stride: int, scale_x: float, scale_y: float, shift_x: float, shift_y: float, oversample_x: int, oversample_y: int, sub_x: *float, sub_y: *float, glyph: int);
+@foreign stbtt_GetGlyphBitmapBox :: proc(font: *stbtt_fontinfo, glyph: int, scale_x: float, scale_y: float, ix0: *int, iy0: *int, ix1: *int, iy1: *int);
+@foreign stbtt_GetGlyphBitmapBoxSubpixel :: proc(font: *stbtt_fontinfo, glyph: int, scale_x: float, scale_y: float, shift_x: float, shift_y: float, ix0: *int, iy0: *int, ix1: *int, iy1: *int);
+@foreign
+stbtt__bitmap :: struct {
+    w: int;
+    h: int;
+    stride: int;
+    pixels: *uchar;
+}
+
+@foreign stbtt_Rasterize :: proc(result: *stbtt__bitmap, flatness_in_pixels: float, vertices: *stbtt_vertex, num_verts: int, scale_x: float, scale_y: float, shift_x: float, shift_y: float, x_off: int, y_off: int, invert: int, userdata: *void);
+@foreign stbtt_FreeSDF :: proc(bitmap: *uchar, userdata: *void);
+@foreign stbtt_GetGlyphSDF :: proc(info: *stbtt_fontinfo, scale: float, glyph: int, padding: int, onedge_value: uchar, pixel_dist_scale: float, width: *int, height: *int, xoff: *int, yoff: *int): *uchar;
+@foreign stbtt_GetCodepointSDF :: proc(info: *stbtt_fontinfo, scale: float, codepoint: int, padding: int, onedge_value: uchar, pixel_dist_scale: float, width: *int, height: *int, xoff: *int, yoff: *int): *uchar;
+@foreign stbtt_FindMatchingFont :: proc(fontdata: *uchar, name: *char, flags: int): int;
+@foreign stbtt_CompareUTF8toUTF16_bigendian :: proc(s1: *char, len1: int, s2: *char, len2: int): int;
+@foreign stbtt_GetFontNameString :: proc(font: *stbtt_fontinfo, length: *int, platformID: int, encodingID: int, languageID: int, nameID: int): *char;

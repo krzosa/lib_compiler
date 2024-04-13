@@ -1,0 +1,13 @@
+// #failed: resolve
+// #error: undeclared identifier 'i'
+// #error: undeclared identifier 'a'
+
+// purpose of this test is to make sure we don't leak for init statement
+
+main :: proc() {
+    for it: i {
+    }
+
+    for it: a {
+    }
+}

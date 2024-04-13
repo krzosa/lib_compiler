@@ -1,0 +1,8 @@
+import "a";
+import "b";
+
+main :: proc(): int {
+    a := A();
+    b := B();
+    return a + b;
+}

@@ -1,0 +1,122 @@
+float3 :: struct {
+    v: [3]float;
+}
+
+float16 :: struct {
+    v: [16]float;
+}
+
+Clamp :: proc(value: float, min: float, max: float): float; @api
+Lerp :: proc(start: float, end: float, amount: float): float; @api
+Normalize :: proc(value: float, start: float, end: float): float; @api
+Remap :: proc(value: float, inputStart: float, inputEnd: float, outputStart: float, outputEnd: float): float; @api
+Wrap :: proc(value: float, min: float, max: float): float; @api
+FloatEquals :: proc(x: float, y: float): int; @api
+Vector2Zero :: proc(): Vector2; @api
+Vector2One :: proc(): Vector2; @api
+Vector2Add :: proc(v1: Vector2, v2: Vector2): Vector2; @api
+Vector2AddValue :: proc(v: Vector2, add: float): Vector2; @api
+Vector2Subtract :: proc(v1: Vector2, v2: Vector2): Vector2; @api
+Vector2SubtractValue :: proc(v: Vector2, sub: float): Vector2; @api
+Vector2Length :: proc(v: Vector2): float; @api
+Vector2LengthSqr :: proc(v: Vector2): float; @api
+Vector2DotProduct :: proc(v1: Vector2, v2: Vector2): float; @api
+Vector2Distance :: proc(v1: Vector2, v2: Vector2): float; @api
+Vector2DistanceSqr :: proc(v1: Vector2, v2: Vector2): float; @api
+Vector2Angle :: proc(v1: Vector2, v2: Vector2): float; @api
+Vector2LineAngle :: proc(start: Vector2, end: Vector2): float; @api
+Vector2Scale :: proc(v: Vector2, scale: float): Vector2; @api
+Vector2Multiply :: proc(v1: Vector2, v2: Vector2): Vector2; @api
+Vector2Negate :: proc(v: Vector2): Vector2; @api
+Vector2Divide :: proc(v1: Vector2, v2: Vector2): Vector2; @api
+Vector2Normalize :: proc(v: Vector2): Vector2; @api
+Vector2Transform :: proc(v: Vector2, mat: Matrix): Vector2; @api
+Vector2Lerp :: proc(v1: Vector2, v2: Vector2, amount: float): Vector2; @api
+Vector2Reflect :: proc(v: Vector2, normal: Vector2): Vector2; @api
+Vector2Rotate :: proc(v: Vector2, angle: float): Vector2; @api
+Vector2MoveTowards :: proc(v: Vector2, target: Vector2, maxDistance: float): Vector2; @api
+Vector2Invert :: proc(v: Vector2): Vector2; @api
+Vector2Clamp :: proc(v: Vector2, min: Vector2, max: Vector2): Vector2; @api
+Vector2ClampValue :: proc(v: Vector2, min: float, max: float): Vector2; @api
+Vector2Equals :: proc(p: Vector2, q: Vector2): int; @api
+Vector3Zero :: proc(): Vector3; @api
+Vector3One :: proc(): Vector3; @api
+Vector3Add :: proc(v1: Vector3, v2: Vector3): Vector3; @api
+Vector3AddValue :: proc(v: Vector3, add: float): Vector3; @api
+Vector3Subtract :: proc(v1: Vector3, v2: Vector3): Vector3; @api
+Vector3SubtractValue :: proc(v: Vector3, sub: float): Vector3; @api
+Vector3Scale :: proc(v: Vector3, scalar: float): Vector3; @api
+Vector3Multiply :: proc(v1: Vector3, v2: Vector3): Vector3; @api
+Vector3CrossProduct :: proc(v1: Vector3, v2: Vector3): Vector3; @api
+Vector3Perpendicular :: proc(v: Vector3): Vector3; @api
+Vector3Length :: proc(v: Vector3): float; @api
+Vector3LengthSqr :: proc(v: Vector3): float; @api
+Vector3DotProduct :: proc(v1: Vector3, v2: Vector3): float; @api
+Vector3Distance :: proc(v1: Vector3, v2: Vector3): float; @api
+Vector3DistanceSqr :: proc(v1: Vector3, v2: Vector3): float; @api
+Vector3Angle :: proc(v1: Vector3, v2: Vector3): float; @api
+Vector3Negate :: proc(v: Vector3): Vector3; @api
+Vector3Divide :: proc(v1: Vector3, v2: Vector3): Vector3; @api
+Vector3Normalize :: proc(v: Vector3): Vector3; @api
+Vector3Project :: proc(v1: Vector3, v2: Vector3): Vector3; @api
+Vector3Reject :: proc(v1: Vector3, v2: Vector3): Vector3; @api
+Vector3OrthoNormalize :: proc(v1: *Vector3, v2: *Vector3); @api
+Vector3Transform :: proc(v: Vector3, mat: Matrix): Vector3; @api
+Vector3RotateByQuaternion :: proc(v: Vector3, q: Quaternion): Vector3; @api
+Vector3RotateByAxisAngle :: proc(v: Vector3, axis: Vector3, angle: float): Vector3; @api
+Vector3Lerp :: proc(v1: Vector3, v2: Vector3, amount: float): Vector3; @api
+Vector3Reflect :: proc(v: Vector3, normal: Vector3): Vector3; @api
+Vector3Min :: proc(v1: Vector3, v2: Vector3): Vector3; @api
+Vector3Max :: proc(v1: Vector3, v2: Vector3): Vector3; @api
+Vector3Barycenter :: proc(p: Vector3, a: Vector3, b: Vector3, c: Vector3): Vector3; @api
+Vector3Unproject :: proc(source: Vector3, projection: Matrix, view: Matrix): Vector3; @api
+Vector3ToFloatV :: proc(v: Vector3): float3; @api
+Vector3Invert :: proc(v: Vector3): Vector3; @api
+Vector3Clamp :: proc(v: Vector3, min: Vector3, max: Vector3): Vector3; @api
+Vector3ClampValue :: proc(v: Vector3, min: float, max: float): Vector3; @api
+Vector3Equals :: proc(p: Vector3, q: Vector3): int; @api
+Vector3Refract :: proc(v: Vector3, n: Vector3, r: float): Vector3; @api
+MatrixDeterminant :: proc(mat: Matrix): float; @api
+MatrixTrace :: proc(mat: Matrix): float; @api
+MatrixTranspose :: proc(mat: Matrix): Matrix; @api
+MatrixInvert :: proc(mat: Matrix): Matrix; @api
+MatrixIdentity :: proc(): Matrix; @api
+MatrixAdd :: proc(left: Matrix, right: Matrix): Matrix; @api
+MatrixSubtract :: proc(left: Matrix, right: Matrix): Matrix; @api
+MatrixMultiply :: proc(left: Matrix, right: Matrix): Matrix; @api
+MatrixTranslate :: proc(x: float, y: float, z: float): Matrix; @api
+MatrixRotate :: proc(axis: Vector3, angle: float): Matrix; @api
+MatrixRotateX :: proc(angle: float): Matrix; @api
+MatrixRotateY :: proc(angle: float): Matrix; @api
+MatrixRotateZ :: proc(angle: float): Matrix; @api
+MatrixRotateXYZ :: proc(angle: Vector3): Matrix; @api
+MatrixRotateZYX :: proc(angle: Vector3): Matrix; @api
+MatrixScale :: proc(x: float, y: float, z: float): Matrix; @api
+MatrixFrustum :: proc(left: double, right: double, bottom: double, top: double, near: double, far: double): Matrix; @api
+MatrixPerspective :: proc(fovY: double, aspect: double, nearPlane: double, farPlane: double): Matrix; @api
+MatrixOrtho :: proc(left: double, right: double, bottom: double, top: double, nearPlane: double, farPlane: double): Matrix; @api
+MatrixLookAt :: proc(eye: Vector3, target: Vector3, up: Vector3): Matrix; @api
+MatrixToFloatV :: proc(mat: Matrix): float16; @api
+QuaternionAdd :: proc(q1: Quaternion, q2: Quaternion): Quaternion; @api
+QuaternionAddValue :: proc(q: Quaternion, add: float): Quaternion; @api
+QuaternionSubtract :: proc(q1: Quaternion, q2: Quaternion): Quaternion; @api
+QuaternionSubtractValue :: proc(q: Quaternion, sub: float): Quaternion; @api
+QuaternionIdentity :: proc(): Quaternion; @api
+QuaternionLength :: proc(q: Quaternion): float; @api
+QuaternionNormalize :: proc(q: Quaternion): Quaternion; @api
+QuaternionInvert :: proc(q: Quaternion): Quaternion; @api
+QuaternionMultiply :: proc(q1: Quaternion, q2: Quaternion): Quaternion; @api
+QuaternionScale :: proc(q: Quaternion, mul: float): Quaternion; @api
+QuaternionDivide :: proc(q1: Quaternion, q2: Quaternion): Quaternion; @api
+QuaternionLerp :: proc(q1: Quaternion, q2: Quaternion, amount: float): Quaternion; @api
+QuaternionNlerp :: proc(q1: Quaternion, q2: Quaternion, amount: float): Quaternion; @api
+QuaternionSlerp :: proc(q1: Quaternion, q2: Quaternion, amount: float): Quaternion; @api
+QuaternionFromVector3ToVector3 :: proc(from: Vector3, to: Vector3): Quaternion; @api
+QuaternionFromMatrix :: proc(mat: Matrix): Quaternion; @api
+QuaternionToMatrix :: proc(q: Quaternion): Matrix; @api
+QuaternionFromAxisAngle :: proc(axis: Vector3, angle: float): Quaternion; @api
+QuaternionToAxisAngle :: proc(q: Quaternion, outAxis: *Vector3, outAngle: *float); @api
+QuaternionFromEuler :: proc(pitch: float, yaw: float, roll: float): Quaternion; @api
+QuaternionToEuler :: proc(q: Quaternion): Vector3; @api
+QuaternionTransform :: proc(q: Quaternion, mat: Matrix): Quaternion; @api
+QuaternionEquals :: proc(p: Quaternion, q: Quaternion): int; @api

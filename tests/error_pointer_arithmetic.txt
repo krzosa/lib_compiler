@@ -1,0 +1,20 @@
+// #failed: resolve
+// #error: invalid binary operation for type '*int'
+// #error: invalid binary operation for type '*int'
+// #error: invalid binary operation for type '*int'
+// #error: invalid binary operation for type '*int'
+// #error: indexing with non integer value of type '*int'
+
+main :: proc(): int {
+    a: *int;
+    b: *int;
+    val: int;
+
+    c := a - b;
+    d := a - 4;
+    e := a * 2;
+    f := a + val;
+    g := &a[b];
+
+    return 0;
+}

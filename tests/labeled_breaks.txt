@@ -1,0 +1,40 @@
+import "libc";
+v: int;
+p :: proc() {
+    for {
+        defer v += 1;
+        for {
+            defer v += 1;
+            { defer v += 1; return; }
+        }
+    }
+}
+
+main :: proc(): int {
+    i := 0;
+    out: for {
+        defer i += 1;
+        in: for {
+            defer i += 1;
+            break out;
+        }
+    }
+    assert(i == 2);
+
+    i = 0;
+    out1: for {
+        defer { i += 1; }
+        in1: for {
+            defer i += 1;
+            if (i < 2) continue out1;
+            if (i > 2) break in1;
+        }
+        break;
+    }
+    assert(i == 5);
+
+    p();
+    assert(v == 3);
+
+    return 0;
+}

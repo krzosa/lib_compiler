@@ -1,0 +1,11 @@
+main :: proc(): int {
+    value := 4;
+    switch value {
+        case 4: { value -= 1; } @fallthrough
+        case 3: { value -= 1; } @fallthrough
+        case 2: { value -= 1; } @fallthrough
+        case 1: { value -= 1; } @fallthrough
+        default: a := 10; @unused
+    }
+    return value;
+}

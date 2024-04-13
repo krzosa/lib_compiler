@@ -1,0 +1,18 @@
+
+D :: struct {
+    a: int;
+}
+
+C :: struct {
+    a: int;
+    d: D;
+}
+
+A :: struct {
+    a: int;
+    b: int;
+    c: C;
+}
+
+AVAL: A;
+AVALP: *A = &AVAL;

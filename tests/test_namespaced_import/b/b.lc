@@ -1,0 +1,12 @@
+import "a";
+
+/*@api*/
+B :: proc(): int {
+    return A();
+}
+
+B_NO_API :: proc() {
+}
+
+/*@api*/
+BCONST :: 32;

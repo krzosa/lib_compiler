@@ -1,0 +1,6 @@
+import "libc";
+
+main :: proc(): int {
+    printf("testing %d %s %d\n", 32, "str");
+    return 0;
+}

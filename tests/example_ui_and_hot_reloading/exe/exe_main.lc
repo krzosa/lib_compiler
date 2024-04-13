@@ -1,0 +1,89 @@
+import "shared";
+
+Mu: *MU_Context;
+TempArena: MA_Arena;
+Temp := &TempArena;
+
+@foreign RandomSeed :: struct { a: u64; }
+@foreign GetRandomU64 :: proc(state: *RandomSeed): u64;
+
+LibraryHotLoad :: struct {
+    reload_count: int;
+    user_context: DLL_Context;
+    library: LIB_Library;
+    update_proc: LibraryUpdate;
+    last_write_time: i64;
+    seed: RandomSeed;
+    init_happened_on_this_frame: bool;
+}
+
+ReloadUpdate :: proc(lib: *LibraryHotLoad) {
+    new_write_time := OS_GetFileModTime(S8_MakeFromChar("game.dll"));
+    if new_write_time == -1 || new_write_time == lib.last_write_time {
+        return;
+    }
+
+    if lib.update_proc {
+        lib.update_proc(Unload, Mu, &lib.user_context);
+        lib.update_proc = nil;
+    }
+
+    if (lib.seed.a == 0) lib.seed.a = 13;
+    random_value := GetRandomU64(&lib.seed);
+    out_filename_dll := S8_Format(Temp, "temp_%u.dll", random_value);
+    out_filename_pdb := S8_Format(Temp, "temp_%u.pdb", random_value);
+    OS_CopyFile(S8_MakeFromChar("game.dll"), out_filename_dll, true);
+    OS_CopyFile(S8_MakeFromChar("game.pdb"), out_filename_pdb, true);
+
+    library := LIB_LoadLibrary(out_filename_dll.str);
+    if !library {
+        IO_Printf("Failed to load library %Q\n", out_filename_dll);
+        return;
+    }
+
+    update_proc: LibraryUpdate = LIB_LoadSymbol(library, "APP_Update");
+    if !library {
+        IO_Printf("Failed to load library %Q\n", out_filename_dll);
+        return;
+    }
+
+    lib.library = library;
+    lib.update_proc = update_proc;
+    lib.last_write_time = new_write_time;
+    if lib.reload_count == 0 {
+        lib.update_proc(Init, Mu, &lib.user_context);
+        lib.init_happened_on_this_frame = true;
+    }
+    else {
+        lib.update_proc(Reload, Mu, &lib.user_context);
+    }
+    lib.reload_count += 1;
+}
+
+CallUpdate :: proc(lib: *LibraryHotLoad) {
+    ReloadUpdate(lib);
+    if lib.update_proc && !lib.init_happened_on_this_frame {
+        lib.update_proc(Update, Mu, &lib.user_context);
+    }
+    lib.init_happened_on_this_frame = false;
+}
+
+main :: proc(): int {
+    Mu = MU_Start({
+        enable_opengl = true,
+        window = {
+            size = {1280, 720}
+        },
+        delta_time = 0.0166666
+    });
+
+
+    lib: LibraryHotLoad = {user_context = {temp = Temp}};
+    for MU_Update(Mu) {
+        CallUpdate(&lib);
+        if (Mu.window.key[MU_KEY_ESCAPE].down) {
+            MU_Quit(Mu);
+        }
+    }
+    return 0;
+}

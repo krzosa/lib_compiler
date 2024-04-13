@@ -1,0 +1,5 @@
+// #failed: resolve
+// #error: assigning value to a temporal object (lvalue)
+f0 :: proc() { (1+1) = 2; }
+// #error: assigning value to a temporal object (lvalue)
+f1 :: proc() { 1+1 = 2; }

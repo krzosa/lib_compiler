@@ -1,0 +1,4 @@
+main :: proc(): int {
+    //i: [8]int;
+    return 0;
+}

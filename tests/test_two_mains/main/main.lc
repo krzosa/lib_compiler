@@ -1,0 +1,5 @@
+import b "b";
+
+main :: proc(): int {
+    return b.main();
+}

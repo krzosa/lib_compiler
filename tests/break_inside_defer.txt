@@ -1,0 +1,12 @@
+// #failed: resolve
+// #error: break inside of defer is illegal
+
+main :: proc() {
+    defer {
+        {
+            {
+                for { break; }
+            }
+        }
+    }
+}

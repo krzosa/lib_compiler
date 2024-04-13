@@ -1,0 +1,7 @@
+main :: proc(): int {
+    a: *int;
+    if a == nil {
+        return 0;
+    }
+    return 1;
+}

@@ -1,0 +1,11 @@
+// just mimicking C, weird memes
+
+// #failed: resolve
+// #error: non constant global declaration
+arr: [100]int;
+ivar := 0;
+pointer_indexing := &arr[ivar];
+
+main :: proc(): int {
+    return *pointer_indexing;
+}

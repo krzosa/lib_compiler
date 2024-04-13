@@ -1,0 +1,9 @@
+// #failed: parse
+// #error: no package with name
+import "qweeeewewe";
+
+main :: proc(): int {
+    a := malloc(32);
+    free(a);
+    return 0;
+}

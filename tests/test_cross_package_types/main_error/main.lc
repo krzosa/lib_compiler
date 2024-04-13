@@ -1,0 +1,7 @@
+T :: import "type";
+
+main :: proc(): int {
+    a := T.EnumVar.VAL;
+    T;
+    T[0];
+}

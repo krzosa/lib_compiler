@@ -1,0 +1,4 @@
+import b "b";
+import "b";
+thing :: proc() {
+}

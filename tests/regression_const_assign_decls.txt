@@ -1,0 +1,10 @@
+// #failed: resolve
+PROC :: proc() {}
+CONST :: 40;
+STRUCT :: struct { a: int; }
+
+// #error: declaration is type, unexpected inside expression
+A :: STRUCT;
+// #error: expected an untyped constant
+C :: PROC;
+D :: CONST;

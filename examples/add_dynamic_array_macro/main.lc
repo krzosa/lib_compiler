@@ -1,0 +1,64 @@
+import "libc";
+
+try_growing_array :: proc(arrp: *void, element_size: size_t) {
+    arr: *ArrayOfvoid = arrp;
+    if (arr.len + 1 > arr.cap) {
+        cap := arr.cap * 2;
+        if (cap == 0) cap = 16;
+
+        arr.data = realloc(arr.data, element_size * :size_t(cap));
+        arr.cap  = cap;
+    }
+}
+
+init_array_base :: proc(arrp: *void, size: int, element_size: size_t) {
+    arr: *ArrayOfvoid = arrp;
+    arr.data = malloc(element_size * :size_t(size * 2));
+    arr.len  = size * 2;
+}
+
+main :: proc(): int {
+    {
+        arr: ArrayOfint;
+        init_array(&arr, {0, 1, 2, 3, 4, 6, 7, 9, 10});
+        for i := 0; i < 10; i += 1 {
+            assert(arr.data[i] == i);
+        }
+
+        
+
+        for it := &arr.data[0]; it < &arr.data[arr.len]; it = &it[1] {
+
+        }
+    }
+
+    {
+        arr: ArrayOfint;
+
+        for i := 0; i < 128; i += 1 {
+            add(&arr, i);
+        }
+
+        for i := 0; i < 128; i += 1 {
+            assert(arr.data[i] == i);
+        }
+    }
+
+
+    {
+        arr: ArrayOffloat;
+
+        for i: float = 0; i < 128; i += 1 {
+            add(&arr, i);
+        }
+
+        for i := 0; i < 128; i += 1 {
+            i0 := :int(arr.data[i]);
+            assert(i0 == i);
+        }
+
+    }
+
+
+    return 0;
+}

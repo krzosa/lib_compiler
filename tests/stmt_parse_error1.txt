@@ -1,0 +1,10 @@
+// #failed: parser
+// #error: expected close brace
+
+main :: proc() {
+    for a := 0; {
+        A();
+    }
+    A();
+
+}

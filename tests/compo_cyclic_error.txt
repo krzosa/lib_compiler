@@ -1,0 +1,11 @@
+// #failed: resolve
+// #error: cyclic dependency
+A :: struct {
+    a: int;
+    b: int;
+}
+
+AA: A = {
+    a = 10,
+    b = AA.a,
+};

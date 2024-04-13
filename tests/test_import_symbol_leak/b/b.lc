@@ -1,0 +1,6 @@
+import "a";
+
+/*@api*/
+B :: proc() {
+    A();
+}

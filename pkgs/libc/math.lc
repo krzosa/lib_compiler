@@ -1,0 +1,122 @@
+#`#include <math.h>`;
+
+acos       :: proc(x: double): double; @foreign
+acosf      :: proc(x: float): float; @foreign
+asin       :: proc(x: double): double; @foreign
+asinf      :: proc(x: float): float; @foreign
+atan       :: proc(x: double): double; @foreign
+atanf      :: proc(x: float): float; @foreign
+atan2      :: proc(y: double, x: double): double; @foreign
+atan2f     :: proc(y: float, x: float): float; @foreign
+cos        :: proc(x: double): double; @foreign
+cosf       :: proc(x: float): float; @foreign
+sin        :: proc(x: double): double; @foreign
+sinf       :: proc(x: float): float; @foreign
+tan        :: proc(x: double): double; @foreign
+tanf       :: proc(x: float): float; @foreign
+
+acosh      :: proc(x: double): double; @foreign
+acoshf     :: proc(x: float): float; @foreign
+asinh      :: proc(x: double): double; @foreign
+asinhf     :: proc(x: float): float; @foreign
+atanh      :: proc(x: double): double; @foreign
+atanhf     :: proc(x: float): float; @foreign
+cosh       :: proc(x: double): double; @foreign
+coshf      :: proc(x: float): float; @foreign
+sinh       :: proc(x: double): double; @foreign
+sinhf      :: proc(x: float): float; @foreign
+tanh       :: proc(x: double): double; @foreign
+tanhf      :: proc(x: float): float; @foreign
+
+exp        :: proc(x: double): double; @foreign
+expf       :: proc(x: float): float; @foreign
+exp2       :: proc(x: double): double; @foreign
+exp2f      :: proc(x: float): float; @foreign
+expm1      :: proc(x: double): double; @foreign
+expm1f     :: proc(x: float): float; @foreign
+frexp      :: proc(value: double, exp: *int): double; @foreign
+frexpf     :: proc(value: float, exp: *int): float; @foreign
+ilogb      :: proc(x: double): int; @foreign
+ilogbf     :: proc(x: float): int; @foreign
+ldexp      :: proc(x: double, exp: int): double; @foreign
+ldexpf     :: proc(x: float, exp: int): float; @foreign
+log        :: proc(x: double): double; @foreign
+logf       :: proc(x: float): float; @foreign
+log10      :: proc(x: double): double; @foreign
+log10f     :: proc(x: float): float; @foreign
+log1p      :: proc(x: double): double; @foreign
+log1pf     :: proc(x: float): float; @foreign
+log2       :: proc(x: double): double; @foreign
+log2f      :: proc(x: float): float; @foreign
+logb       :: proc(x: double): double; @foreign
+logbf      :: proc(x: float): float; @foreign
+modf       :: proc(value: double, iptr: *double): double; @foreign
+modff      :: proc(value: float, iptr: *float): float; @foreign
+scalbn     :: proc(x: double, n: int): double; @foreign
+scalbnf    :: proc(x: float, n: int): float; @foreign
+scalbln    :: proc(x: double, n: long): double; @foreign
+scalblnf   :: proc(x: float, n: long): float; @foreign
+
+cbrt       :: proc(x: double): double; @foreign
+cbrtf      :: proc(x: float): float; @foreign
+fabs       :: proc(x: double): double; @foreign
+fabsf      :: proc(x: float): float; @foreign
+hypot      :: proc(x: double, y: double): double; @foreign
+hypotf     :: proc(x: float, y: float): float; @foreign
+pow        :: proc(x: double, y: double): double; @foreign
+powf       :: proc(x: float, y: float): float; @foreign
+sqrt       :: proc(x: double): double; @foreign
+sqrtf      :: proc(x: float): float; @foreign
+
+erf        :: proc(x: double): double; @foreign
+erff       :: proc(x: float): float; @foreign
+erfc       :: proc(x: double): double; @foreign
+erfcf      :: proc(x: float): float; @foreign
+lgamma     :: proc(x: double): double; @foreign
+lgammaf    :: proc(x: float): float; @foreign
+tgamma     :: proc(x: double): double; @foreign
+tgammaf    :: proc(x: float): float; @foreign
+
+ceil       :: proc(x: double): double; @foreign
+ceilf      :: proc(x: float): float; @foreign
+floor      :: proc(x: double): double; @foreign
+floorf     :: proc(x: float): float; @foreign
+nearbyint  :: proc(x: double): double; @foreign
+nearbyintf :: proc(x: float): float; @foreign
+rint       :: proc(x: double): double; @foreign
+rintf      :: proc(x: float): float; @foreign
+lrint      :: proc(x: double): long; @foreign
+lrintf     :: proc(x: float): long; @foreign
+llrint     :: proc(x: double): llong; @foreign
+llrintf    :: proc(x: float): llong; @foreign
+round      :: proc(x: double): double; @foreign
+roundf     :: proc(x: float): float; @foreign
+lround     :: proc(x: double): long; @foreign
+lroundf    :: proc(x: float): long; @foreign
+llround    :: proc(x: double): llong; @foreign
+llroundf   :: proc(x: float): llong; @foreign
+trunc      :: proc(x: double): double; @foreign
+truncf     :: proc(x: float): float; @foreign
+
+fmod       :: proc(x: double, y: double): double; @foreign
+fmodf      :: proc(x: float, y: float): float; @foreign
+remainder  :: proc(x: double, y: double): double; @foreign
+remainderf :: proc(x: float, y: float): float; @foreign
+remquo     :: proc(x: double, y: double, quo: *int): double; @foreign
+remquof    :: proc(x: float, y: float, quo: *int): float; @foreign
+
+copysign   :: proc(x: double, y: double): double; @foreign
+copysignf  :: proc(x: float, y: float): float; @foreign
+nan        :: proc(tagp: *char): double; @foreign
+nanf       :: proc(tagp: *char): float; @foreign
+nextafter  :: proc(x: double, y: double): double; @foreign
+nextafterf :: proc(x: float, y: float): float; @foreign
+
+fdim       :: proc(x: double, y: double): double; @foreign
+fdimf      :: proc(x: float, y: float): float; @foreign
+fmax       :: proc(x: double, y: double): double; @foreign
+fmaxf      :: proc(x: float, y: float): float; @foreign
+fmin       :: proc(x: double, y: double): double; @foreign
+fminf      :: proc(x: float, y: float): float; @foreign
+fma        :: proc(x: double, y: double, z: double): double; @foreign
+fmaf       :: proc(x: float, y: float, z: float): float; @foreign

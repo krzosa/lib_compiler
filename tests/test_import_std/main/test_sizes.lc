@@ -1,0 +1,61 @@
+TestSizes :: proc() {
+    uint64_max: u64 = #`UINT64_MAX`;
+    assert(UINT64_MAX == uint64_max);
+    uint32_max: u32 = #`UINT32_MAX`;
+    assert(UINT32_MAX == uint32_max);
+    uint16_max: u16 = #`UINT16_MAX`;
+    assert(UINT16_MAX == uint16_max);
+    uint8_max: u8 = #`UINT8_MAX`;
+    assert(UINT8_MAX == uint8_max);
+    int64_max: i64 = #`INT64_MAX`;
+    assert(INT64_MAX == int64_max);
+    int64_min: i64 = #`INT64_MIN`;
+    assert(INT64_MIN == int64_min);
+    int32_max: i32 = #`INT32_MAX`;
+    assert(INT32_MAX == int32_max);
+    int32_min: i32 = #`INT32_MIN`;
+    assert(INT32_MIN == int32_min);
+    int16_max: i16 = #`INT16_MAX`;
+    assert(INT16_MAX == int16_max);
+    int16_min: i16 = #`INT16_MIN`;
+    assert(INT16_MIN == int16_min);
+    int8_max: i8 = #`INT8_MAX`;
+    assert(INT8_MAX == int8_max);
+    int8_min: i8 = #`INT8_MIN`;
+    assert(INT8_MIN == int8_min);
+    char_max: char = #`CHAR_MAX`;
+    assert(CHAR_MAX == char_max);
+    char_min: char = #`CHAR_MIN`;
+    assert(CHAR_MIN == char_min);
+    uchar_max: uchar = #`UCHAR_MAX`;
+    assert(UCHAR_MAX == uchar_max);
+    int_max: int = #`INT_MAX`;
+    assert(INT_MAX == int_max);
+    int_min: int = #`INT_MIN`;
+    assert(INT_MIN == int_min);
+    uint_max: uint = #`UINT_MAX`;
+    assert(UINT_MAX == uint_max);
+    llong_max: llong = #`LLONG_MAX`;
+    assert(LLONG_MAX == llong_max);
+    llong_min: llong = #`LLONG_MIN`;
+    assert(LLONG_MIN == llong_min);
+    ullong_max: ullong = #`ULLONG_MAX`;
+    assert(ULLONG_MAX == ullong_max);
+
+    long_max: long = #`LONG_MAX`;
+    assert(LONG_MAX == long_max);
+    long_min: long = #`LONG_MIN`;
+    assert(LONG_MIN == long_min);
+    ulong_max: ulong = #`ULONG_MAX`;
+    assert(ULONG_MAX == ulong_max);
+    ulong_min: ulong = #`0`;
+    assert(ULONG_MIN == ulong_min);
+
+    intptr_max: intptr = #`INTPTR_MAX`;
+    assert(INTPTR_MAX == intptr_max);
+    intptr_min: intptr = #`INTPTR_MIN`;
+    assert(INTPTR_MIN == intptr_min);
+    uintptr_max: uintptr = #`UINTPTR_MAX`;
+    assert(UINTPTR_MAX == uintptr_max);
+
+}

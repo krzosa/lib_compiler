@@ -1,0 +1,8 @@
+// #failed: parse
+// #error: got unexpected token: package doc comment
+
+/** file
+*/
+
+/** package
+*/

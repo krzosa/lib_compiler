@@ -1,0 +1,16 @@
+import "libc";
+
+SourceLoc :: struct {
+    file: String;
+    line: int;
+}
+
+Allocate :: proc(size: int, source_loc: SourceLoc = {}): *void {
+    printf("%.*s:%d\n", source_loc.file.len, source_loc.file.str, source_loc.line);
+    return malloc(:size_t(size));
+}
+
+main :: proc(): int {
+    value: *int = Allocate(32);
+    return 0;
+}

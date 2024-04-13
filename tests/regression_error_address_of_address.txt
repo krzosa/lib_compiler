@@ -1,0 +1,7 @@
+// #failed: resolve
+// #error: trying to access address of a temporal object
+main :: proc(): int {
+    a := 0;
+    app := &(&(a));
+    return 0;
+}

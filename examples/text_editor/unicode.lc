@@ -1,0 +1,94 @@
+UTF32_Result :: struct {
+    out_str: u32;
+    advance: int;
+    error:   int;
+}
+
+UTF8_Result :: struct {
+    out_str: [4]u8;
+    len:       int;
+    error:     int;
+}
+
+IsUTF8ContinuationByte :: proc(c: u8): bool {
+    result := (c & 0b11000000) == 0b10000000;
+    return result;
+}
+
+UTF8ToUTF32 :: proc(c: *uchar, max_advance: int): UTF32_Result {
+    result: UTF32_Result;
+
+    if (c[0] & 0x80) == 0 { // Check if leftmost zero of first byte is unset
+        if max_advance >= 1 {
+            result.out_str = :u32(c[0]);
+            result.advance = 1;
+        }
+        else result.error = 1;
+    }
+
+    else if (c[0] & 0xe0) == 0xc0 {
+        if (c[1] & 0xc0) == 0x80 { // Continuation byte required
+            if max_advance >= 2 {
+                result.out_str = (:u32(c[0] & 0x1f) << 6) | :u32(c[1] & 0x3f);
+                result.advance = 2;
+            }
+            else result.error = 2;
+        }
+        else result.error = 2;
+    }
+
+    else if (c[0] & 0xf0) == 0xe0 {
+        if ((c[1] & 0xc0) == 0x80) && ((c[2] & 0xc0) == 0x80) { // Two continuation bytes required
+            if max_advance >= 3 {
+                result.out_str = (:u32(c[0] & 0xf) << 12) | (:u32(c[1] & 0x3f) << 6) | :u32(c[2] & 0x3f);
+                result.advance = 3;
+            }
+            else result.error = 3;
+        }
+        else result.error = 3;
+    }
+
+    else if (c[0] & 0xf8) == 0xf0 {
+        if (c[1] & 0xc0) == 0x80 && (c[2] & 0xc0) == 0x80 && (c[3] & 0xc0) == 0x80 { // Three continuation bytes required
+            if max_advance >= 4 {
+                result.out_str = :u32(c[0] & 0xf) << 18 | :u32(c[1] & 0x3f) << 12 | :u32(c[2] & 0x3f) << 6 | :u32(c[3] & 0x3f);
+                result.advance = 4;
+            }
+            else result.error = 4;
+        }
+        else result.error = 4;
+    }
+    else result.error = 4;
+
+    return result;
+}
+
+UTF32ToUTF8 :: proc(codepoint: u32): UTF8_Result {
+    result: UTF8_Result;
+
+    if codepoint <= 0x7F {
+        result.len = 1;
+        result.out_str[0] = :u8(codepoint);
+    }
+    else if codepoint <= 0x7FF {
+        result.len = 2;
+        result.out_str[0] = :u8 (0xc0 | 0x1f & (codepoint >> 6));
+        result.out_str[1] = :u8 (0x80 | 0x3f &  codepoint);
+    }
+    else if codepoint <= 0xFFFF { // 16 bit word
+        result.len = 3;
+        result.out_str[0] = :u8 (0xe0 | 0xf  & (codepoint >> 12)); // 4 bits
+        result.out_str[1] = :u8 (0x80 | 0x3f & (codepoint >> 6));  // 6 bits
+        result.out_str[2] = :u8 (0x80 | 0x3f &  codepoint);        // 6 bits
+    }
+    else if codepoint <= 0x10FFFF { // 21 bit word
+        result.len = 4;
+        result.out_str[0] = :u8 (0xf0 | 0x7  & (codepoint >> 18)); // 3 bits
+        result.out_str[1] = :u8 (0x80 | 0x3f & (codepoint >> 12)); // 6 bits
+        result.out_str[2] = :u8 (0x80 | 0x3f & (codepoint >> 6));  // 6 bits
+        result.out_str[3] = :u8 (0x80 | 0x3f &  codepoint);        // 6 bits
+    }
+    else result.error = 1;
+
+    return result;
+}

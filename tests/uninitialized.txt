@@ -1,0 +1,13 @@
+import "libc";
+
+S :: struct {i: int; j: int;}
+U :: union  {i: int; j: float;}
+
+main :: proc(): int {
+    thing: int; @unused @not_init 
+    string: String; @unused @not_init 
+    other: *char; @unused @not_init 
+    s: S; @unused @not_init 
+    u: U; @unused @not_init 
+    return 0;
+}

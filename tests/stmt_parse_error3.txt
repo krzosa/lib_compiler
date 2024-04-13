@@ -1,0 +1,15 @@
+// #failed: parse
+// #error: unclosed open brace '{'
+main :: proc(): int {
+{;
+}
+
+// #error: statement lacks a semicolon 
+A :: proc() {
+    asd
+}
+
+// #error: statement lacks a semicolon
+B :: proc() {
+    asd
+}

@@ -1,0 +1,7 @@
+build/
+private.bat
+todo.txt
+*.sublime-project
+*.sublime-workspace
+*.rdbg
+*.wasm

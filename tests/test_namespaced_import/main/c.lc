@@ -1,0 +1,10 @@
+import b "b";
+
+main :: proc(): int {
+    result := b.B();
+    // b.B_NO_API();
+    b.A();
+    b;
+    co := b.BCONST; @unused
+    return result;
+}

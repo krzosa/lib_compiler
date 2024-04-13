@@ -1,0 +1,8 @@
+A :: typedef int;
+B :: typedef int; @weak
+main :: proc(): int {
+    a: A; @unused
+    b: B;
+
+    return b;
+}

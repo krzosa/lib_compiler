@@ -1,0 +1,10 @@
+// #failed: resolve
+// #error: non constant global declarations are illegal
+// #error: expected an untyped constant
+
+thing :: proc(): int {
+    return 0;
+}
+
+variable := thing();
+constant :: thing();

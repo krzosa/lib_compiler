@@ -1,0 +1,17 @@
+call :: proc(): int {
+    return 0;
+}
+
+void_call :: proc() {
+}
+
+args :: proc(a: int, b: int, c: int, d: int): int {
+    return a + b + c + d;
+}
+
+main :: proc(): int {
+    void_call();
+    val := call() + call() + call() * call();
+    result := args(1,2,3,4) - 10;
+    return result + val;
+}

@@ -1,0 +1,557 @@
+#`
+
+#include "core/core.c"
+#include "core/map.c"
+`;
+@foreign
+UTF32_Result :: struct {
+    out_str: u32;
+    advance: int;
+    error: int;
+}
+
+@foreign
+UTF8_Result :: struct {
+    out_str: [4]u8;
+    len: int;
+    error: int;
+}
+
+@foreign
+UTF16_Result :: struct {
+    out_str: [2]u16;
+    len: int;
+    error: int;
+}
+
+@foreign
+UTF8_Iter :: struct {
+    str: *char;
+    len: int;
+    utf8_codepoint_byte_size: int;
+    i: int;
+    item: u32;
+}
+
+@foreign UTF_ConvertUTF16ToUTF32 :: proc(c: *u16, max_advance: int): UTF32_Result;
+@foreign UTF_ConvertUTF32ToUTF8 :: proc(codepoint: u32): UTF8_Result;
+@foreign UTF_ConvertUTF8ToUTF32 :: proc(c: *char, max_advance: int): UTF32_Result;
+@foreign UTF_ConvertUTF32ToUTF16 :: proc(codepoint: u32): UTF16_Result;
+@foreign UTF_CreateCharFromWidechar :: proc(buffer: *char, buffer_size: i64, in: *wchar_t, inlen: i64): i64;
+@foreign UTF_CreateWidecharFromChar :: proc(buffer: *wchar_t, buffer_size: i64, in: *char, inlen: i64): i64;
+@foreign UTF8_Advance :: proc(iter: *UTF8_Iter);
+@foreign UTF8_IterateEx :: proc(str: *char, len: int): UTF8_Iter;
+@foreign UTF8_Iterate :: proc(str: *char): UTF8_Iter;
+@foreign UTF_CreateStringFromWidechar :: proc(arena: *MA_Arena, wstr: *wchar_t, wsize: i64): S8_String;
+
+@foreign
+IO_ErrorResult :: typedef int;
+IO_ErrorResult_Continue :: 0;
+IO_ErrorResult_Break    :: ^;
+IO_ErrorResult_Exit     :: ^;
+
+@foreign IO_Printf :: proc(msg: *char, ...);
+@foreign IO_Print :: proc(msg: *char);
+@foreign IO_OutputMessage :: proc(str: *char, len: int);
+@foreign IO_OutputError :: proc(str: *char, len: int): IO_ErrorResult;
+@foreign IO_Exit :: proc(error_code: int);
+@foreign IO_IsDebuggerPresent :: proc(): bool;
+@foreign
+M_AllocatorOp :: typedef int;
+M_AllocatorOp_Allocate   :: 0;
+M_AllocatorOp_Deallocate :: ^;
+
+@foreign M_AllocatorProc :: typedef proc(a: *void, b: M_AllocatorOp, c: *void, d: usize): *void;
+@foreign
+M_Allocator :: struct {
+    obj: *void;
+    p: proc(a: *void, b: M_AllocatorOp, c: *void, d: usize): *void;
+}
+
+@foreign M_AllocNonZeroed :: proc(allocator: M_Allocator, size: usize): *void;
+@foreign M_Alloc :: proc(allocator: M_Allocator, size: usize): *void;
+@foreign M_AllocCopy :: proc(allocator: M_Allocator, p: *void, size: usize): *void;
+@foreign M_Dealloc :: proc(allocator: M_Allocator, p: *void);
+@foreign MA_AllocatorProc :: proc(allocator: M_Allocator, kind: M_AllocatorOp, p: *void, size: usize): *void;
+@foreign M_GetSystemAllocator :: proc(): M_Allocator;
+@foreign
+MV_Memory :: struct {
+    commit: usize;
+    reserve: usize;
+    data: *u8;
+}
+
+@foreign
+MA_Arena :: struct {
+    allocator: M_Allocator;
+    memory: MV_Memory;
+    alignment: int;
+    saved_alignment: int;
+    len: usize;
+    packed_array_element_size: usize;
+    packed_array_begin: usize;
+}
+
+@foreign
+MA_Temp :: struct {
+    arena: *MA_Arena;
+    pos: usize;
+}
+
+@foreign MA_MemoryZero :: proc(p: *void, size: usize);
+@foreign MA_MemoryCopy :: proc(dst: *void, src: *void, size: usize);
+@foreign MA_GetAlignOffset :: proc(size: usize, align: usize): usize;
+@foreign MA_AlignUp :: proc(size: usize, align: usize): usize;
+@foreign MA_AlignDown :: proc(size: usize, align: usize): usize;
+@foreign MA_DeallocateStub :: proc(arena: *MA_Arena, p: *void);
+@foreign MA_PopToPos :: proc(arena: *MA_Arena, pos: usize);
+@foreign MA_PopSize :: proc(arena: *MA_Arena, size: usize): *void;
+@foreign MA_DeallocateArena :: proc(arena: *MA_Arena);
+@foreign MA_Reset :: proc(arena: *MA_Arena);
+@foreign MA__BeginPackedArray :: proc(arena: *MA_Arena, element_size: usize): *void;
+@foreign MA_EndPackedArray :: proc(arena: *MA_Arena): int;
+@foreign MA_SetAlignment :: proc(arena: *MA_Arena, alignment: int);
+@foreign MA_GetTop :: proc(a: *MA_Arena): *u8;
+@foreign MA_PushSizeNonZeroed :: proc(a: *MA_Arena, size: usize): *void;
+@foreign MA_PushSize :: proc(arena: *MA_Arena, size: usize): *void;
+@foreign MA_Init :: proc(a: *MA_Arena, reserve: usize);
+@foreign MA_Create :: proc(): MA_Arena;
+@foreign MA_InitFromBuffer :: proc(arena: *MA_Arena, buffer: *void, size: usize);
+@foreign MA_MakeFromBuffer :: proc(buffer: *void, size: usize): MA_Arena;
+@foreign MA_PushStringCopy :: proc(arena: *MA_Arena, p: *char, size: usize): *char;
+@foreign MA_PushCopy :: proc(arena: *MA_Arena, p: *void, size: usize): *void;
+@foreign MA_IsPointerInside :: proc(arena: *MA_Arena, p: *void): bool;
+@foreign MA_PushArena :: proc(arena: *MA_Arena, size: usize): MA_Arena;
+@foreign MA_BeginTemp :: proc(arena: *MA_Arena): MA_Temp;
+@foreign MA_EndTemp :: proc(checkpoint: MA_Temp);
+@foreign MA_GetScratchEx :: proc(conflicts: **MA_Arena, conflict_count: int): MA_Temp;
+@foreign MA_GetScratch :: proc(): MA_Temp;
+@foreign MA_GetScratch1 :: proc(conflict: *MA_Arena): MA_Temp;
+@foreign MV_Reserve :: proc(size: usize): MV_Memory;
+@foreign MV_Commit :: proc(m: *MV_Memory, commit: usize): bool;
+@foreign MV_Deallocate :: proc(m: *MV_Memory);
+@foreign MV_DecommitPos :: proc(m: *MV_Memory, pos: usize): bool;
+@foreign
+S8_String :: struct {
+    str: *char;
+    len: i64;
+}
+
+@foreign
+S8_Node :: struct {
+    next: *S8_Node;
+    string: S8_String;
+}
+
+@foreign
+S8_List :: struct {
+    node_count: i64;
+    char_count: i64;
+    first: *S8_Node;
+    last: *S8_Node;
+}
+
+@foreign S8_AreEqual :: proc(a: S8_String, b: S8_String, ignore_case: uint): bool;
+@foreign S8_EndsWith :: proc(a: S8_String, end: S8_String, ignore_case: uint): bool;
+@foreign S8_StartsWith :: proc(a: S8_String, start: S8_String, ignore_case: uint): bool;
+@foreign S8_Make :: proc(str: *char, len: i64): S8_String;
+@foreign S8_Copy :: proc(allocator: *MA_Arena, string: S8_String): S8_String;
+@foreign S8_NormalizePath :: proc(s: S8_String);
+@foreign S8_Chop :: proc(string: S8_String, len: i64): S8_String;
+@foreign S8_Skip :: proc(string: S8_String, len: i64): S8_String;
+@foreign S8_GetPostfix :: proc(string: S8_String, len: i64): S8_String;
+@foreign S8_GetPrefix :: proc(string: S8_String, len: i64): S8_String;
+@foreign S8_Slice :: proc(string: S8_String, first_index: i64, one_past_last_index: i64): S8_String;
+@foreign S8_Trim :: proc(string: S8_String): S8_String;
+@foreign S8_TrimEnd :: proc(string: S8_String): S8_String;
+@foreign S8_ToLowerCase :: proc(allocator: *MA_Arena, s: S8_String): S8_String;
+@foreign S8_ToUpperCase :: proc(allocator: *MA_Arena, s: S8_String): S8_String;
+@foreign S8_Find :: proc(string: S8_String, find: S8_String, flags: uint, index_out: *i64): bool;
+@foreign S8_Split :: proc(allocator: *MA_Arena, string: S8_String, find: S8_String, flags: uint): S8_List;
+@foreign S8_MergeWithSeparator :: proc(allocator: *MA_Arena, list: S8_List, separator: S8_String): S8_String;
+@foreign S8_Merge :: proc(allocator: *MA_Arena, list: S8_List): S8_String;
+@foreign S8_ReplaceAll :: proc(allocator: *MA_Arena, string: S8_String, replace: S8_String, with: S8_String, flags: uint): S8_String;
+@foreign S8_FindAll :: proc(allocator: *MA_Arena, string: S8_String, find: S8_String, flags: uint): S8_List;
+@foreign S8_ChopLastSlash :: proc(s: S8_String): S8_String;
+@foreign S8_ChopLastPeriod :: proc(s: S8_String): S8_String;
+@foreign S8_SkipToLastSlash :: proc(s: S8_String): S8_String;
+@foreign S8_SkipToLastPeriod :: proc(s: S8_String): S8_String;
+@foreign S8_Length :: proc(string: *char): i64;
+@foreign S8_WideLength :: proc(string: *wchar_t): i64;
+@foreign S8_MakeFromChar :: proc(string: *char): S8_String;
+@foreign S8_MakeEmpty :: proc(): S8_String;
+@foreign S8_MakeEmptyList :: proc(): S8_List;
+@foreign S8_FormatV :: proc(allocator: *MA_Arena, str: *char, args1: va_list): S8_String;
+@foreign S8_Format :: proc(allocator: *MA_Arena, str: *char, ...): S8_String;
+@foreign S8_CreateNode :: proc(allocator: *MA_Arena, string: S8_String): *S8_Node;
+@foreign S8_ReplaceNodeString :: proc(list: *S8_List, node: *S8_Node, new_string: S8_String);
+@foreign S8_AddExistingNode :: proc(list: *S8_List, node: *S8_Node);
+@foreign S8_AddArray :: proc(allocator: *MA_Arena, list: *S8_List, array: **char, count: int);
+@foreign S8_AddArrayWithPrefix :: proc(allocator: *MA_Arena, list: *S8_List, prefix: *char, array: **char, count: int);
+@foreign S8_MakeList :: proc(allocator: *MA_Arena, a: S8_String): S8_List;
+@foreign S8_CopyList :: proc(allocator: *MA_Arena, a: S8_List): S8_List;
+@foreign S8_ConcatLists :: proc(allocator: *MA_Arena, a: S8_List, b: S8_List): S8_List;
+@foreign S8_AddNode :: proc(allocator: *MA_Arena, list: *S8_List, string: S8_String): *S8_Node;
+@foreign S8_AddF :: proc(allocator: *MA_Arena, list: *S8_List, str: *char, ...): S8_String;
+@foreign
+MU__Float2 :: struct {
+    x: float;
+    y: float;
+}
+
+@foreign
+MU__Int2 :: struct {
+    x: int;
+    y: int;
+}
+
+@foreign MU_glGetProcAddress :: typedef proc(a: *char): *void;
+@foreign
+MU_Window_Params :: struct {
+    size: MU__Int2;
+    pos: MU__Int2;
+    title: *char;
+    enable_canvas: bool;
+    resizable: bool;
+    borderless: bool;
+    fps_cursor: bool;
+}
+
+@foreign
+MU_Params :: struct {
+    memory: *void;
+    cap: usize;
+    enable_opengl: bool;
+    opengl_major: int;
+    opengl_minor: int;
+    delta_time: double;
+    window: MU_Window_Params;
+    sound_callback: proc(a: *MU_Context, b: *u16, c: u32): void;
+}
+
+@foreign
+MU_Key_State :: struct {
+    down: bool;
+    press: bool;
+    unpress: bool;
+    raw_press: bool;
+}
+
+@foreign
+MU_Key :: typedef int;
+    MU_KEY_INVALID :: 0;
+    MU_KEY_ESCAPE :: ^;
+    MU_KEY_ENTER :: ^;
+    MU_KEY_TAB :: ^;
+    MU_KEY_BACKSPACE :: ^;
+    MU_KEY_INSERT :: ^;
+    MU_KEY_DELETE :: ^;
+    MU_KEY_RIGHT :: ^;
+    MU_KEY_LEFT :: ^;
+    MU_KEY_DOWN :: ^;
+    MU_KEY_UP :: ^;
+    MU_KEY_PAGE_UP :: ^;
+    MU_KEY_PAGE_DOWN :: ^;
+    MU_KEY_HOME :: ^;
+    MU_KEY_END :: ^;
+    MU_KEY_F1 :: ^;
+    MU_KEY_F2 :: ^;
+    MU_KEY_F3 :: ^;
+    MU_KEY_F4 :: ^;
+    MU_KEY_F5 :: ^;
+    MU_KEY_F6 :: ^;
+    MU_KEY_F7 :: ^;
+    MU_KEY_F8 :: ^;
+    MU_KEY_F9 :: ^;
+    MU_KEY_F10 :: ^;
+    MU_KEY_F11 :: ^;
+    MU_KEY_F12 :: ^;
+    MU_KEY_SPACE :: 32;
+    MU_KEY_APOSTROPHE :: 39;
+    MU_KEY_PLUS :: 43;
+    MU_KEY_COMMA :: 44;
+    MU_KEY_MINUS :: 45;
+    MU_KEY_PERIOD :: 46;
+    MU_KEY_SLASH :: 47;
+    MU_KEY_0 :: 48;
+    MU_KEY_1 :: 49;
+    MU_KEY_2 :: 50;
+    MU_KEY_3 :: 51;
+    MU_KEY_4 :: 52;
+    MU_KEY_5 :: 53;
+    MU_KEY_6 :: 54;
+    MU_KEY_7 :: 55;
+    MU_KEY_8 :: 56;
+    MU_KEY_9 :: 57;
+    MU_KEY_SEMICOLON :: 59;
+    MU_KEY_EQUAL :: 61;
+    MU_KEY_A :: 65;
+    MU_KEY_B :: 66;
+    MU_KEY_C :: 67;
+    MU_KEY_D :: 68;
+    MU_KEY_E :: 69;
+    MU_KEY_F :: 70;
+    MU_KEY_G :: 71;
+    MU_KEY_H :: 72;
+    MU_KEY_I :: 73;
+    MU_KEY_J :: 74;
+    MU_KEY_K :: 75;
+    MU_KEY_L :: 76;
+    MU_KEY_M :: 77;
+    MU_KEY_N :: 78;
+    MU_KEY_O :: 79;
+    MU_KEY_P :: 80;
+    MU_KEY_Q :: 81;
+    MU_KEY_R :: 82;
+    MU_KEY_S :: 83;
+    MU_KEY_T :: 84;
+    MU_KEY_U :: 85;
+    MU_KEY_V :: 86;
+    MU_KEY_W :: 87;
+    MU_KEY_X :: 88;
+    MU_KEY_Y :: 89;
+    MU_KEY_Z :: 90;
+    MU_KEY_LEFT_BRACKET :: 91;
+    MU_KEY_BACKSLASH :: 92;
+    MU_KEY_RIGHT_BRACKET :: 93;
+    MU_KEY_GRAVE_ACCENT :: 96;
+    MU_KEY_F13 :: ^;
+    MU_KEY_F14 :: ^;
+    MU_KEY_F15 :: ^;
+    MU_KEY_F16 :: ^;
+    MU_KEY_F17 :: ^;
+    MU_KEY_F18 :: ^;
+    MU_KEY_F19 :: ^;
+    MU_KEY_F20 :: ^;
+    MU_KEY_F21 :: ^;
+    MU_KEY_F22 :: ^;
+    MU_KEY_F23 :: ^;
+    MU_KEY_F24 :: ^;
+    MU_KEY_KP_0 :: ^;
+    MU_KEY_KP_1 :: ^;
+    MU_KEY_KP_2 :: ^;
+    MU_KEY_KP_3 :: ^;
+    MU_KEY_KP_4 :: ^;
+    MU_KEY_KP_5 :: ^;
+    MU_KEY_KP_6 :: ^;
+    MU_KEY_KP_7 :: ^;
+    MU_KEY_KP_8 :: ^;
+    MU_KEY_KP_9 :: ^;
+    MU_KEY_KP_DECIMAL :: ^;
+    MU_KEY_KP_DIVIDE :: ^;
+    MU_KEY_KP_MULTIPLY :: ^;
+    MU_KEY_KP_SUBTRACT :: ^;
+    MU_KEY_KP_ADD :: ^;
+    MU_KEY_KP_ENTER :: ^;
+    MU_KEY_LEFT_SHIFT :: ^;
+    MU_KEY_LEFT_CONTROL :: ^;
+    MU_KEY_LEFT_ALT :: ^;
+    MU_KEY_LEFT_SUPER :: ^;
+    MU_KEY_RIGHT_SHIFT :: ^;
+    MU_KEY_RIGHT_CONTROL :: ^;
+    MU_KEY_RIGHT_ALT :: ^;
+    MU_KEY_RIGHT_SUPER :: ^;
+    MU_KEY_CAPS_LOCK :: ^;
+    MU_KEY_SCROLL_LOCK :: ^;
+    MU_KEY_NUM_LOCK :: ^;
+    MU_KEY_PRINT_SCREEN :: ^;
+    MU_KEY_PAUSE :: ^;
+    MU_KEY_SHIFT :: ^;
+    MU_KEY_CONTROL :: ^;
+    MU_KEY_COUNT :: ^;
+
+@foreign
+MU_Mouse_State :: struct {
+    pos: MU__Int2;
+    posf: MU__Float2;
+    delta_pos: MU__Int2;
+    delta_pos_normalized: MU__Float2;
+    left: MU_Key_State;
+    middle: MU_Key_State;
+    right: MU_Key_State;
+    delta_wheel: float;
+}
+
+@foreign
+MU_DroppedFile :: struct {
+    next: *MU_DroppedFile;
+    filename: *char;
+    filename_size: int;
+}
+
+@foreign
+MU_Arena :: struct {
+    memory: *char;
+    len: usize;
+    cap: usize;
+}
+
+@foreign
+MU_Window :: struct {
+    size: MU__Int2;
+    sizef: MU__Float2;
+    pos: MU__Int2;
+    posf: MU__Float2;
+    dpi_scale: float;
+    is_fullscreen: bool;
+    is_fps_mode: bool;
+    is_focused: bool;
+    change_cursor_on_mouse_hold: bool;
+    processed_events_this_frame: u64;
+    should_render: bool;
+    first_dropped_file: *MU_DroppedFile;
+    canvas: *u32;
+    canvas_enabled: bool;
+    mouse: MU_Mouse_State;
+    key: [140]MU_Key_State;
+    user_text32: [32]u32;
+    user_text32_count: int;
+    user_text8: [32]char;
+    user_text8_count: int;
+    next: *MU_Window;
+    handle: *void;
+    platform: *void;
+}
+
+@foreign
+MU_Time :: struct {
+    app_start: double;
+    frame_start: double;
+    update: double;
+    update_total: double;
+    delta: double;
+    deltaf: float;
+    total: double;
+    totalf: float;
+}
+
+@foreign
+MU_Sound :: struct {
+    initialized: bool;
+    samples_per_second: uint;
+    number_of_channels: uint;
+    bytes_per_sample: uint;
+    callback: proc(a: *MU_Context, b: *u16, c: u32): void;
+}
+
+@foreign
+MU_Context :: struct {
+    quit: bool;
+    sound: MU_Sound;
+    time: MU_Time;
+    first_frame: bool;
+    _MU_Update_count: int;
+    frame: usize;
+    consecutive_missed_frames: usize;
+    total_missed_frames: usize;
+    primary_monitor_size: MU__Int2;
+    opengl_initialized: bool;
+    opengl_major: int;
+    opengl_minor: int;
+    gl_get_proc_address: proc(a: *char): *void;
+    params: MU_Params;
+    window: *MU_Window;
+    all_windows: *MU_Window;
+    perm_arena: MU_Arena;
+    frame_arena: MU_Arena;
+    platform: *void;
+}
+
+@foreign MU_Quit :: proc(mu: *MU_Context);
+@foreign MU_DefaultSoundCallback :: proc(mu: *MU_Context, buffer: *u16, samples_to_fill: u32);
+@foreign MU_GetTime :: proc(): double;
+@foreign MU_ToggleFPSMode :: proc(window: *MU_Window);
+@foreign MU_DisableFPSMode :: proc(window: *MU_Window);
+@foreign MU_EnableFPSMode :: proc(window: *MU_Window);
+@foreign MU_ToggleFullscreen :: proc(window: *MU_Window);
+@foreign MU_Init :: proc(mu: *MU_Context, params: MU_Params, len: usize);
+@foreign MU_AddWindow :: proc(mu: *MU_Context, params: MU_Window_Params): *MU_Window;
+@foreign MU_InitWindow :: proc(mu: *MU_Context, window: *MU_Window, params: MU_Window_Params);
+@foreign MU_Start :: proc(params: MU_Params): *MU_Context;
+@foreign MU_Update :: proc(mu: *MU_Context): bool;
+@foreign LIB_Library :: typedef *void;
+@foreign LIB_LoadLibrary :: proc(str: *char): LIB_Library;
+@foreign LIB_LoadSymbol :: proc(lib: LIB_Library, symbol: *char): *void;
+@foreign LIB_UnloadLibrary :: proc(lib: LIB_Library): bool;
+@foreign
+CTX_Context :: struct {
+    heap: M_Allocator;
+    temp_alloc: M_Allocator;
+    perm_alloc: M_Allocator;
+    temp: *MA_Arena;
+    perm: *MA_Arena;
+    temporary_arena: MA_Arena;
+    pernament_arena: MA_Arena;
+    user_context: *void;
+}
+
+@foreign CTX_Init :: proc();
+@foreign
+OS_Result :: typedef int;
+    OS_SUCCESS        :: 0;
+    OS_ALREADY_EXISTS :: ^;
+    OS_PATH_NOT_FOUND :: ^;
+    OS_FAILURE        :: ^;
+
+@foreign
+OS_Date :: struct {
+    year: u32;
+    month: u32;
+    day: u32;
+    hour: u32;
+    minute: u32;
+    second: u32;
+    milliseconds: u32;
+}
+
+@foreign OS_IsAbsolute :: proc(path: S8_String): bool;
+@foreign OS_GetExePath :: proc(arena: *MA_Arena): S8_String;
+@foreign OS_GetExeDir :: proc(arena: *MA_Arena): S8_String;
+@foreign OS_GetWorkingDir :: proc(arena: *MA_Arena): S8_String;
+@foreign OS_SetWorkingDir :: proc(path: S8_String);
+@foreign OS_GetAbsolutePath :: proc(arena: *MA_Arena, relative: S8_String): S8_String;
+@foreign OS_FileExists :: proc(path: S8_String): bool;
+@foreign OS_IsDir :: proc(path: S8_String): bool;
+@foreign OS_IsFile :: proc(path: S8_String): bool;
+@foreign OS_GetTime :: proc(): double;
+@foreign OS_ListDir :: proc(arena: *MA_Arena, path: S8_String, flags: uint): S8_List;
+@foreign OS_MakeDir :: proc(path: S8_String): OS_Result;
+@foreign OS_CopyFile :: proc(from: S8_String, to: S8_String, overwrite: bool): OS_Result;
+@foreign OS_DeleteFile :: proc(path: S8_String): OS_Result;
+@foreign OS_DeleteDir :: proc(path: S8_String, flags: uint): OS_Result;
+@foreign OS_AppendFile :: proc(path: S8_String, string: S8_String): OS_Result;
+@foreign OS_WriteFile :: proc(path: S8_String, string: S8_String): OS_Result;
+@foreign OS_ReadFile :: proc(arena: *MA_Arena, path: S8_String): S8_String;
+@foreign OS_SystemF :: proc(string: *char, ...): int;
+@foreign OS_GetFileModTime :: proc(file: S8_String): i64;
+@foreign OS_GetDate :: proc(): OS_Date;
+@foreign S8_SplitOnRegex :: proc(arena: *MA_Arena, string: S8_String, regex: S8_String, flags: uint): S8_List;
+@foreign OS_ListDirRegex :: proc(arena: *MA_Arena, path: S8_String, flags: uint, regex: *char): S8_List;
+@foreign OS_ListDirRegexAsString :: proc(arena: *MA_Arena, path: S8_String, flags: uint, regex: *char): S8_String;
+@foreign OS_ExpandIncludesList :: proc(arena: *MA_Arena, out: *S8_List, filepath: S8_String): bool;
+@foreign OS_ExpandIncludes :: proc(arena: *MA_Arena, filepath: S8_String): S8_String;
+@foreign
+LC_MapEntry :: struct {
+    key: u64;
+    value: u64;
+}
+
+@foreign
+LC_Map :: struct {
+    allocator: M_Allocator;
+    entries: *LC_MapEntry;
+    cap: int;
+    len: int;
+}
+
+@foreign LC_MapReserve :: proc(map: *LC_Map, size: int);
+@foreign LC_GetMapEntryEx :: proc(map: *LC_Map, key: u64): *LC_MapEntry;
+@foreign LC_InsertMapEntry :: proc(map: *LC_Map, key: u64, value: u64): *LC_MapEntry;
+@foreign LC_GetMapEntry :: proc(map: *LC_Map, key: u64): *LC_MapEntry;
+@foreign LC_MapInsert :: proc(map: *LC_Map, keystr: S8_String, value: *void);
+@foreign LC_MapGet :: proc(map: *LC_Map, keystr: S8_String): *void;
+@foreign LC_MapInsertU64 :: proc(map: *LC_Map, keystr: u64, value: *void);
+@foreign LC_MapGetU64 :: proc(map: *LC_Map, keystr: u64): *void;
+@foreign LC_MapGetP :: proc(map: *LC_Map, key: *void): *void;
+@foreign LC_MapInsertP :: proc(map: *LC_Map, key: *void, value: *void);
+@foreign Map_Insert2P :: proc(map: *LC_Map, key: *void, value: *void);

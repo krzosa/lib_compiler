@@ -1,0 +1,94 @@
+import "libc";
+
+main :: proc(argc: int @unused, argv: **char @unused): int {
+    {
+        i: int;
+        j0 := &i; @unused
+        j1 := :ullong(&i); @unused
+    }
+
+    {
+        b := 0 && 1; @unused
+    }
+
+    {
+        d := 20.0 + 40;
+        assert(d == 60.0);
+        e: float = 20; @unused
+        c: float = 10 + 20;
+        assert(c == :float(30));
+        assert(d == :double(60.0));
+        assert(:int(d) == :int(60.0));
+        assert(:int(d) == 60);
+        assert(:uint(-1) > 1000000);
+        f: float;
+        assert(f == 0.0);
+        assert(:double(f) == 0);
+    }
+
+    {
+        c := !1;
+        assert(typeof(c) == typeof(:bool));
+    }
+
+    {
+        a: int = 10;
+        b: double = 10;
+        assert(:int(b) == a);
+        assert(:double(a) == b);
+        assert(a == 10*true);
+        assert(a != 0);
+    }
+
+    {
+        assert(10.0 == 10);
+        assert(10.0 != 9.0);
+        assert(10.0 != 9);
+    }
+
+    {
+        assert(:uint(1) == 1);
+        assert(:uint(-1) != 1);
+        c: uchar = :uchar(-1);
+        assert(c == 255);
+        a: ushort = :ushort(-1);
+        assert(a == :ushort(-1));
+        assert(:uint(a) != :uint(-1));
+        assert(:int(a) != :int(-1));
+        assert(:uint(:ushort(-1)) != :uint(-1));
+        assert(:ullong(:uchar(-1)) != :ullong(-1));
+    }
+
+    {
+        a := :[]uchar{:uchar(-1), :uchar(-2), :uchar(-3)};
+        first := 255;
+        for i: uchar = 0; i < lengthof(a); i += 1 {
+            assert(:uchar(first) - i == a[i]);
+        }
+
+        assert(typeof(a[0]) == typeof(:uchar));
+    }
+
+    {
+        b: double = 10;
+        a := 10.0 == b;
+        assert(typeof(a) == typeof(:bool));
+    }
+
+    {
+        a: bool = true;
+        b := false;
+        assert(typeof(a) == typeof(b));
+    }
+
+    {
+        a :: 1 << 63;
+        U64MAX :: 0xffffffffffffffff;
+        assert(U64MAX == :ullong(-1));
+        assert(a == :ullong(1) << 63);
+    }
+
+
+
+    return 0;
+}

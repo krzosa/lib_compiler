@@ -1,0 +1,7 @@
+// #failed: resolve
+// #error: unused local variable 'a'
+
+main :: proc(): int {
+    a: int;
+    return 0;
+}

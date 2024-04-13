@@ -1,0 +1,52 @@
+import "libc";
+
+A :: struct {
+    a: short;
+    b: char;
+    c: int;
+    d: char;
+    e: llong;
+    f: uchar;
+} @packed
+
+B :: struct {
+    a: A;
+    b: A;
+}
+
+C :: struct {
+    a: llong;
+    b: A;
+    c: A;
+}
+
+D :: struct {
+    a: A;
+    b: int;
+    c: char;
+} @packed
+
+#static_assert(sizeof(:A) == 17);
+#static_assert(alignof(:A) == 1);
+
+#static_assert(sizeof(:B) == 34);
+#static_assert(alignof(:B) == 1);
+
+#static_assert(sizeof(:C) == 48);
+#static_assert(alignof(:C) == 8);
+
+#static_assert(sizeof(:D) == 22);
+#static_assert(alignof(:D) == 1);
+
+main :: proc(): int {
+    assert(sizeof(:A) == 17);
+    assert(alignof(:A) == 1);
+
+    assert(sizeof(:B) == 34);
+    assert(alignof(:B) == 1);
+
+    assert(sizeof(:C) == 48);
+    assert(alignof(:C) == 8);
+
+    return 0;
+}

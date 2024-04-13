@@ -1,0 +1,19 @@
+// #failed: resolve
+// #error: undeclared identifier 'asd'
+// #error: undeclared identifier 'qwe'
+// #error: undeclared identifier 'asd'
+// #error: undeclared identifier 'totk'
+
+A :: struct {
+    a: asd;
+    b: qwe;
+    c: asd;
+    d: totk;
+}
+
+// #error: duplicate field 'O'
+
+B :: struct {
+    O: int;
+    O: int;
+}

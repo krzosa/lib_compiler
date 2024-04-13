@@ -1,0 +1,9 @@
+// #failed: resolve
+// #error: undeclared identifier 'meme'
+A: meme;
+
+main :: proc(): int {
+// #error: undeclared identifier 'asd'
+    a: asd;
+    return a;
+}

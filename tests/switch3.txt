@@ -1,0 +1,15 @@
+// #failed: resolve
+// #error: duplicate fields
+main :: proc(): int {
+
+    value := 1;
+    switch value {
+        case 0, 1: {
+            return 1;
+        }
+        case 1, 2: {
+            return 2;
+        }
+    }
+    return 0;
+}

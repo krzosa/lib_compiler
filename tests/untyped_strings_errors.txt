@@ -1,0 +1,22 @@
+// #failed: resolve
+
+main :: proc(): int {
+
+// #error: invalid operand add '+' for binary expr of type untyped string
+    binary_op :: "a" + "b";
+// #error: invalid operand exclamation '!' for unary expr of type untyped string
+    unary_op0 :: !"a";
+// #error: invalid operand subtract '-' for unary expr of type untyped string
+    unary_op1 :: -"a";
+// #error: invalid operand add '+' for unary expr of type untyped string
+    unary_op2 :: +"a";
+
+// #error: cannot get sizeof a value that is untyped: 'UntypedString'
+    sizeof("asd");
+// #error: cannot get alignof a value that is untyped: 'UntypedString'
+    alignof("asd");
+// #error: cannot get typeof a value that is untyped: 'UntypedString'
+    typeof("asd");
+
+    return 0;
+}

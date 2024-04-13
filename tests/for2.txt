@@ -1,0 +1,12 @@
+
+A :: struct {
+    a: int;
+}
+
+main :: proc(): int {
+    result := 2;
+    for &:A{1} {result -= 1; break;}
+    for "asd"  {result -= 1; break;}
+
+    return result;
+}

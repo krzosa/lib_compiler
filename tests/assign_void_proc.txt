@@ -1,0 +1,18 @@
+// #failed: resolve
+A :: proc() {}
+B :: proc() {}
+C :: proc() {}
+D :: proc() {}
+E :: proc() {}
+
+main :: proc(): int {
+    a := A();
+    b := +B();
+    c := C() + D();
+    e := E() + 10;
+    return 0;
+}
+// #error: cannot assign void expression to a variable
+// #error: invalid unary operation for type 'void'
+// #error: cannot perform binary operation, types don't qualify for it, left: 'void' right: 'void'
+// #error: cannot perform binary operation, types don't qualify for it, left: 'void' right: 'UntypedInt'

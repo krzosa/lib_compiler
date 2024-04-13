@@ -1,0 +1,4 @@
+import a "main";
+
+other_thing :: proc() {
+}

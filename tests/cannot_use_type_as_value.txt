@@ -1,0 +1,13 @@
+// #failed: resolve
+A :: struct { a: int; b: int; }
+B :: typedef int;
+
+main :: proc(): int {
+// #error: cannot use type as value
+    a := :A;
+// #error: cannot use type as value
+    b := :A.i;
+// #error: declaration is type, unexpected inside expression
+    d := B;
+    return 0;
+}

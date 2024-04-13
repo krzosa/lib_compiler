@@ -1,0 +1,22 @@
+#build_if(LC_ARCH == ARCH_X86);
+
+#static_assert(sizeof(:long) == 4);
+
+LONG_MAX :: INT32_MAX;
+LONG_MIN :: INT32_MIN;
+ULONG_MAX :: UINT32_MAX;
+ULONG_MIN :: UINT32_MIN;
+
+usize :: typedef u32; @foreign(size_t)
+isize :: typedef i32; @foreign(intptr_t)
+intptr :: typedef i32; @foreign(intptr_t)
+uintptr :: typedef u32; @foreign(uintptr_t)
+
+INTPTR_MAX  :: INT32_MAX;
+INTPTR_MIN  :: INT32_MIN;
+UINTPTR_MAX :: UINT32_MAX;
+UINTPTR_MIN :: UINT32_MIN;
+ISIZE_MAX   :: INT32_MAX;
+ISIZE_MIN   :: INT32_MIN;
+USIZE_MAX   :: UINT32_MAX;
+USIZE_MIN   :: UINT32_MIN;

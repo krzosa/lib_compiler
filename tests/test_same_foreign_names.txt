@@ -1,0 +1,11 @@
+// #failed: resolve
+// #expected_error_count: 4
+
+lc_testing_thing :: proc() {} @foreign
+
+thing :: proc() {
+}
+
+lc_testing_meme :: proc() {} @dont_mangle
+
+meme :: proc() {}

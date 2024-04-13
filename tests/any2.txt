@@ -1,0 +1,4 @@
+// #failed: resolve
+// #error: non constant global declarations are illegal
+global: int = 4;
+any_global: Any = global;

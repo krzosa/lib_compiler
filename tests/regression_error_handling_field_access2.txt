@@ -1,0 +1,26 @@
+// #failed: resolve
+
+Some_Struct :: struct {
+    item: int;
+    another_item: int;
+}
+
+main :: proc() {
+    ss: Some_Struct;
+    if ss.item {
+        {
+// #error: undeclared identifier 'i'
+            a := ss.i;
+// #error: undeclared identifier 'b'
+            ss.item = b - a;
+        }
+    }
+
+    @unused thing: Some_Struct;
+// #error: undeclared identifier 'undeclared'
+    undeclared;
+
+    another_thing: Some_Struct;
+// #error: very likely a bug, expression statement
+    another_thing;
+}

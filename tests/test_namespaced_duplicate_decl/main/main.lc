@@ -1,0 +1,6 @@
+import a2 "a2";
+a :: proc(): int { return 0; }
+
+main :: proc(): int {
+    return a2.a() + a();
+}

@@ -1,0 +1,23 @@
+// #failed: resolve
+INT_MAX :: 2147483647;
+INT_MORE_THEN_MAX :: INT_MAX + 1;
+
+main :: proc(): int {
+// #error: value '2147483648', doesn't fit into type 'int'
+    a: int = INT_MORE_THEN_MAX; @unused
+// #error: value '2147483648', doesn't fit into type 'int'
+    a = INT_MORE_THEN_MAX; @unused
+
+
+// #error: value '-1', doesn't fit into type 'uchar'
+    c: uchar = -1; @unused
+
+    d := INT_MAX; @unused
+
+// #error: value '2147483648', doesn't fit into type 'int'
+    e := INT_MAX + 1; @unused
+
+    f: bool = 10; @unused
+
+    return 0;
+}

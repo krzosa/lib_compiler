@@ -1,0 +1,19 @@
+TypeKind :: typedef int;
+TYPE_KIND_STRUCT :: 0;
+
+StructMem :: struct {
+    name: *char;
+    offset: int;
+}
+
+Typeinfo :: struct {
+    kind: TypeKind;
+    name: *char;
+
+    size: int;
+    align: int;
+
+    child_count: int;
+    struct_mems: *StructMem;
+}
+

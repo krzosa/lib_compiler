@@ -1,0 +1,89 @@
+import "libc";
+
+main :: proc(): int {
+    a: int;
+    d: float;
+    assert(typeof(:int) == typeof(:int));
+    assert(typeof(:int) == typeof(a));
+    assert(typeof(:float) != typeof(:int));
+    assert(sizeof(:int) == sizeof(a));
+    assert(alignof(:int) == alignof(:int));
+    assert(sizeof(:int) != sizeof(:*int));
+    assert(typeof(:int) != typeof(:*int));
+    assert(alignof(:int) != alignof(:*int));
+    assert(typeof(:*int) == typeof(&a));
+    assert(sizeof(:*int) == sizeof(&a));
+    assert(sizeof(a) == sizeof(d));
+
+    arr: [30]int;
+    assert(lengthof(arr) == 30);
+    assert(sizeof(arr) == lengthof(arr) * sizeof(:int));
+    assert(typeof(arr) == typeof(:[30]int));
+    assert(typeof(:int) != typeof(:[30]int));
+    assert(typeof(arr[0]) == typeof(a));
+    assert(typeof(:double) != typeof(:int));
+    assert(typeof(:double) != typeof(:*double));
+
+    t := :[]ullong{
+        typeof(:char),
+        typeof(:uchar),
+        typeof(:short),
+        typeof(:ushort),
+        typeof(:bool),
+        typeof(:int),
+        typeof(:uint),
+        typeof(:long),
+        typeof(:ulong),
+        typeof(:llong),
+        typeof(:ullong),
+        typeof(:float),
+        typeof(:double),
+        typeof(:*char),
+        typeof(:*uchar),
+        typeof(:*short),
+        typeof(:*ushort),
+        typeof(:*bool),
+        typeof(:*int),
+        typeof(:*uint),
+        typeof(:*long),
+        typeof(:*ulong),
+        typeof(:*llong),
+        typeof(:*ullong),
+        typeof(:*float),
+        typeof(:*double),
+        typeof(:[1]char),
+        typeof(:[1]uchar),
+        typeof(:[1]short),
+        typeof(:[1]ushort),
+        typeof(:[1]bool),
+        typeof(:[1]int),
+        typeof(:[1]uint),
+        typeof(:[1]long),
+        typeof(:[1]ulong),
+        typeof(:[1]llong),
+        typeof(:[1]ullong),
+        typeof(:[1]float),
+        typeof(:[1]double),
+        typeof(:**char),
+        typeof(:**uchar),
+        typeof(:**short),
+        typeof(:**ushort),
+        typeof(:**bool),
+        typeof(:**int),
+        typeof(:**uint),
+        typeof(:**long),
+        typeof(:**ulong),
+        typeof(:**llong),
+        typeof(:**ullong),
+        typeof(:**float),
+        typeof(:**double),
+    };
+    for i := 0; i < lengthof(t); i += 1 {
+        for j := 0; j < lengthof(t); j += 1 {
+            if (i==j) continue;
+            assert(t[i] != t[j]);
+        }
+    }
+
+    return 0;
+}

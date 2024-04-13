@@ -1,0 +1,14 @@
+// #dont_run
+THING_A :: 0;
+THING_B :: ^;
+THING_C :: ^;
+THING_D :: ^;
+THING_E :: 6;
+THING_F :: ^;
+
+#static_assert(THING_A == 0);
+#static_assert(THING_B == 1);
+#static_assert(THING_C == 2);
+#static_assert(THING_D == 3);
+#static_assert(THING_E == 6);
+#static_assert(THING_F == 7);

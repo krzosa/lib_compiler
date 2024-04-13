@@ -1,0 +1,313 @@
+import "raylib";
+import "libc";
+
+main :: proc(): int {
+    {
+        size := sizeof(:Vector2);
+        csize: int = #`sizeof(lc_raylib_Vector2)`;
+        assert(size == csize);
+
+        align := alignof(:Vector2);
+        calign: int = #`LC_Alignof(lc_raylib_Vector2)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Vector3);
+        csize: int = #`sizeof(lc_raylib_Vector3)`;
+        assert(size == csize);
+
+        align := alignof(:Vector3);
+        calign: int = #`LC_Alignof(lc_raylib_Vector3)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Vector4);
+        csize: int = #`sizeof(lc_raylib_Vector4)`;
+        assert(size == csize);
+
+        align := alignof(:Vector4);
+        calign: int = #`LC_Alignof(lc_raylib_Vector4)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Matrix);
+        csize: int = #`sizeof(lc_raylib_Matrix)`;
+        assert(size == csize);
+
+        align := alignof(:Matrix);
+        calign: int = #`LC_Alignof(lc_raylib_Matrix)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Color);
+        csize: int = #`sizeof(lc_raylib_Color)`;
+        assert(size == csize);
+
+        align := alignof(:Color);
+        calign: int = #`LC_Alignof(lc_raylib_Color)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Rectangle);
+        csize: int = #`sizeof(lc_raylib_Rectangle)`;
+        assert(size == csize);
+
+        align := alignof(:Rectangle);
+        calign: int = #`LC_Alignof(lc_raylib_Rectangle)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Image);
+        csize: int = #`sizeof(lc_raylib_Image)`;
+        assert(size == csize);
+
+        align := alignof(:Image);
+        calign: int = #`LC_Alignof(lc_raylib_Image)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Texture);
+        csize: int = #`sizeof(lc_raylib_Texture)`;
+        assert(size == csize);
+
+        align := alignof(:Texture);
+        calign: int = #`LC_Alignof(lc_raylib_Texture)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:RenderTexture);
+        csize: int = #`sizeof(lc_raylib_RenderTexture)`;
+        assert(size == csize);
+
+        align := alignof(:RenderTexture);
+        calign: int = #`LC_Alignof(lc_raylib_RenderTexture)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:NPatchInfo);
+        csize: int = #`sizeof(lc_raylib_NPatchInfo)`;
+        assert(size == csize);
+
+        align := alignof(:NPatchInfo);
+        calign: int = #`LC_Alignof(lc_raylib_NPatchInfo)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:GlyphInfo);
+        csize: int = #`sizeof(lc_raylib_GlyphInfo)`;
+        assert(size == csize);
+
+        align := alignof(:GlyphInfo);
+        calign: int = #`LC_Alignof(lc_raylib_GlyphInfo)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Font);
+        csize: int = #`sizeof(lc_raylib_Font)`;
+        assert(size == csize);
+
+        align := alignof(:Font);
+        calign: int = #`LC_Alignof(lc_raylib_Font)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Camera3D);
+        csize: int = #`sizeof(lc_raylib_Camera3D)`;
+        assert(size == csize);
+
+        align := alignof(:Camera3D);
+        calign: int = #`LC_Alignof(lc_raylib_Camera3D)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Camera2D);
+        csize: int = #`sizeof(lc_raylib_Camera2D)`;
+        assert(size == csize);
+
+        align := alignof(:Camera2D);
+        calign: int = #`LC_Alignof(lc_raylib_Camera2D)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Mesh);
+        csize: int = #`sizeof(lc_raylib_Mesh)`;
+        assert(size == csize);
+
+        align := alignof(:Mesh);
+        calign: int = #`LC_Alignof(lc_raylib_Mesh)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Shader);
+        csize: int = #`sizeof(lc_raylib_Shader)`;
+        assert(size == csize);
+
+        align := alignof(:Shader);
+        calign: int = #`LC_Alignof(lc_raylib_Shader)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:MaterialMap);
+        csize: int = #`sizeof(lc_raylib_MaterialMap)`;
+        assert(size == csize);
+
+        align := alignof(:MaterialMap);
+        calign: int = #`LC_Alignof(lc_raylib_MaterialMap)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Material);
+        csize: int = #`sizeof(lc_raylib_Material)`;
+        assert(size == csize);
+
+        align := alignof(:Material);
+        calign: int = #`LC_Alignof(lc_raylib_Material)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Transform);
+        csize: int = #`sizeof(lc_raylib_Transform)`;
+        assert(size == csize);
+
+        align := alignof(:Transform);
+        calign: int = #`LC_Alignof(lc_raylib_Transform)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:BoneInfo);
+        csize: int = #`sizeof(lc_raylib_BoneInfo)`;
+        assert(size == csize);
+
+        align := alignof(:BoneInfo);
+        calign: int = #`LC_Alignof(lc_raylib_BoneInfo)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Model);
+        csize: int = #`sizeof(lc_raylib_Model)`;
+        assert(size == csize);
+
+        align := alignof(:Model);
+        calign: int = #`LC_Alignof(lc_raylib_Model)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:ModelAnimation);
+        csize: int = #`sizeof(lc_raylib_ModelAnimation)`;
+        assert(size == csize);
+
+        align := alignof(:ModelAnimation);
+        calign: int = #`LC_Alignof(lc_raylib_ModelAnimation)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Ray);
+        csize: int = #`sizeof(lc_raylib_Ray)`;
+        assert(size == csize);
+
+        align := alignof(:Ray);
+        calign: int = #`LC_Alignof(lc_raylib_Ray)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:RayCollision);
+        csize: int = #`sizeof(lc_raylib_RayCollision)`;
+        assert(size == csize);
+
+        align := alignof(:RayCollision);
+        calign: int = #`LC_Alignof(lc_raylib_RayCollision)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:BoundingBox);
+        csize: int = #`sizeof(lc_raylib_BoundingBox)`;
+        assert(size == csize);
+
+        align := alignof(:BoundingBox);
+        calign: int = #`LC_Alignof(lc_raylib_BoundingBox)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Wave);
+        csize: int = #`sizeof(lc_raylib_Wave)`;
+        assert(size == csize);
+
+        align := alignof(:Wave);
+        calign: int = #`LC_Alignof(lc_raylib_Wave)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:AudioStream);
+        csize: int = #`sizeof(lc_raylib_AudioStream)`;
+        assert(size == csize);
+
+        align := alignof(:AudioStream);
+        calign: int = #`LC_Alignof(lc_raylib_AudioStream)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Sound);
+        csize: int = #`sizeof(lc_raylib_Sound)`;
+        assert(size == csize);
+
+        align := alignof(:Sound);
+        calign: int = #`LC_Alignof(lc_raylib_Sound)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:Music);
+        csize: int = #`sizeof(lc_raylib_Music)`;
+        assert(size == csize);
+
+        align := alignof(:Music);
+        calign: int = #`LC_Alignof(lc_raylib_Music)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:VrDeviceInfo);
+        csize: int = #`sizeof(lc_raylib_VrDeviceInfo)`;
+        assert(size == csize);
+
+        align := alignof(:VrDeviceInfo);
+        calign: int = #`LC_Alignof(lc_raylib_VrDeviceInfo)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:VrStereoConfig);
+        csize: int = #`sizeof(lc_raylib_VrStereoConfig)`;
+        assert(size == csize);
+
+        align := alignof(:VrStereoConfig);
+        calign: int = #`LC_Alignof(lc_raylib_VrStereoConfig)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:FilePathList);
+        csize: int = #`sizeof(lc_raylib_FilePathList)`;
+        assert(size == csize);
+
+        align := alignof(:FilePathList);
+        calign: int = #`LC_Alignof(lc_raylib_FilePathList)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:AutomationEvent);
+        csize: int = #`sizeof(lc_raylib_AutomationEvent)`;
+        assert(size == csize);
+
+        align := alignof(:AutomationEvent);
+        calign: int = #`LC_Alignof(lc_raylib_AutomationEvent)`;
+        assert(align == calign);
+    }
+    {
+        size := sizeof(:AutomationEventList);
+        csize: int = #`sizeof(lc_raylib_AutomationEventList)`;
+        assert(size == csize);
+
+        align := alignof(:AutomationEventList);
+        calign: int = #`LC_Alignof(lc_raylib_AutomationEventList)`;
+        assert(align == calign);
+    }
+
+    return 0;
+}

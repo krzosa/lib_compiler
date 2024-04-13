@@ -1,0 +1,20 @@
+// #failed: resolve
+
+Some_Struct :: struct {
+    item: int;
+    another_item: int;
+}
+
+main :: proc() {
+
+    {
+        some_struct: Some_Struct;
+// #error: undeclared identifier 'i'
+        i := some_struct.i;
+    }
+
+    @unused im: int; // int should be declared
+    @unused thing: Some_Struct;
+// #error: undeclared identifier 'undeclared'
+    another_undeclared: undeclared;
+}

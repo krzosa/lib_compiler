@@ -1,0 +1,286 @@
+CurrentMap: Map;
+
+Tile :: typedef int;
+TILE_BLOCKER           :: 1;
+TILE_ACTOR_IS_STANDING :: <<;
+
+Map :: struct {
+    data:  *Tile;
+    x:      int;
+    y:      int;
+    actors: ArrayOfActors;
+}
+
+V2I :: struct {
+    x: int;
+    y: int;
+}
+
+Actor :: struct {
+    p:             V2I;
+    target_p:      V2I;
+    map:          *Map;
+
+    open_paths:    ArrayOfPaths;
+    close_paths:   ArrayOfPaths;
+    tiles_visited: ArrayOfV2Is;
+    history:       ArrayOfPaths;
+}
+
+Path :: struct {
+    value_to_sort_by: int;
+    p:                V2I;
+    came_from:        V2I;
+}
+
+ArrayOfActors :: struct {
+    data: *Actor;
+    len:   int;
+    cap:   int;
+}
+
+ArrayOfPaths :: struct {
+    data: *Path;
+    len:   int;
+    cap:   int;
+}
+
+ArrayOfV2Is :: struct {
+    data: *V2I;
+    len:   int;
+    cap:   int;
+}
+
+Rect :: proc(p: V2I): Rectangle {
+    result: Rectangle = {:float(p.x) * RectX, :float(p.y) * RectY, RectX, RectY};
+    return result;
+}
+
+Circle :: proc(p: V2I): Vector2 {
+    result: Vector2 = {:float(p.x) * RectX + RectX/2, :float(p.y) * RectY + RectY/2};
+    return result;
+}
+
+ScreenToMap :: proc(p: Vector2): V2I {
+    x := p.x / RectX;
+    y := p.y / RectY;
+
+    result: V2I = {:int(x), :int(y)};
+    return result;
+}
+
+MaxInt :: proc(x: int, y: int): int {
+    if x > y return x;
+    return y;
+}
+
+Assert :: proc(x: bool) {
+    if (!x) {
+        libc.printf("assertion failed\n");
+        libc.fflush(libc.stdout);
+        libc.debug_break();
+    }
+}
+
+InvalidCodepath :: proc() {
+    libc.printf("invalid codepath\n");
+    libc.fflush(libc.stdout);
+    libc.debug_break();
+}
+
+AddActor :: proc(map: *Map, p: V2I): *Actor {
+    AddActorToArray(&map.actors, {p, p, map});
+    map.data[p.x + p.y * map.x] |= TILE_ACTOR_IS_STANDING;
+    result := GetLastActor(map.actors);
+    return result;
+}
+
+SetActorP :: proc(actor: *Actor, p: V2I) {
+    map := actor.map;
+    new_tile := &map.data[p.x + p.y * map.x];
+    if *new_tile != 0  return;
+
+    tile := &map.data[actor.p.x + actor.p.y * map.x];
+    Assert((*tile & TILE_ACTOR_IS_STANDING) != 0);
+    *tile &= ~TILE_ACTOR_IS_STANDING;
+
+    *new_tile |= TILE_ACTOR_IS_STANDING;
+    actor.p = p;
+
+    actor.tiles_visited.len = 0;
+    actor.history.len       = 0;
+    actor.open_paths.len    = 0;
+    actor.close_paths.len   = 0;
+}
+
+SetTargetP :: proc(actor: *Actor, p: V2I) {
+    actor.target_p = p;
+
+    actor.tiles_visited.len = 0;
+    actor.history.len       = 0;
+    actor.open_paths.len    = 0;
+    actor.close_paths.len   = 0;
+}
+
+GetRandomP :: proc(m: *Map): V2I {
+    result: V2I = {GetRandomInt(0, m.x - 1), GetRandomInt(0, m.y - 1)};
+    return result;
+}
+
+GetRandomUnblockedP :: proc(m: *Map): V2I {
+    for i := 0; i < 128; i += 1 {
+        p := GetRandomP(m);
+        if m.data[p.x + p.y * m.x] == 0 {
+            return p;
+        }
+    }
+    Assert(!:ullong(:*char("invalid codepath")));
+    return {};
+}
+
+InitMap :: proc() {
+    CurrentMap.x = WinX / RectX;
+    CurrentMap.y = WinY / RectY;
+
+    bytes          := sizeof(:Tile) * CurrentMap.x * CurrentMap.y;
+    CurrentMap.data = libc.malloc(:libc.size_t(bytes));
+    libc.memset(CurrentMap.data, 0, :libc.size_t(bytes));
+
+    actor         := AddActor(&CurrentMap, GetRandomUnblockedP(&CurrentMap));
+    actor.target_p = GetRandomUnblockedP(&CurrentMap);
+
+    actor2         := AddActor(&CurrentMap, GetRandomUnblockedP(&CurrentMap));
+    actor2.target_p = GetRandomUnblockedP(&CurrentMap);
+}
+
+RandomizeActors :: proc() {
+    map := &CurrentMap;
+    for i := 0; i < map.actors.len; i += 1 {
+        it := &map.actors.data[i];
+        p := GetRandomUnblockedP(&CurrentMap);
+        SetActorP(it, p);
+        it.target_p = GetRandomUnblockedP(&CurrentMap);
+    }
+}
+
+InsertOpenPath :: proc(actor: *Actor, p: V2I, came_from: V2I, ignore_blocks: bool = false) {
+    if p.x < 0 || p.x >= actor.map.x  return;
+    if p.y < 0 || p.y >= actor.map.y  return;
+    if ignore_blocks == false && actor.map.data[p.x + p.y * actor.map.x] != 0  return;
+
+    for i := 0; i < actor.close_paths.len; i += 1 {
+        it := &actor.close_paths.data[i];
+        if it.p.x == p.x && it.p.y == p.y  return;
+    }
+
+    for i := 0; i < actor.open_paths.len; i += 1 {
+        it := &actor.open_paths.data[i];
+        if it.p.x == p.x && it.p.y == p.y  return;
+    }
+
+    dx := actor.target_p.x - p.x;
+    dy := actor.target_p.y - p.y;
+    d  := dx*dx + dy*dy;
+    InsertSortedPath(&actor.open_paths, {d, p, came_from});
+}
+
+GetCloseP :: proc(actor: *Actor, p: V2I): *Path {
+    for i := 0; i < actor.close_paths.len; i += 1 {
+        it := &actor.close_paths.data[i];
+        if it.p.x == p.x && it.p.y == p.y  return it;
+    }
+    InvalidCodepath();
+    return nil;
+}
+
+RecomputeHistory :: proc(actor: *Actor) {
+    if actor.close_paths.len > 1 {
+        actor.history.len = 0;
+        it := GetLastPath(actor.close_paths);
+        AddPath(&actor.history, *it);
+        for i := 0;;i += 1 {
+            if it.p.x == actor.p.x && it.p.y == actor.p.y { break; }
+            if i > 512             { actor.history.len = 0; break; } // @todo: Pop after this and error?
+            it = GetCloseP(actor, it.came_from);
+            AddPath(&actor.history, *it);
+        }
+        PopPath(&actor.history);
+    }
+}
+
+MoveTowardsTarget :: proc(actor: *Actor) {
+    tile := &actor.map.data[actor.p.x + actor.p.y * actor.map.x];
+    if actor.history.len > 0 {
+        step := PopPath(&actor.history);
+        new_tile := &actor.map.data[step.p.x + step.p.y * actor.map.x];
+        if *new_tile == 0 {
+            AddV2I(&actor.tiles_visited, actor.p);
+            actor.p    = step.p;
+            *tile     &= ~TILE_ACTOR_IS_STANDING;
+            *new_tile |= TILE_ACTOR_IS_STANDING;
+        }
+    }
+}
+
+PathFindUpdate :: proc(map: *Map) {
+    for actor_i := 0; actor_i < map.actors.len; actor_i += 1 {
+        actor_it := &map.actors.data[actor_i];
+        for i := 0; i < actor_it.history.len; i += 1 {
+            history_it := &actor_it.history.data[i];
+
+            tile := actor_it.map.data[history_it.p.x + history_it.p.y * actor_it.map.x];
+            if tile != 0 {
+                actor_it.close_paths.len = 0;
+                actor_it.open_paths.len  = 0;
+                actor_it.history.len     = 0;
+                break;
+            }
+        }
+        PathFind(actor_it);
+    }
+}
+
+PathFindStep :: proc(s: *Actor, compute_history: bool = true): bool {
+    if s.open_paths.len == 0 {
+        // Reset if we didn't find solution
+        if s.close_paths.len != 0 {
+            last := GetLastPath(s.close_paths);
+            reached_target := last.p.x == s.target_p.x && last.p.y == s.target_p.y;
+            if reached_target == false {
+                s.close_paths.len = 0;
+                s.open_paths.len  = 0;
+                s.history.len     = 0;
+            }
+        }
+
+        InsertOpenPath(s, s.p, s.p, ignore_blocks = true);
+    }
+
+    if s.close_paths.len != 0 {
+        last := GetLastPath(s.close_paths);
+        reached_target := last.p.x == s.target_p.x && last.p.y == s.target_p.y;
+        if reached_target return true;
+    }
+
+    it := PopPath(&s.open_paths);
+    AddPath(&s.close_paths, it);
+
+    for y := -1; y <= 1; y += 1 {
+        for x := -1; x <= 1; x += 1 {
+            if x == 0 && y == 0 continue;
+            p: V2I = {it.p.x + x, it.p.y + y};
+            InsertOpenPath(s, p, it.p);
+        }
+    }
+
+    if compute_history RecomputeHistory(s);
+    return false;
+}
+
+PathFind :: proc(actor: *Actor) {
+    for i := 0; i < 32; i += 1 {
+        done := PathFindStep(actor, false);
+        if done break;
+    }
+    RecomputeHistory(actor);
+}

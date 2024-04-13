@@ -1,0 +1,24 @@
+import "libc";
+
+main :: proc(): int {
+    untyped_string_const :: "something";
+    default_string := untyped_string_const;
+    assert(typeof(default_string) == typeof(:*char));
+
+    with_type: *char = untyped_string_const; @unused
+    void_type: *void = untyped_string_const; @unused
+
+    indexing_const := untyped_string_const[0];
+    assert(indexing_const == 's');
+    assert(typeof(indexing_const) == typeof(:char));
+
+    lengthof_const_string := lengthof(untyped_string_const);
+    assert(lengthof_const_string == 9);
+    assert(lengthof_const_string == lengthof("something"));
+
+    pointer_index := addptr("something", 0);
+    assert(typeof(pointer_index) == typeof(:*char));
+    assert(pointer_index[0] == 's');
+
+    return 0;
+}

@@ -1,0 +1,13 @@
+import c "libc";
+
+BeginProc :: proc(func: *char, file: *char, line: int) {
+    c.printf("begin timming proc: %s at %s:%d\n", func, file, line);
+}
+
+EndProc :: proc() {
+    c.printf("end timming proc\n");
+}
+
+main :: proc(): int {
+    return 0;
+}

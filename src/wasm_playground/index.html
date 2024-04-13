@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playground</title>
+</head>
+
+<body>
+  <select id="example-select">
+      <option value="0">hello world</option>
+      <option value="1">conway's game of life</option>
+  </select>
+  <textarea autofocus id="code" name="code" autocorrect="off" autocomplete="off" spellcheck="false" wrap="off" autocapitalize="off"></textarea>
+  <textarea disabled readonly id="output" name="output" autocorrect="off" autocomplete="off" spellcheck="false" wrap="off" autocapitalize="off"></textarea>
+</body>
+<style>
+  * { margin: 5px; padding: 0; }
+  body {
+    height: 100%;
+    margin: 60px auto;
+    max-width: 750px;
+    background: #000;
+  }
+  #code { width: 98%; height: 49vh; padding: 10px; }
+  #output { width: 98%; height: 46vh; padding: 10px; }
+  textarea { background: #000; color: #FFF; }
+</style>
+
+</html>
+<script>
+    Programs = [
+        <InsertPrograms>
+    ]
+    Program = Programs[0];
+
+    const ExampleSelect = document.getElementById("example-select");
+    const Output = document.getElementById("output");
+    const Code = document.getElementById("code");
+
+    ExampleSelect.addEventListener("change", (event) => {
+        Program = Programs[ExampleSelect.value];
+        Code.value = Program;
+        Output.value = "";
+        WASM_Exports.test();
+    });
+
+    Code.addEventListener("input", (event) => {
+        Program = event.target.value;
+        Code.value = Program;
+        Output.value = "";
+        WASM_Exports.test();
+    });
+
+    Code.addEventListener('keydown', function(e) {
+      if (e.key == 'Tab') {
+        e.preventDefault();
+        var start = this.selectionStart;
+        var end = this.selectionEnd;
+
+        // set textarea value to: text before caret + tab + text after caret
+        this.value = this.value.substring(0, start) +
+          "    " + this.value.substring(end);
+
+        // put caret at right position again
+        this.selectionStart = this.selectionEnd = start + 4;
+      }
+    });
+
+    Code.value = Program;
+
+    (async function main() {
+        let request = await fetch('main.wasm')
+        let binary = await request.arrayBuffer()
+
+        WASM_Memory = new WebAssembly['Memory']({ 'initial': 32 })
+        WASM_MemoryU8 = new Uint8Array(WASM_Memory['buffer']) // is this memory iterator?
+
+        WASM_Imports = {
+            memory: WASM_Memory,
+            JS_LoadFile: () => {
+              const buffer = new TextEncoder().encode(Program);
+              const pointer = 30 * 1024 * 64;
+              const slice = new Uint8Array(WASM_Memory.buffer, pointer, buffer.length + 1);
+              slice.set(buffer);
+              slice[buffer.length] = 0; // null byte to null-terminate the string
+              return pointer;
+            },
+            JS_ConsoleLog: (str, len) => {
+                let arr = WASM_MemoryU8.subarray( str, str+len );
+                let out = utf8decoder.decode( arr );
+                Output.value += out;
+            },
+            JS_ParseFloat: (str, len) => {
+                let arr = WASM_MemoryU8.subarray( str, str+len );
+                let out = utf8decoder.decode( arr );
+                let result = parseFloat(out);
+                return result;
+            },
+    }
+
+        let utf8decoder = new TextDecoder( "utf-8" );
+        let program = await WebAssembly['instantiate'](binary, { "env": WASM_Imports})
+        let instance = program['instance']
+        WASM_Exports = instance['exports']
+        WASM_Exports["test"]();
+    })()
+</script>

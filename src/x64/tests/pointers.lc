@@ -1,0 +1,25 @@
+
+stack_value :: proc(): int {
+    i := 2;
+    ip := &i;
+    return *ip - 2;
+}
+
+I := 2;
+glob_value :: proc(): int {
+    ip := &I;
+    return *ip - 2;
+}
+
+param_value :: proc(i: int): int {
+    ip := &i;
+    ipp := &ip;
+    return *ip - **ipp;
+}
+
+main :: proc(): int {
+    i0 := stack_value();
+    i1 := glob_value();
+    i2 := param_value(i0);
+    return i0 + i1 + i2;
+}

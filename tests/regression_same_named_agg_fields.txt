@@ -1,0 +1,6 @@
+// #failed: resolve
+// #error: duplicate field 'a' in aggregate type 'A'
+A :: struct {
+    a: int;
+    a: int;
+}

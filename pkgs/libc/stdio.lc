@@ -1,0 +1,61 @@
+#`#include<stdio.h>`;
+
+SEEK_SET :: 0;
+SEEK_CUR :: 1;
+SEEK_END :: 2;
+
+FILE :: struct {a: int;} @foreign
+fpos_t :: typedef long; @foreign
+
+stderr: *FILE; @foreign
+stdin:  *FILE; @foreign
+stdout: *FILE; @foreign
+
+remove    :: proc(filename: *char): int; @foreign
+rename    :: proc(old: *char, new: *char): int; @foreign
+tmpfile   :: proc(): *FILE; @foreign
+tmpnam    :: proc(s: *char): *char; @foreign
+
+fclose    :: proc(stream: *FILE): int; @foreign
+fflush    :: proc(stream: *FILE): int; @foreign
+fopen     :: proc(filename: *char, mode: *char): *FILE; @foreign
+freopen   :: proc(filename: *char, mode: *char, stream: *FILE): *FILE; @foreign
+setbuf    :: proc(stream: *FILE, buf: *char); @foreign
+setvbuf   :: proc(stream: *FILE, buf: *char, mode: int, size: size_t): int; @foreign
+
+fprintf   :: proc(stream: *FILE, format: *char, ...): int; @foreign
+fscanf    :: proc(stream: *FILE, format: *char, ...): int; @foreign
+printf    :: proc(format: *char, ...): int; @foreign
+scanf     :: proc(format: *char, ...): int; @foreign
+snprintf  :: proc(s: *char, n: size_t, format: *char, ...): int; @foreign
+sscanf    :: proc(s: *char, format: *char, ...): int; @foreign
+vfprintf  :: proc(stream: *FILE, format: *char, arg: *va_list): int; @foreign
+vfscanf   :: proc(stream: *FILE, format: *char, arg: *va_list): int; @foreign
+vprintf   :: proc(format: *char, arg: *va_list): int; @foreign
+vscanf    :: proc(format: *char, arg: *va_list): int; @foreign
+vsnprintf :: proc(s: *char, n: size_t, format: *char, arg: *va_list): int; @foreign
+vsprintf  :: proc(s: *char, format: *char, arg: *va_list): int; @foreign
+vsscanf   :: proc(s: *char, format: *char, arg: *va_list): int; @foreign
+
+fgetc     :: proc(stream: *FILE): int; @foreign
+fgets     :: proc(s: *char, n: int, stream: *FILE): *char; @foreign
+fputc     :: proc(s: *char, stream: *FILE): int; @foreign
+getc      :: proc(stream: *FILE): int; @foreign
+getchar   :: proc(): int; @foreign
+putc      :: proc(c: int, stream: *FILE): int; @foreign
+putchar   :: proc(c: int): int; @foreign
+puts      :: proc(s: *char): int; @foreign
+ungetc    :: proc(c: int, stream: *FILE): int; @foreign
+fread     :: proc(ptr: *void, size: size_t, nmemb: size_t, stream: *FILE): size_t; @foreign
+fwrite    :: proc(ptr: *void, size: size_t, nmemb: size_t, stream: *FILE): size_t; @foreign
+
+fgetpos   :: proc(stream: *FILE, pos: *fpos_t): int; @foreign
+fseek     :: proc(stream: *FILE, offset: long, whence: int): int; @foreign
+fsetpos   :: proc(stream: *FILE, pos: *fpos_t): int; @foreign
+ftell     :: proc(stream: *FILE): long; @foreign
+rewind    :: proc(stream: *FILE); @foreign
+
+clearerr  :: proc(stream: *FILE); @foreign
+feof      :: proc(stream: *FILE): int; @foreign
+ferror    :: proc(stream: *FILE): int; @foreign
+perror    :: proc(s: *char); @foreign

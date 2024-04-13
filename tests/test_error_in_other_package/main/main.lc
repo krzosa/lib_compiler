@@ -1,0 +1,14 @@
+import "other";
+
+Meme :: proc(): asd2 {
+    return 0;
+}
+
+make_sure_it_doesnt_report_about_lacking_return :: proc(): int {
+    asd := Meme();
+    return asd;
+}
+
+main :: proc(): int {
+    c: asd_local;
+}

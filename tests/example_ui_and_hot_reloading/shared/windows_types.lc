@@ -1,0 +1,34 @@
+#`#include <stdint.h>`;
+
+@foreign(int8_t)  i8  :: typedef char;
+@foreign(int16_t) i16 :: typedef short;
+@foreign(int32_t) i32 :: typedef int;
+@foreign(int64_t) i64 :: typedef llong;
+
+@foreign(uint8_t)  u8  :: typedef uchar;
+@foreign(uint16_t) u16 :: typedef ushort;
+@foreign(uint32_t) u32 :: typedef uint;
+@foreign(uint64_t) u64 :: typedef ullong;
+
+@foreign(size_t) usize :: typedef u64;
+@foreign(intptr_t) isize :: typedef i64;
+@foreign(intptr_t) intptr :: typedef i64;
+@foreign(uintptr_t) uintptr :: typedef u64;
+
+@weak @foreign f32 :: typedef float;
+@weak @foreign f64 :: typedef double;
+
+@foreign wchar_t :: typedef u16;
+@foreign va_list :: typedef u64;
+
+NULL :: 0;
+
+@foreign UINT64_MAX: u64;
+@foreign UINT32_MAX: u32;
+@foreign UINT16_MAX: u16;
+@foreign UINT8_MAX: u8;
+
+@foreign INT64_MAX: i64;
+@foreign INT32_MAX: i32;
+@foreign INT16_MAX: i16;
+@foreign INT8_MAX: i8;

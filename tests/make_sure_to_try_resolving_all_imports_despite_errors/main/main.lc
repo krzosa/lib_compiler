@@ -1,0 +1,13 @@
+import "a";
+import "b";
+import "working";
+import "d_not_working";
+
+a :: proc(): int {
+    return 0;
+}
+
+should_not_report_undeclared_n :: proc(): int {
+    result := b();
+    return result;
+}

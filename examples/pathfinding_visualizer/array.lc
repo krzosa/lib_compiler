@@ -1,0 +1,147 @@
+AddActorToArray :: proc(arr: *ArrayOfActors, actor: Actor) {
+    if arr.len + 1 > arr.cap {
+        new_cap := arr.cap * 2;
+        if (new_cap == 0) new_cap = 16;
+
+        arr.data = libc.realloc(arr.data, sizeof(:Actor) * :libc.size_t(new_cap));
+        arr.cap  = new_cap;
+    }
+
+    arr.data[arr.len] = actor;
+    arr.len          += 1;
+}
+
+TryGrowingActorArray :: proc(a: *ArrayOfActors) {
+    if a.len + 1 > a.cap {
+        new_cap := a.cap * 2;
+        if (new_cap == 0) new_cap = 16;
+        a.data = libc.realloc(a.data, sizeof(:Actor) * :libc.size_t(new_cap));
+        a.cap  = new_cap;
+    }
+}
+
+InsertActor :: proc(a: *ArrayOfActors, item: Actor, index: int) {
+    if index == a.len {
+        AddActorToArray(a, item);
+        return;
+    }
+
+    Assert(index < a.len);
+    Assert(index >= 0);
+
+    TryGrowingActorArray(a);
+    right_len := :libc.size_t(a.len - index);
+    libc.memmove(&a.data[index + 1], &a.data[index], sizeof(:Actor) * right_len);
+    a.data[index] = item;
+    a.len += 1;
+}
+
+GetLastActor :: proc(a: ArrayOfActors): *Actor {
+    Assert(a.len > 0);
+    result := &a.data[a.len - 1];
+    return result;
+}
+
+//
+
+AddPath :: proc(arr: *ArrayOfPaths, actor: Path) {
+    if arr.len + 1 > arr.cap {
+        new_cap := arr.cap * 2;
+        if (new_cap == 0) new_cap = 16;
+
+        arr.data = libc.realloc(arr.data, sizeof(:Path) * :libc.size_t(new_cap));
+        arr.cap  = new_cap;
+    }
+
+    arr.data[arr.len] = actor;
+    arr.len          += 1;
+}
+
+TryGrowingPathArray :: proc(a: *ArrayOfPaths) {
+    if a.len + 1 > a.cap {
+        new_cap := a.cap * 2;
+        if (new_cap == 0) new_cap = 16;
+        a.data = libc.realloc(a.data, sizeof(:Path) * :libc.size_t(new_cap));
+        a.cap  = new_cap;
+    }
+}
+
+InsertPath :: proc(a: *ArrayOfPaths, item: Path, index: int) {
+    if index == a.len {
+        AddPath(a, item);
+        return;
+    }
+
+    Assert(index < a.len);
+    Assert(index >= 0);
+
+    TryGrowingPathArray(a);
+    right_len := :libc.size_t(a.len - index);
+    libc.memmove(&a.data[index + 1], &a.data[index], sizeof(:Path) * right_len);
+    a.data[index] = item;
+    a.len += 1;
+}
+
+InsertSortedPath :: proc(a: *ArrayOfPaths, item: Path) {
+    insert_index := -1;
+    for i := 0; i < a.len; i += 1 {
+        it := &a.data[i];
+        if it.value_to_sort_by <= item.value_to_sort_by {
+            insert_index = i;
+            InsertPath(a, item, i);
+            break;
+        }
+    }
+    if insert_index == -1 {
+        AddPath(a, item);
+    }
+}
+
+GetLastPath :: proc(a: ArrayOfPaths): *Path {
+    Assert(a.len > 0);
+    result := &a.data[a.len - 1];
+    return result;
+}
+
+PopPath :: proc(a: *ArrayOfPaths): Path {
+    a.len -= 1;
+    result := a.data[a.len];
+    return result;
+}
+
+//
+
+AddV2I :: proc(arr: *ArrayOfV2Is, item: V2I) {
+    if arr.len + 1 > arr.cap {
+        new_cap := arr.cap * 2;
+        if (new_cap == 0) new_cap = 16;
+
+        arr.data = libc.realloc(arr.data, sizeof(:V2I) * :libc.size_t(new_cap));
+        arr.cap  = new_cap;
+    }
+
+    arr.data[arr.len] = item;
+    arr.len          += 1;
+}
+
+//
+
+AddAnimationSetTile :: proc(arr: *ArrayOfAnimationSetTiles, item: AnimationSetTile) {
+    if arr.len + 1 > arr.cap {
+        new_cap := arr.cap * 2;
+        if (new_cap == 0) new_cap = 16;
+
+        arr.data = libc.realloc(arr.data, sizeof(:AnimationSetTile) * :libc.size_t(new_cap));
+        arr.cap  = new_cap;
+    }
+
+    arr.data[arr.len] = item;
+    arr.len          += 1;
+}
+
+UnorderedRemoveAnimationSetTile :: proc(a: *ArrayOfAnimationSetTiles, item: *AnimationSetTile) {
+    Assert(a.len > 0);
+    Assert(item >= a.data && item < &a.data[a.len]);
+    a.len -= 1;
+    *item = a.data[a.len];
+}

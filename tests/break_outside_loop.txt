@@ -1,0 +1,6 @@
+// #failed: resolve
+// #error: break outside of a for loop is illegal
+
+main :: proc() {
+    break;
+}

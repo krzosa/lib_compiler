@@ -1,0 +1,4 @@
+import b "circular_b";
+
+thing :: proc() {
+}

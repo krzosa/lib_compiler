@@ -1,0 +1,78 @@
+import "shared";
+IO_Assertf :: proc(b: bool, s: *char, ...); @foreign
+IO_Assert  :: proc(b: bool); @foreign
+IO_InvalidCodepath :: proc(); @foreign
+S8_Lit :: proc(s: *char): S8_String; @foreign
+IO_FatalErrorf :: proc(msg: *char, ...); @foreign
+IO_FatalError :: proc(msg: *char); @foreign
+
+HashBytes :: proc(data: *void, data_size: u64): u64; @foreign
+
+// @todo: hmm ?
+SLL_QUEUE_ADD :: proc(first: *void, last: *void, data: *void); @foreign
+
+Mu: *MU_Context;
+Gs: *GameState;
+Perm: *MA_Arena;
+Temp: *MA_Arena;
+R: *R_Render;
+
+GameState :: struct {
+    render: R_Render;
+}
+
+activated: bool;
+APP_Update :: proc(event: LibraryEvent, mu: *MU_Context, dll_context: *DLL_Context) {
+    Mu = mu;
+    Perm = &dll_context.perm;
+    Temp =  dll_context.temp;
+    Gs = dll_context.context;
+
+    if event == Init {
+        dll_context.context = MA_PushSize(Perm, :usize(sizeof(:GameState)));
+        Gs = dll_context.context;
+
+        R_Init(&Gs.render);
+        return;
+    }
+
+    if event == Reload {
+        R_Reload();
+        return;
+    }
+
+    if event == Unload {
+        return;
+    }
+
+    UI_Begin();
+    Ui.cut = UI_Cut_Top;
+    UI_PushLayout({});
+    {
+        Ui.cut = UI_Cut_Left;
+
+        if (UI_Checkbox(&activated, "File")) {
+        }
+        UI_Button("Edit");
+        Ui.cut = UI_Cut_Right;
+        UI_Button("Memes");
+
+        Ui.s.cut_size.x += 100000;
+        UI_Fill();
+        UI_PopLayout();
+        UI_PopStyle();
+    }
+    UI_End();
+
+    R_Text2D({
+        pos = {100, 100},
+        text = S8_Lit("Testing memes"),
+        color = R_ColorWhite,
+        do_draw = true,
+        scale = 1.0,
+    });
+
+    R_Rect2D(R2P_SizeF(200, 200, 100, 100), R.atlas.white_texture_bounding_box, R_ColorWhite);
+
+    R_EndFrame();
+}

@@ -1,0 +1,79 @@
+Rect2P :: struct {
+    min: Vector2;
+    max: Vector2;
+}
+
+F32_Max :: proc(a: f32, b: f32): f32 {
+    if a > b return a;
+    return b;
+}
+
+F32_Min :: proc(a: f32, b: f32): f32 {
+    if a > b return b;
+    return a;
+}
+
+F32_Clamp :: proc(val: f32, min: f32, max: f32): f32 {
+    if (val > max) return max;
+    if (val < min) return min;
+    return val;
+}
+
+GetRectSize :: proc(rect: Rect2P): Vector2 {
+    result: Vector2 = {rect.max.x - rect.min.x, rect.max.y - rect.min.y};
+    return result;
+}
+
+CutLeft :: proc(r: *Rect2P, value: f32): Rect2P {
+    minx := r.min.x;
+    r.min.x = F32_Min(r.max.x, r.min.x + value);
+    return :Rect2P{
+        {    minx, r.min.y},
+        {r.min.x, r.max.y},
+    };
+}
+
+CutRight :: proc(r: *Rect2P, value: f32): Rect2P {
+    maxx := r.max.x;
+    r.max.x = F32_Max(r.max.x - value, r.min.x);
+    return :Rect2P{
+        {r.max.x, r.min.y},
+        {    maxx, r.max.y},
+    };
+}
+
+CutBottom :: proc(r: *Rect2P, value: f32): Rect2P { // Y is down
+    maxy := r.max.y;
+    r.max.y = F32_Max(r.min.y, r.max.y - value);
+    return :Rect2P{
+        {r.min.x, r.max.y},
+        {r.max.x,     maxy},
+    };
+}
+
+CutTop :: proc(r: *Rect2P, value: f32): Rect2P { // Y is down
+    miny := r.min.y;
+    r.min.y = F32_Min(r.min.y + value, r.max.y);
+    return :Rect2P{
+        {r.min.x,     miny},
+        {r.max.x, r.min.y},
+    };
+}
+
+Rect2PToRectangle :: proc(r: Rect2P): Rectangle {
+    result: Rectangle = {r.min.x, r.min.y, r.max.x - r.min.x, r.max.y - r.min.y};
+    return result;
+}
+
+Rect2PSize :: proc(x: f32, y: f32, w: f32, h: f32): Rect2P {
+    result: Rect2P = {{x, y}, {x+w, y+h}};
+    return result;
+}
+
+Shrink :: proc(r: Rect2P, v: f32): Rect2P {
+    r.min.x += v;
+    r.min.y += v;
+    r.max.x -= v;
+    r.max.y -= v;
+    return r;
+}

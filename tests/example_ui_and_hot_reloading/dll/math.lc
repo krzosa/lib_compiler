@@ -1,0 +1,122 @@
+
+V2   :: struct { x: f32; y: f32; }
+V3   :: struct { x: f32; y: f32; z: f32; }
+V4   :: struct { x: f32; y: f32; z: f32; w: f32; }
+R2P :: struct { min: V2; max: V2; }
+
+V2I  :: struct { x: i32; y: i32; }
+V3I  :: struct { x: i32; y: i32; z: i32; }
+V4I  :: struct { x: i32; y: i32; z: i32; w: i32; }
+
+R2P_SizeF :: proc(px: f32, py: f32, sx: f32, sy: f32): R2P {
+    result: R2P = {{px, py}, {px + sx, py + sy}};
+    return result;
+}
+
+R2P_Size :: proc(pos: V2, size: V2): R2P {
+    result := :R2P{{pos.x, pos.y}, {pos.x + size.x, pos.y + size.y}};
+    return result;
+}
+
+R2P_GetSize :: proc(r: R2P): V2 {
+    result := :V2{r.max.x - r.min.x, r.max.y - r.min.y};
+    return result;
+}
+
+V2_Mul :: proc(a: V2, b: V2): V2 {
+    result := :V2{a.x * b.x, a.y * b.y};
+    return result;
+}
+
+V2_MulF :: proc(a: V2, b: f32): V2 {
+    result := :V2{a.x * b, a.y * b};
+    return result;
+}
+
+V2_FromV2I :: proc(a: V2I): V2 {
+    result := :V2{:f32(a.x), :f32(a.y)};
+    return result;
+}
+
+I32_Max :: proc(a: i32, b: i32): i32 {
+    if a > b return a;
+    return b;
+}
+
+I32_Min :: proc(a: i32, b: i32): i32 {
+    if a > b return b;
+    return a;
+}
+
+F32_Max :: proc(a: f32, b: f32): f32 {
+    if a > b return a;
+    return b;
+}
+
+F32_Min :: proc(a: f32, b: f32): f32 {
+    if a > b return b;
+    return a;
+}
+
+F32_Clamp :: proc(val: f32, min: f32, max: f32): f32 {
+    if (val > max) return max;
+    if (val < min) return min;
+    return val;
+}
+
+R2P_CutLeft :: proc(r: *R2P, value: float): R2P {
+    minx := r.min.x;
+    r.min.x = F32_Min(r.max.x, r.min.x + value);
+    return :R2P{
+        {    minx, r.min.y},
+        {r.min.x, r.max.y}
+    };
+}
+
+R2P_CutRight :: proc(r: *R2P, value: f32): R2P {
+    maxx := r.max.x;
+    r.max.x = F32_Max(r.max.x - value, r.min.x);
+    return :R2P{
+        {r.max.x, r.min.y},
+        {    maxx, r.max.y}
+    };
+}
+
+R2P_CutTop :: proc(r: *R2P, value: f32): R2P { // Y is up
+    maxy := r.max.y;
+    r.max.y = F32_Max(r.min.y, r.max.y - value);
+    return :R2P{
+        {r.min.x, r.max.y},
+        {r.max.x,     maxy}
+    };
+}
+
+R2P_CutBottom :: proc(r: *R2P, value: f32): R2P { // Y is up
+    miny := r.min.y;
+    r.min.y = F32_Min(r.min.y + value, r.max.y);
+    return :R2P{
+        {r.min.x,     miny},
+        {r.max.x, r.min.y}
+    };
+}
+
+R2P_Shrink :: proc(r: R2P, size: f32): R2P {
+    return :R2P{
+        :V2{r.min.x + size, r.min.y + size},
+        :V2{r.max.x - size, r.max.y - size}
+    };
+}
+
+R2P_CollidesV2 :: proc(rect: R2P , point: V2): bool {
+    result := point.x > rect.min.x && point.x < rect.max.x && point.y > rect.min.y && point.y < rect.max.y;
+    return result;
+}
+
+R2P_CollidesR2P :: proc(a: R2P, b: R2P): bool {
+    result := a.min.x < b.max.x && a.max.x > b.min.x && a.min.y < b.max.y && a.max.y > b.min.y;
+    return result;
+}
+
+V2_Add :: proc(a: V2, b: V2): V2 { return {a.x + b.x, a.y + b.y}; }
+V2_Sub :: proc(a: V2, b: V2): V2 { return {a.x - b.x, a.y - b.y}; }
+V2_DivF :: proc(a: V2, b: f32): V2 { return {a.x / b, a.y / b}; }

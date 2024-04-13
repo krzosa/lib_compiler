@@ -1,0 +1,17 @@
+// #failed: resolve
+// #expected_error_count: 6
+OS_WINDOWS :: 10;
+
+
+String :: struct {
+    a: int;
+}
+
+int :: struct {
+    i: long;
+}
+
+// This should be OK
+UntypedFloat :: struct {
+    a: float;
+}

@@ -1,0 +1,7 @@
+// #failed: resolve
+// #error: returning from defer block is illegal
+
+main :: proc(): int {
+    defer return 0;
+    return 0;
+}

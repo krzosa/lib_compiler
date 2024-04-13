@@ -1,0 +1,28 @@
+#`#include<string.h>`;
+
+
+memset   :: proc(s:  *void, value: int, n: size_t): *void; @foreign
+memcpy   :: proc(s1: *void, s2: *void, n: size_t): *void; @foreign
+memmove  :: proc(s1: *void, s2: *void, n: size_t): *void; @foreign
+strcpy   :: proc(s1: *char, s2: *char): *char; @foreign
+strncpy  :: proc(s1: *char, s2: *char, n: size_t): *char; @foreign
+
+strcat   :: proc(s1: *char, s2: *char): *char; @foreign
+strncat  :: proc(s1: *char, s2: *char, n: size_t): *char; @foreign
+
+memcmp   :: proc(s1: *void, s2: *void, n: size_t): int; @foreign
+strcmp   :: proc(s1: *char, s2: *char): int; @foreign
+strcoll  :: proc(s1: *char, s2: *char): int; @foreign
+strncmp  :: proc(s1: *char, s2: *char, n: size_t): int; @foreign
+strxfrm  :: proc(s1: *char, s2: *char, n: size_t): size_t; @foreign
+
+memchr   :: proc(s : *void, c: int, n: size_t): *void; @foreign
+strchr   :: proc(s : *char, c: int): *char; @foreign
+strcspn  :: proc(s1: *char, s2: *char): size_t; @foreign
+strpbrk  :: proc(s1: *char, s2: *char): *char; @foreign
+strrchr  :: proc(s : *char, c: int): *char; @foreign
+strcpn   :: proc(s1: *char, s2: *char): *char; @foreign
+strtok   :: proc(s1: *char, s2: *char): *char; @foreign
+
+strerror :: proc(errnum: int): *char; @foreign
+strlen   :: proc(s: *char): size_t; @foreign

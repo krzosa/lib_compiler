@@ -1,0 +1,13 @@
+LibraryUpdate :: typedef proc(event: LibraryEvent, mu: *MU_Context, context: *DLL_Context);
+
+LibraryEvent :: typedef int;
+    Init   :: 0;
+    Reload :: ^;
+    Unload :: ^;
+    Update :: ^;
+
+DLL_Context :: struct {
+    temp: *MA_Arena;
+    perm: MA_Arena;
+    context: *void;
+}

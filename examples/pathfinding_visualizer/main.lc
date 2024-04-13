@@ -1,0 +1,266 @@
+import "raylib";
+import libc "libc";
+import "std_types";
+
+WinX  := 1280;
+WinY  := 720;
+Mode  := 0;
+RectX :: 16;
+RectY :: 16;
+Dt: float;
+
+MouseX:= 0;
+MouseY:= 0;
+MouseP: Vector2 = {0, 0};
+
+MouseSelecting := false;
+MouseSelectionPivot: Vector2;
+MouseSelectionBox: Rectangle;
+MouseSelectedActors: ArrayOfActors;
+
+AnimationSetTiles: ArrayOfAnimationSetTiles;
+
+AnimationSetTile :: struct {
+    set: bool;
+    p:   V2I;
+    t:   float;
+}
+
+ArrayOfAnimationSetTiles :: struct {
+    data: *AnimationSetTile;
+    len:   int;
+    cap:   int;
+}
+
+main :: proc(): int {
+    InitMap();
+    InitWindow(WinX, WinY, "pathfinding visualizer");
+    SetTargetFPS(60);
+
+    orange  := ORANGE;
+    orange.a = 255/2;
+    brown  := BROWN;
+    brown.a = 255/2;
+    dark_green  := DARKGREEN;
+    dark_green.a = 255/2;
+    blue  := BLUE;
+    blue.a = 255/2;
+    green  := GREEN;
+    green.a = 255/2;
+    red := RED;
+    red.a = 255/2;
+
+    actor_color         := dark_green;
+    past_actor_color    := blue;
+    target_color        := red;
+    selection_box_color := green;
+    selected_color      := selection_box_color;
+
+    for !WindowShouldClose() {
+        WinX   = GetScreenHeight();
+        WinY   = GetScreenWidth();
+        MouseX = GetMouseX();
+        MouseY = GetMouseY();
+        MouseP = GetMousePosition();
+        Dt     = GetFrameTime();
+        @unused map := &CurrentMap;
+
+        MouseSelecting = false;
+        if IsMouseButtonDown(MOUSE_BUTTON_LEFT) {
+            MouseSelecting = true;
+            if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
+                MouseSelectionPivot = MouseP;
+            }
+
+            MouseSelectionBox = {
+                MouseSelectionPivot.x,
+                MouseSelectionPivot.y,
+                MouseP.x - MouseSelectionPivot.x,
+                MouseP.y - MouseSelectionPivot.y,
+            };
+
+            if MouseSelectionBox.width < 0 {
+                MouseSelectionBox.x    += MouseSelectionBox.width;
+                MouseSelectionBox.width = -MouseSelectionBox.width;
+            }
+            if MouseSelectionBox.height < 0 {
+                MouseSelectionBox.y     += MouseSelectionBox.height;
+                MouseSelectionBox.height = -MouseSelectionBox.height;
+            }
+        }
+
+        if IsKeyPressed(KEY_F1) {
+            Mode = 0;
+        }
+
+        if IsKeyPressed(KEY_F2) {
+            Mode = 1;
+        }
+
+        if IsKeyPressed(KEY_F3) {
+            for i := 0; i < map.actors.len; i += 1 {
+                it := &map.actors.data[i];
+                MoveTowardsTarget(it);
+            }
+        }
+        PathFindUpdate(map);
+
+        if IsKeyPressed(KEY_F4) {
+            RandomizeActors();
+        }
+
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+
+        map_rectangle: Rectangle = {0, 0, :float(map.x) * RectX, :float(map.y) * RectY};
+        DrawRectangleRec(map_rectangle, LIGHTGRAY);
+
+        for x := 0; x < map.x; x += 1 {
+            for y := 0; y < map.y; y += 1 {
+                it := map.data[x + y*map.x];
+                r : Rectangle = {:float(x) * RectX, :float(y) * RectY, RectX, RectY};
+                r2: Rectangle = {r.x + 1, r.y + 1, r.width - 2, r.height - 2};
+
+                colliding := CheckCollisionPointRec(MouseP, r);
+                color := RAYWHITE;
+                if it == 1 { color = GRAY; }
+
+                if Mode == 0 {
+                    if colliding && IsMouseButtonDown(MOUSE_BUTTON_LEFT) {
+                        AddAnimationSetTile(&AnimationSetTiles, {true, {x,y}});
+                    }
+                    if colliding && IsMouseButtonDown(MOUSE_BUTTON_RIGHT) {
+                        AddAnimationSetTile(&AnimationSetTiles, {false, {x,y}});
+                    }
+                    if colliding {
+                        color.a = 100;
+                    }
+                }
+
+                DrawRectangleRec(r2, color);
+            }
+        }
+
+        for tile_i := 0; tile_i < AnimationSetTiles.len; tile_i += 1 {
+            tile_it := &AnimationSetTiles.data[tile_i];
+            remove  := false;
+
+            t := tile_it.t;
+            if tile_it.set == false {
+                t = 1 - t;
+            }
+
+            x := :float(tile_it.p.x) * RectX + 1;
+            y := :float(tile_it.p.y) * RectY + 1;
+
+            w: float = RectX - 2;
+            h: float = RectY - 2;
+            wt := w * t;
+            ht := h * t;
+            wd := w - wt;
+            hd := h - ht;
+
+            r: Rectangle = {x + wd/2, y + hd/2, wt, ht};
+            DrawRectangleRec(r, GRAY);
+
+            if tile_it.t > 1 {
+                map_tile := &map.data[tile_it.p.x + tile_it.p.y*map.x];
+                if tile_it.set  {*map_tile |=  TILE_BLOCKER;}
+                else            {*map_tile &= ~TILE_BLOCKER;}
+
+                remove = true;
+            }
+
+            tile_it.t += Dt*8;
+            if remove {
+                UnorderedRemoveAnimationSetTile(&AnimationSetTiles, tile_it);
+                tile_i -= 1;
+            }
+        }
+
+        for actor_i := 0; actor_i < map.actors.len; actor_i += 1 {
+            actor_it := &map.actors.data[actor_i];
+            target_r := Rect(actor_it.target_p);
+
+            main_p := Circle(actor_it.p);
+            DrawCircleV(main_p, RectX/2, actor_color);
+            DrawRectangleRec(target_r, target_color);
+
+            smaller_the_further: float;
+            for tile_i := actor_it.tiles_visited.len - 1; tile_i >= 0; tile_i -= 1 {
+                tile_it := &actor_it.tiles_visited.data[tile_i];
+                p := Circle({tile_it.x, tile_it.y});
+                DrawCircleV(p, RectX/2 - smaller_the_further, past_actor_color);
+                smaller_the_further += 0.5;
+            }
+
+            for path_i := 0; path_i < actor_it.open_paths.len; path_i += 1 {
+                path_it := &actor_it.open_paths.data[path_i];
+                path_r  := Rect(path_it.p);
+                DrawRectangleRec(path_r, orange);
+                s := TextFormat("%d", :int(libc.sqrtf(:float(path_it.value_to_sort_by))));
+                DrawText(s, :int(path_r.x), :int(path_r.y), 1, RAYWHITE);
+            }
+
+            for path_i := 0; path_i < actor_it.close_paths.len; path_i += 1 {
+                path_it := &actor_it.close_paths.data[path_i];
+                path_r  := Rect(path_it.p);
+                DrawRectangleRec(path_r, brown);
+            }
+
+            for path_i := 0; path_i < actor_it.history.len; path_i += 1 {
+                path_it := &actor_it.history.data[path_i];
+
+                p0 := Circle(path_it.came_from);
+                p1 := Circle(path_it.p);
+
+                DrawLineEx(p0, p1, 5, LIGHTGRAY);
+                DrawCircleV(p0, 4, LIGHTGRAY);
+                DrawCircleV(p1, 4, LIGHTGRAY);
+            }
+        }
+
+        if Mode == 1 {
+            for actor_i := 0; actor_i < MouseSelectedActors.len; actor_i += 1 {
+                actor_it := &MouseSelectedActors.data[actor_i];
+                actor_box := Rect(actor_it.p);
+                DrawRectangleRec(actor_box, selected_color);
+
+                if IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) {
+                    p := ScreenToMap(MouseP);
+                    SetTargetP(actor_it, p);
+                }
+            }
+
+            if MouseSelecting {
+                MouseSelectedActors.len = 0;
+                for actor_i := 0; actor_i < MouseSelectedActors.len; actor_i += 1 {
+                    actor_it := &MouseSelectedActors.data[actor_i];
+                    actor_box := Rect(actor_it.p);
+
+                    if CheckCollisionRecs(actor_box, MouseSelectionBox) {
+                        AddActorToArray(&MouseSelectedActors, *actor_it);
+                    }
+                }
+                DrawRectangleRec(MouseSelectionBox, selection_box_color);
+            }
+        }
+
+        text_size := 24;
+        text_p    := 4;
+        text_y    := text_size * 2;
+
+        DrawText("F4 :: Randomize actors", text_p, text_y, text_size, GRAY);
+        text_y -= text_size;
+        DrawText("F3 :: Simulate actors", text_p, text_y, text_size, GRAY);
+        text_y -= text_size;
+        text: *char = "Mode(F1) :: Block placing";
+        if Mode == 1 { text = "Mode(F2) :: Actor placing"; }
+        DrawText(text, text_p, text_y, text_size, GRAY);
+        text_y -= text_size;
+
+        EndDrawing();
+    }
+
+    return 0;
+}
