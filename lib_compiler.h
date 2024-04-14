@@ -825,13 +825,13 @@ typedef enum {
 typedef struct {
     int left;
     int right;
-} LC_BindingPower;
+} LC_Precedence;
 
 typedef enum {
-    LC_Binding_Prefix,
-    LC_Binding_Infix,
-    LC_Binding_Postfix,
-} LC_Binding;
+    LC_PrecedenceKind_Prefix,
+    LC_PrecedenceKind_Infix,
+    LC_PrecedenceKind_Postfix,
+} LC_PrecedenceKind;
 
 typedef enum {
     LC_CmpRes_LT,
@@ -872,12 +872,6 @@ struct LC_FileIter {
     X(struct)            \
     X(union)             \
     X(addptr)            \
-    X(and)               \
-    X(or)                \
-    X(bit_and)           \
-    X(bit_or)            \
-    X(bit_xor)           \
-    X(not )              \
     X(true)              \
     X(false)
 
@@ -1010,7 +1004,9 @@ struct LC_Lang {
     bool breakpoint_on_error;
     bool use_colored_terminal_output;
 
-    bool (*on_decl_parsed)(bool discarded, LC_AST *n); // returning 'true' from here indicates that declaration should be discarded
+    void (*on_tokens_lexed)(LC_Lex *x);
+    void (*on_tokens_interned)(LC_Lex *x);
+    void (*on_decl_parsed)(LC_AST *n);
     void (*on_expr_parsed)(LC_AST *n);
     void (*on_stmt_parsed)(LC_AST *n);
     void (*on_typespec_parsed)(LC_AST *n);
@@ -1026,7 +1022,6 @@ struct LC_Lang {
 };
 
 extern LC_THREAD_LOCAL LC_Lang *L;
-extern LC_Operand               LC_OPNull;
 
 //
 // Main @api
@@ -1036,23 +1031,23 @@ LC_FUNCTION LC_Lang *LC_LangAlloc(void);        // This allocates memory for LC_
 LC_FUNCTION void     LC_LangBegin(LC_Lang *l);  // Prepare for compilation: init types, init builtins, set architecture variables stuff like that
 LC_FUNCTION void     LC_LangEnd(LC_Lang *lang); // Deallocate language memory
 
-LC_FUNCTION void          LC_RegisterPackageDir(char *dir);              // Add a package search directory
-LC_FUNCTION LC_ASTRefList LC_ResolvePackageByName(LC_Intern name);       // Fully resolve a package and all it's dependences
-LC_FUNCTION LC_String     LC_GenerateUnityBuild(LC_ASTRefList packages); // Generate the C program and return as a string
+LC_FUNCTION void      LC_RegisterPackageDir(char *dir);   // Add a package search directory
+LC_FUNCTION void      LC_ParseAndResolve(LC_Intern name); // Fully resolve a package and all it's dependences
+LC_FUNCTION LC_String LC_GenerateUnityBuild(void);        // Generate the C program and return as a string
 
 // Smaller passes for AST modification
-LC_FUNCTION void LC_ParsePackagesUsingRegistry(LC_Intern name);   // These 3 functions are equivalent to LC_ResolvePackageByName,
-LC_FUNCTION void LC_OrderAndResolveTopLevelDecls(LC_Intern name); // you can use them to hook into the compilation process - you can modify the AST
-LC_FUNCTION void LC_ResolveAllProcBodies(void);                   // before resolving or use resolved top declarations to generate some code.
-                                                                  // The Parse and Order functions can be called multiple times to accommodate this.
+LC_FUNCTION void LC_ParsePackagesPass(LC_Intern name);           // These functions are equivalent to LC_ParseAndResolve,
+LC_FUNCTION void LC_BuildIfPass(void);                           // you can use them to hook into the compilation process - you can modify the AST
+LC_FUNCTION void LC_OrderAndResolveTopLevelPass(LC_Intern name); // before resolving or use resolved top declarations to generate some code.
+LC_FUNCTION void LC_ResolveProcBodiesPass(void);                 // The Parse and Order functions can be called multiple times to accommodate this.
 
 // Extended pass / optimization
-LC_FUNCTION void LC_FindUnusedLocalsAndRemoveUnusedGlobalDecls(void); // Extended pass that you can execute once you have resolved all packages
+LC_FUNCTION void LC_FindUnusedLocalsAndRemoveUnusedGlobalDeclsPass(void); // Extended pass that you can execute once you have resolved all packages
 
-// These three functions are used to implement LC_FindUnusedLocalsAndRemoveUnusedGlobalDecls
+// These three functions are used to implement LC_FindUnusedLocalsAndRemoveUnusedGlobalDeclsPass
 LC_FUNCTION LC_Map LC_CountDeclRefs(LC_Arena *arena);
-LC_FUNCTION void   LC_RemoveUnreferencedGlobalDecls(LC_Map *map_of_visits);
-LC_FUNCTION void   LC_ErrorOnUnreferencedLocals(LC_Map *map_of_visits);
+LC_FUNCTION void   LC_RemoveUnreferencedGlobalDeclsPass(LC_Map *map_of_visits);
+LC_FUNCTION void   LC_ErrorOnUnreferencedLocalsPass(LC_Map *map_of_visits);
 
 // Notes
 LC_FUNCTION void    LC_DeclareNote(LC_Intern intern);
@@ -1184,38 +1179,37 @@ LC_FUNCTION LC_Type       *LC_StripPointer(LC_Type *type);
 LC_FUNCTION LC_AST *LC_ParseFile(LC_AST *package, char *filename, char *content, int line);
 LC_FUNCTION LC_AST *LC_ParseTokens(LC_AST *package, LC_Lex *x);
 
-LC_FUNCTION LC_Parser       LC_MakeParser(LC_Lex *x);
-LC_FUNCTION LC_Parser      *LC_MakeParserQuick(char *str);
-LC_FUNCTION LC_Token       *LC_Next(void);
-LC_FUNCTION LC_Token       *LC_Get(void);
-LC_FUNCTION LC_Token       *LC_GetI(int i);
-LC_FUNCTION LC_Token       *LC_Is(LC_TokenKind kind);
-LC_FUNCTION LC_Token       *LC_IsKeyword(LC_Intern intern);
-LC_FUNCTION LC_Token       *LC_Match(LC_TokenKind kind);
-LC_FUNCTION LC_Token       *LC_MatchKeyword(LC_Intern intern);
-LC_FUNCTION LC_BindingPower LC_MakeBP(int left, int right);
-LC_FUNCTION LC_BindingPower LC_GetBindingPower(LC_Binding binding, LC_TokenKind kind);
-LC_FUNCTION LC_AST         *LC_ParseExprEx(int min_bp);
-LC_FUNCTION LC_AST         *LC_ParseCompo(LC_Token *pos, LC_AST *left);
-LC_FUNCTION LC_AST         *LC_ParseExpr(void);
-LC_FUNCTION LC_AST         *LC_ParseProcType(LC_Token *pos);
-LC_FUNCTION LC_AST         *LC_ParseType(void);
-LC_FUNCTION LC_AST         *LC_ParseForStmt(LC_Token *pos);
-LC_FUNCTION LC_AST         *LC_ParseSwitchStmt(LC_Token *pos);
-LC_FUNCTION LC_AST         *LC_ParseStmt(bool check_semicolon);
-LC_FUNCTION LC_AST         *LC_ParseStmtBlock(int flags);
-LC_FUNCTION LC_AST         *LC_ParseProcDecl(LC_Token *name);
-LC_FUNCTION LC_AST         *LC_ParseStruct(LC_ASTKind kind, LC_Token *ident);
-LC_FUNCTION LC_AST         *LC_ParseTypedef(LC_Token *ident);
-LC_FUNCTION LC_AST         *LC_CreateNote(LC_Token *pos, LC_Intern ident);
-LC_FUNCTION LC_AST         *LC_ParseNote(void);
-LC_FUNCTION LC_AST         *LC_ParseNotes(void);
-LC_FUNCTION bool            LC_ResolveBuildIf(LC_AST *build_if);
-LC_FUNCTION LC_AST         *LC_ParseImport(void);
-LC_FUNCTION LC_AST         *LC_ParseDecl(LC_AST *file);
-LC_FUNCTION bool            LC_EatUntilNextValidDecl(void);
-LC_FUNCTION bool            LC_ParseHashBuildOn(LC_AST *n);
-LC_FUNCTION LC_AST         *LC_ParseFileEx(LC_AST *package);
+LC_FUNCTION LC_Parser     LC_MakeParser(LC_Lex *x);
+LC_FUNCTION LC_Parser    *LC_MakeParserQuick(char *str);
+LC_FUNCTION LC_Token     *LC_Next(void);
+LC_FUNCTION LC_Token     *LC_Get(void);
+LC_FUNCTION LC_Token     *LC_GetI(int i);
+LC_FUNCTION LC_Token     *LC_Is(LC_TokenKind kind);
+LC_FUNCTION LC_Token     *LC_IsKeyword(LC_Intern intern);
+LC_FUNCTION LC_Token     *LC_Match(LC_TokenKind kind);
+LC_FUNCTION LC_Token     *LC_MatchKeyword(LC_Intern intern);
+LC_FUNCTION LC_Precedence LC_GetPrecedence(LC_PrecedenceKind binding, LC_TokenKind kind);
+LC_FUNCTION LC_AST       *LC_ParseExprEx(int min_bp);
+LC_FUNCTION LC_AST       *LC_ParseCompo(LC_Token *pos, LC_AST *left);
+LC_FUNCTION LC_AST       *LC_ParseExpr(void);
+LC_FUNCTION LC_AST       *LC_ParseProcType(LC_Token *pos);
+LC_FUNCTION LC_AST       *LC_ParseType(void);
+LC_FUNCTION LC_AST       *LC_ParseForStmt(LC_Token *pos);
+LC_FUNCTION LC_AST       *LC_ParseSwitchStmt(LC_Token *pos);
+LC_FUNCTION LC_AST       *LC_ParseStmt(bool check_semicolon);
+LC_FUNCTION LC_AST       *LC_ParseStmtBlock(int flags);
+LC_FUNCTION LC_AST       *LC_ParseProcDecl(LC_Token *name);
+LC_FUNCTION LC_AST       *LC_ParseStruct(LC_ASTKind kind, LC_Token *ident);
+LC_FUNCTION LC_AST       *LC_ParseTypedef(LC_Token *ident);
+LC_FUNCTION LC_AST       *LC_CreateNote(LC_Token *pos, LC_Intern ident);
+LC_FUNCTION LC_AST       *LC_ParseNote(void);
+LC_FUNCTION LC_AST       *LC_ParseNotes(void);
+LC_FUNCTION bool          LC_ResolveBuildIf(LC_AST *build_if);
+LC_FUNCTION LC_AST       *LC_ParseImport(void);
+LC_FUNCTION LC_AST       *LC_ParseDecl(LC_AST *file);
+LC_FUNCTION bool          LC_EatUntilNextValidDecl(void);
+LC_FUNCTION bool          LC_ParseHashBuildOn(LC_AST *n);
+LC_FUNCTION LC_AST       *LC_ParseFileEx(LC_AST *package);
 
 //
 // Resolution functions
@@ -1275,6 +1269,7 @@ LC_FUNCTION LC_Operand                 LC_ResolveTypeCast(LC_AST *pos, LC_Operan
 LC_FUNCTION LC_Operand                 LC_ResolveTypeVarDecl(LC_AST *pos, LC_Operand t, LC_Operand v);
 LC_FUNCTION LC_Operand                 LC_ResolveTypeAggregate(LC_AST *pos, LC_Type *type);
 
+extern LC_Operand       LC_OPNull;
 LC_FUNCTION LC_Operand  LC_OPError(void);
 LC_FUNCTION LC_Operand  LC_OPConstType(LC_Type *type);
 LC_FUNCTION LC_Operand  LC_OPDecl(LC_Decl *decl);
@@ -3338,6 +3333,7 @@ LC_FUNCTION LC_Lex *LC_LexStream(char *file, char *str, int line) {
         LC_LexNext(x, t);
         if (t->kind == LC_TokenKind_EOF) break;
     }
+    if (L->on_tokens_lexed) L->on_tokens_lexed(x);
 
     return x;
 }
@@ -3419,6 +3415,7 @@ LC_FUNCTION void LC_InternTokens(LC_Lex *x) {
             }
         }
     }
+    if (L->on_tokens_interned) L->on_tokens_interned(x);
 }
 
 #undef LC_IF
@@ -7770,39 +7767,35 @@ LC_FUNCTION LC_Token *LC_MatchKeyword(LC_Intern intern) {
 // Pratt expression parser
 // Based on this really good article: https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 // clang-format off
-LC_FUNCTION LC_BindingPower LC_MakeBP(int left, int right) {
-    LC_BindingPower result = {left, right};
-    return result;
-}
-
-LC_FUNCTION LC_BindingPower LC_GetBindingPower(LC_Binding binding, LC_TokenKind kind) {
-    if (binding == LC_Binding_Prefix) goto Prefix;
-    if (binding == LC_Binding_Infix) goto Infix;
-    if (binding == LC_Binding_Postfix) goto Postfix;
+LC_FUNCTION LC_Precedence LC_MakePrecedence(int left, int right) { return {left, right}; }
+LC_FUNCTION LC_Precedence LC_GetPrecedence(LC_PrecedenceKind p, LC_TokenKind kind) {
+    if (p == LC_PrecedenceKind_Prefix) goto Prefix;
+    if (p == LC_PrecedenceKind_Infix) goto Infix;
+    if (p == LC_PrecedenceKind_Postfix) goto Postfix;
     LC_ASSERT(NULL, !"invalid codepath");
 
 Prefix:
     switch (kind) {
-        case LC_TokenKind_OpenBracket: return LC_MakeBP(-2, 22);
+        case LC_TokenKind_OpenBracket: return LC_MakePrecedence(-2, 22);
         case LC_TokenKind_Mul: case LC_TokenKind_BitAnd: case LC_TokenKind_Keyword: case LC_TokenKind_OpenParen:
-        case LC_TokenKind_Sub: case LC_TokenKind_Add: case LC_TokenKind_Neg: case LC_TokenKind_Not: case LC_TokenKind_OpenBrace: return LC_MakeBP(-2, 20);
-        default: return LC_MakeBP(-1, -1);
+        case LC_TokenKind_Sub: case LC_TokenKind_Add: case LC_TokenKind_Neg: case LC_TokenKind_Not: case LC_TokenKind_OpenBrace: return LC_MakePrecedence(-2, 20);
+        default: return LC_MakePrecedence(-1, -1);
     }
 Infix:
     switch (kind) {
-        case LC_TokenKind_Or: return LC_MakeBP(9, 10);
-        case LC_TokenKind_And: return LC_MakeBP(11, 12);
+        case LC_TokenKind_Or: return LC_MakePrecedence(9, 10);
+        case LC_TokenKind_And: return LC_MakePrecedence(11, 12);
         case LC_TokenKind_Equals: case LC_TokenKind_NotEquals: case LC_TokenKind_GreaterThen:
-        case LC_TokenKind_GreaterThenEq: case LC_TokenKind_LesserThen: case LC_TokenKind_LesserThenEq: return LC_MakeBP(13, 14);
-        case LC_TokenKind_Sub: case LC_TokenKind_Add: case LC_TokenKind_BitOr: case LC_TokenKind_BitXor: return LC_MakeBP(15, 16);
+        case LC_TokenKind_GreaterThenEq: case LC_TokenKind_LesserThen: case LC_TokenKind_LesserThenEq: return LC_MakePrecedence(13, 14);
+        case LC_TokenKind_Sub: case LC_TokenKind_Add: case LC_TokenKind_BitOr: case LC_TokenKind_BitXor: return LC_MakePrecedence(15, 16);
         case LC_TokenKind_RightShift: case LC_TokenKind_LeftShift: case LC_TokenKind_BitAnd:
-        case LC_TokenKind_Mul: case LC_TokenKind_Div: case LC_TokenKind_Mod: return LC_MakeBP(17, 18);
-        default: return LC_MakeBP(0, 0);
+        case LC_TokenKind_Mul: case LC_TokenKind_Div: case LC_TokenKind_Mod: return LC_MakePrecedence(17, 18);
+        default: return LC_MakePrecedence(0, 0);
     }
 Postfix:
     switch (kind) {
-        case LC_TokenKind_Dot: case LC_TokenKind_OpenBracket: case LC_TokenKind_OpenParen: return LC_MakeBP(21, -2);
-        default: return LC_MakeBP(-1, -1);
+        case LC_TokenKind_Dot: case LC_TokenKind_OpenBracket: case LC_TokenKind_OpenParen: return LC_MakePrecedence(21, -2);
+        default: return LC_MakePrecedence(-1, -1);
     }
 }
 
@@ -7810,7 +7803,7 @@ LC_FUNCTION LC_AST *LC_ParseExprEx(int min_bp) {
     LC_AST *left = NULL;
     LC_Token *prev = LC_GetI(-1);
     LC_Token *t = LC_Next();
-    LC_BindingPower prefixbp = LC_GetBindingPower(LC_Binding_Prefix, t->kind);
+    LC_Precedence prefixbp = LC_GetPrecedence(LC_PrecedenceKind_Prefix, t->kind);
 
     // parse prefix expression
     switch (t->kind) {
@@ -7908,8 +7901,8 @@ LC_FUNCTION LC_AST *LC_ParseExprEx(int min_bp) {
         // it's not so we don't recurse - we break
         // We do the for loop instead
 
-        LC_BindingPower postfix_bp = LC_GetBindingPower(LC_Binding_Postfix, t->kind);
-        LC_BindingPower infix_bp = LC_GetBindingPower(LC_Binding_Infix, t->kind);
+        LC_Precedence postfix_bp = LC_GetPrecedence(LC_PrecedenceKind_Postfix, t->kind);
+        LC_Precedence infix_bp = LC_GetPrecedence(LC_PrecedenceKind_Infix, t->kind);
 
         // parse postfix expression
         if (postfix_bp.left > min_bp) {
@@ -8655,8 +8648,8 @@ LC_FUNCTION LC_AST *LC_ParseFileEx(LC_AST *package) {
         if (decl->kind == LC_ASTKind_Error) {
             LC_EatUntilNextValidDecl();
         } else {
-            if (L->on_decl_parsed) L->on_decl_parsed(false, decl);
             LC_DLLAdd(n->afile.fdecl, n->afile.ldecl, decl);
+            if (L->on_decl_parsed) L->on_decl_parsed(decl);
         }
     }
 
@@ -9911,7 +9904,7 @@ LC_FUNCTION LC_Map LC_CountDeclRefs(LC_Arena *arena) {
     return map;
 }
 
-LC_FUNCTION void LC_RemoveUnreferencedGlobalDecls(LC_Map *map_of_visits) {
+LC_FUNCTION void LC_RemoveUnreferencedGlobalDeclsPass(LC_Map *map_of_visits) {
     for (LC_ASTRef *it = L->ordered_packages.first; it; it = it->next) {
         for (LC_Decl *decl = it->ast->apackage.ext->first_ordered; decl;) {
             intptr_t ref_count = (intptr_t)LC_MapGetP(map_of_visits, decl);
@@ -9925,7 +9918,7 @@ LC_FUNCTION void LC_RemoveUnreferencedGlobalDecls(LC_Map *map_of_visits) {
     }
 }
 
-LC_FUNCTION void LC_ErrorOnUnreferencedLocals(LC_Map *map_of_visits) {
+LC_FUNCTION void LC_ErrorOnUnreferencedLocalsPass(LC_Map *map_of_visits) {
     LC_Decl *first = (LC_Decl *)L->decl_arena->memory.data;
     for (int i = 0; i < L->decl_count; i += 1) {
         LC_Decl *decl = first + i;
@@ -9942,13 +9935,13 @@ LC_FUNCTION void LC_ErrorOnUnreferencedLocals(LC_Map *map_of_visits) {
     }
 }
 
-LC_FUNCTION void LC_FindUnusedLocalsAndRemoveUnusedGlobalDecls(void) {
+LC_FUNCTION void LC_FindUnusedLocalsAndRemoveUnusedGlobalDeclsPass(void) {
     if (L->errors) return;
     LC_TempArena check = LC_BeginTemp(L->arena);
 
     LC_Map map = LC_CountDeclRefs(check.arena);
-    LC_ErrorOnUnreferencedLocals(&map);
-    LC_RemoveUnreferencedGlobalDecls(&map);
+    LC_ErrorOnUnreferencedLocalsPass(&map);
+    LC_RemoveUnreferencedGlobalDeclsPass(&map);
 
     LC_EndTemp(check);
 }
@@ -10159,7 +10152,7 @@ LC_FUNCTION void LC_ParsePackage(LC_AST *n) {
     }
 }
 
-LC_FUNCTION void LC_ParsePackagesUsingRegistry(LC_Intern name) {
+LC_FUNCTION void LC_ParsePackagesPass(LC_Intern name) {
     LC_AST *n = LC_GetPackageByName(name);
     if (!n) {
         LC_SendErrorMessagef(NULL, NULL, "no package with name '%s'\n", name);
@@ -10172,7 +10165,7 @@ LC_FUNCTION void LC_ParsePackagesUsingRegistry(LC_Intern name) {
     LC_ParsePackage(n);
     LC_ASTRefList imports = LC_GetPackageImports(n);
     for (LC_ASTRef *it = imports.first; it; it = it->next) {
-        LC_ParsePackagesUsingRegistry(it->ast->gimport.path);
+        LC_ParsePackagesPass(it->ast->gimport.path);
     }
 }
 
@@ -10274,7 +10267,7 @@ LC_FUNCTION LC_AST *LC_OrderPackagesAndBasicResolve(LC_AST *pos, LC_Intern name)
     return n;
 }
 
-LC_FUNCTION void LC_OrderAndResolveTopLevelDecls(LC_Intern name) {
+LC_FUNCTION void LC_OrderAndResolveTopLevelPass(LC_Intern name) {
     L->first_package = name;
     LC_OrderPackagesAndBasicResolve(NULL, name);
 
@@ -10288,7 +10281,7 @@ LC_FUNCTION void LC_OrderAndResolveTopLevelDecls(LC_Intern name) {
     }
 }
 
-LC_FUNCTION void LC_ResolveAllProcBodies(void) {
+LC_FUNCTION void LC_ResolveProcBodiesPass(void) {
     // We don't need to check errors, only valid packages should have been put into
     // the list.
     for (LC_ASTRef *it = L->ordered_packages.first; it; it = it->next) {
@@ -10298,19 +10291,18 @@ LC_FUNCTION void LC_ResolveAllProcBodies(void) {
     }
 }
 
-LC_FUNCTION LC_ASTRefList LC_ResolvePackageByName(LC_Intern name) {
-    LC_ParsePackagesUsingRegistry(name);
+LC_FUNCTION void LC_ParseAndResolve(LC_Intern name) {
+    LC_ParsePackagesPass(name);
     LC_BuildIfPass();
-    LC_ASTRefList empty = {0};
-    if (L->errors) return empty;
+    if (L->errors) return;
 
-    LC_OrderAndResolveTopLevelDecls(name);
-    LC_ResolveAllProcBodies();
-    return L->ordered_packages;
+    LC_OrderAndResolveTopLevelPass(name);
+    LC_ResolveProcBodiesPass();
 }
 
-LC_FUNCTION LC_String LC_GenerateUnityBuild(LC_ASTRefList packages) {
+LC_FUNCTION LC_String LC_GenerateUnityBuild(void) {
     if (L->errors) return LC_MakeEmptyString();
+    LC_ASTRefList packages = L->ordered_packages;
 
     LC_BeginStringGen(L->arena);
 
