@@ -19,12 +19,6 @@ LC_FUNCTION LC_AST *LC_CopyAST(LC_Arena *arena, LC_AST *n) {
             LC_AST *it_copy = LC_CopyAST(arena, it);
             LC_DLLAdd(result->afile.fdecl, result->afile.ldecl, it_copy);
         }
-        LC_ASTFor(it, n->afile.fdiscarded) {
-            LC_AST *it_copy = LC_CopyAST(arena, it);
-            LC_DLLAdd(result->afile.fdiscarded, result->afile.ldiscarded, it_copy);
-        }
-
-        result->afile.build_if = n->afile.build_if;
     } break;
 
     case LC_ASTKind_DeclProc: {

@@ -369,12 +369,8 @@ struct LC_ASTFile {
     LC_AST *limport;
     LC_AST *fdecl;
     LC_AST *ldecl;
-    LC_AST *fdiscarded;
-    LC_AST *ldiscarded; // @build_if
 
     LC_Token *doc_comment;
-
-    bool build_if;
 };
 
 struct LC_ASTPackage {
@@ -384,8 +380,6 @@ struct LC_ASTPackage {
     LC_StringList injected_filepaths; // to sidestep regular file finding, implement single file packages etc.
     LC_AST       *ffile;
     LC_AST       *lfile;
-    LC_AST       *fdiscarded;
-    LC_AST       *ldiscarded; // #build_if
 
     LC_Token *doc_comment;
 
@@ -446,7 +440,7 @@ struct LC_ExprCompoItem {
 };
 
 // clang-format off
-union LC_Val               { LC_BigInt i; double d; LC_Intern name; };
+union  LC_Val             { LC_BigInt i; double d; LC_Intern name; };
 struct LC_ExprIdent       { LC_Intern name; LC_Decl *resolved_decl; };
 struct LC_ExprUnary       { LC_TokenKind op; LC_AST *expr; };
 struct LC_ExprBinary      { LC_TokenKind op; LC_AST *left; LC_AST *right; };
@@ -487,7 +481,7 @@ struct LC_DeclNote        { LC_DeclBase base; LC_AST *expr; bool processed; }; /
 struct LC_GlobImport      { LC_Intern name; LC_Intern path; bool resolved; LC_Decl *resolved_decl; };
 
 struct LC_ASTRef          { LC_ASTRef *next; LC_ASTRef *prev; LC_AST *ast; };
-struct LC_ASTRefList       { LC_ASTRef *first; LC_ASTRef *last; };
+struct LC_ASTRefList      { LC_ASTRef *first; LC_ASTRef *last; };
 // clang-format on
 
 struct LC_TypeAndVal {
@@ -650,10 +644,8 @@ struct LC_ASTWalker {
     LC_ASTArray stack;
 
     int inside_builtin;
-    int inside_discarded;
     int inside_note;
 
-    uint8_t         visit_discarded;
     uint8_t         visit_notes;
     uint8_t         depth_first;
     uint8_t         dont_recurse; // breathfirst only
@@ -905,6 +897,7 @@ struct LC_Lang {
     LC_Intern     first_package;
     LC_ASTRefList ordered_packages;
     LC_StringList package_dirs;
+    LC_ASTRefList discarded;
 
     LC_Map   interns;
     LC_Map   declared_notes;
@@ -1655,10 +1648,6 @@ LC_FUNCTION wchar_t *LC_ToWidechar(LC_Arena *allocator, LC_String string);
         } else {                                       \
             (node)->prev->next = (node)->next;         \
             (node)->next->prev = (node)->prev;         \
-        }                                              \
-        if (node) {                                    \
-            (node)->prev = 0;                          \
-            (node)->next = 0;                          \
         }                                              \
     } while (0)
 #define LC_DLLRemove(first, last, node) LC_DLLRemoveMod(first, last, node, next, prev)

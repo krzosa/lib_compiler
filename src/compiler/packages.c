@@ -221,6 +221,36 @@ LC_FUNCTION void LC_ParsePackagesUsingRegistry(LC_Intern name) {
     }
 }
 
+LC_FUNCTION void LC_BuildIfPass(void) {
+    LC_ASTFor(n, L->fpackage) {
+        for (LC_AST *fit = n->apackage.ffile; fit;) {
+            LC_AST *next = fit->next;
+
+            LC_AST *build_if = LC_HasNote(fit, L->ibuild_if);
+            if (build_if) {
+                if (!LC_ResolveBuildIf(build_if)) {
+                    LC_DLLRemove(n->apackage.ffile, n->apackage.lfile, fit);
+                    LC_AddASTToRefList(&L->discarded, fit);
+                    fit = next;
+                    continue;
+                }
+            }
+
+            for (LC_AST *dit = fit->afile.fdecl; dit; dit = dit->next) {
+                LC_AST *build_if = LC_HasNote(dit, L->ibuild_if);
+                if (build_if) {
+                    if (!LC_ResolveBuildIf(build_if)) {
+                        LC_DLLRemove(fit->afile.fdecl, fit->afile.ldecl, dit);
+                        LC_AddASTToRefList(&L->discarded, dit);
+                    }
+                }
+            }
+
+            fit = next;
+        }
+    }
+}
+
 LC_FUNCTION void LC_AddOrderedPackageToRefList(LC_AST *n) {
     LC_ASTRefList *ordered = &L->ordered_packages;
     for (LC_ASTRef *it = ordered->first; it; it = it->next) {
@@ -315,6 +345,7 @@ LC_FUNCTION void LC_ResolveAllProcBodies(void) {
 
 LC_FUNCTION LC_ASTRefList LC_ResolvePackageByName(LC_Intern name) {
     LC_ParsePackagesUsingRegistry(name);
+    LC_BuildIfPass();
     LC_ASTRefList empty = {0};
     if (L->errors) return empty;
 

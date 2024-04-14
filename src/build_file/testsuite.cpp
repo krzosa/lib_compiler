@@ -277,6 +277,7 @@ void RunTestFile(TestDesc it) {
 
     L->first_package = name;
     LC_ParsePackagesUsingRegistry(name);
+    LC_BuildIfPass();
     if (L->errors) {
         result = Failed_Parse;
         goto end_of_test;

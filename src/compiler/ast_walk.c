@@ -58,10 +58,6 @@ LC_FUNCTION void LC_WalkAST(LC_ASTWalker *ctx, LC_AST *n) {
 
     case LC_ASTKind_Package: {
         LC_ASTFor(it, n->apackage.ffile) LC_WalkAST(ctx, it);
-
-        ctx->inside_discarded += 1;
-        if (ctx->visit_discarded) LC_ASTFor(it, n->apackage.fdiscarded) LC_WalkAST(ctx, it);
-        ctx->inside_discarded -= 1;
     } break;
 
     case LC_ASTKind_File: {
@@ -70,10 +66,6 @@ LC_FUNCTION void LC_WalkAST(LC_ASTWalker *ctx, LC_AST *n) {
             if (ctx->visit_notes == false && it->kind == LC_ASTKind_DeclNote) continue;
             LC_WalkAST(ctx, it);
         }
-
-        ctx->inside_discarded += 1;
-        if (ctx->visit_discarded) LC_ASTFor(it, n->afile.fdiscarded) LC_WalkAST(ctx, it);
-        ctx->inside_discarded -= 1;
     } break;
 
     case LC_ASTKind_DeclProc: {

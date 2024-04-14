@@ -776,6 +776,33 @@ LC_FUNCTION LC_AST *LC_ParseNotes(void) {
     return 0;
 }
 
+LC_FUNCTION bool ParseHashBuildIf(LC_AST *n) {
+    LC_Token *t0 = LC_GetI(0);
+    LC_Token *t1 = LC_GetI(1);
+    if (t0->kind == LC_TokenKind_Hash && t1->kind == LC_TokenKind_Ident && t1->ident == L->ibuild_if) {
+        LC_Next();
+
+        LC_AST *note = LC_ParseNote();
+        if (note->kind == LC_ASTKind_Error) {
+            LC_EatUntilNextValidDecl();
+            return true;
+        }
+
+        if (!LC_Match(LC_TokenKind_Semicolon)) {
+            LC_ReportParseError(LC_GetI(-1), "expected ';' semicolon");
+            LC_EatUntilNextValidDecl();
+            return true;
+        }
+
+        LC_AST *note_list = LC_CreateAST(t0, LC_ASTKind_NoteList);
+        LC_DLLAdd(note_list->anote_list.first, note_list->anote_list.last, note);
+        n->notes = note_list;
+
+        return LC_ResolveBuildIf(note);
+    }
+    return true;
+}
+
 LC_FUNCTION bool LC_ResolveBuildIf(LC_AST *build_if) {
     LC_ExprCompo *note = &build_if->anote;
     if (note->size != 1) {
@@ -785,7 +812,7 @@ LC_FUNCTION bool LC_ResolveBuildIf(LC_AST *build_if) {
 
     LC_ExprCompoItem *item = &note->first->ecompo_item;
     if (item->index != NULL || item->name != 0) {
-        LC_ReportParseError(LC_GetI(-1), "invalid syntax, #build_if shouldn't have a named or indexed first argument");
+        LC_ReportParseError(LC_GetI(-1), "invalid syntax, you have passed in a named or indexed argument to #build_if");
         return true;
     }
 
@@ -908,34 +935,6 @@ LC_FUNCTION bool LC_EatUntilNextValidDecl(void) {
     }
 }
 
-LC_FUNCTION bool LC_ParseHashBuildOn(LC_AST *n) {
-    LC_Token *t0 = LC_GetI(0);
-    LC_Token *t1 = LC_GetI(1);
-    if (t0->kind == LC_TokenKind_Hash && t1->kind == LC_TokenKind_Ident && t1->ident == L->ibuild_if) {
-        LC_Next();
-
-        LC_AST *build_if     = LC_CreateAST(t1, LC_ASTKind_DeclNote);
-        build_if->dnote.expr = LC_ParseNote();
-        if (build_if->dnote.expr->kind == LC_ASTKind_Error) {
-            LC_EatUntilNextValidDecl();
-            return true;
-        }
-
-        if (!LC_Match(LC_TokenKind_Semicolon)) {
-            LC_ReportParseError(LC_GetI(-1), "expected ';' semicolon");
-            LC_EatUntilNextValidDecl();
-            return true;
-        }
-
-        LC_AST *note_list = LC_CreateAST(t0, LC_ASTKind_NoteList);
-        LC_DLLAdd(note_list->anote_list.first, note_list->anote_list.last, build_if);
-        n->notes = note_list;
-
-        return LC_ResolveBuildIf(build_if->dnote.expr);
-    }
-    return true;
-}
-
 LC_FUNCTION LC_AST *LC_ParseImport(void) {
     LC_AST   *n      = NULL;
     LC_Token *import = LC_MatchKeyword(L->kimport);
@@ -965,7 +964,7 @@ LC_FUNCTION LC_AST *LC_ParseFileEx(LC_AST *package) {
     LC_AST *n            = LC_CreateAST(LC_Get(), LC_ASTKind_File);
     n->afile.x           = L->parser->x;
     n->afile.doc_comment = LC_Match(LC_TokenKind_FileDocComment);
-    n->afile.build_if    = LC_ParseHashBuildOn(n);
+    ParseHashBuildIf(n);
 
     // Parse imports
     while (!LC_Is(LC_TokenKind_EOF)) {
@@ -988,35 +987,15 @@ LC_FUNCTION LC_AST *LC_ParseFileEx(LC_AST *package) {
         if (decl->kind == LC_ASTKind_Error) {
             LC_EatUntilNextValidDecl();
         } else {
-            bool skip = false;
-
-            LC_AST *build_if = LC_HasNote(decl, L->ibuild_if);
-            if (build_if) {
-                skip = !LC_ResolveBuildIf(build_if);
-            }
-
-            if (L->on_decl_parsed) {
-                skip = L->on_decl_parsed(skip, decl);
-            }
-
-            if (skip) {
-                LC_DLLAdd(n->afile.fdiscarded, n->afile.ldiscarded, decl);
-            } else {
-                LC_DLLAdd(n->afile.fdecl, n->afile.ldecl, decl);
-            }
+            if (L->on_decl_parsed) L->on_decl_parsed(false, decl);
+            LC_DLLAdd(n->afile.fdecl, n->afile.ldecl, decl);
         }
     }
 
     if (package) {
         if (package->apackage.doc_comment) LC_ReportParseError(package_doc_comment, "there are more then 1 package doc comments in %s package", (char *)package->apackage.name);
         package->apackage.doc_comment = package_doc_comment;
-
-        if (n->afile.build_if) {
-            LC_AddFileToPackage(package, n);
-        } else {
-            LC_DLLAdd(package->apackage.fdiscarded, package->apackage.ldiscarded, n);
-            n->afile.package = package;
-        }
+        LC_AddFileToPackage(package, n);
     }
 
     return n;

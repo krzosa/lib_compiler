@@ -5,12 +5,10 @@ I have no illusions here, this is not the next big language. What I propose is v
 - **User has full control over compilation!**
 - **No dependencies, permissive license, single file that compile both in C and C++!**
 - **Simpler then C:** core of the language is 4000 loc and entire package 11k loc.
-- **Statically typed, procedural and MODERN:** it's a mix of Go/Odin/Jai with "return to C" as ideal.
+- **Statically typed, procedural and modern:** it's a mix of Go/Odin/Jai with "return to C" as ideal.
 - **Complete:** it supports conditional compilation, modularity via packages etc.
 - **State of art error handling techniques** like AST poisoning, proper parsing recovery, catches tons of errors without misreporting!
 - **Great C integration:** using C libraries feels native, the language compiles easily to C with great debug info.
-
-**Library is in beta so I reserve the right to change things!**
 
 ## Example or [you can try the language online](https://krzosa.xyz/playground.html)
 

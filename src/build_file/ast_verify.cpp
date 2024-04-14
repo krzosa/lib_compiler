@@ -1,4 +1,5 @@
 thread_local LC_Map DebugASTMap;
+thread_local bool   DebugInsideDiscarded;
 
 void DebugVerify_WalkAST(LC_ASTWalker *ctx, LC_AST *n) {
     bool created = LC_InsertWithoutReplace(&DebugASTMap, n, (void *)(intptr_t)100);
@@ -23,7 +24,7 @@ void DebugVerify_WalkAST(LC_ASTWalker *ctx, LC_AST *n) {
         }
     }
 
-    if (LC_IsType(n) && ctx->inside_discarded == 0) {
+    if (LC_IsType(n) && DebugInsideDiscarded == false) {
         if (!n->type) {
             LC_ReportASTError(n, "typespec doesn't hold type");
         }
@@ -42,7 +43,7 @@ void DebugVerify_WalkAST(LC_ASTWalker *ctx, LC_AST *n) {
             }
         }
 
-        bool should_have_type = parent_is_builtin == false && ctx->inside_note == 0 && ctx->inside_discarded == 0;
+        bool should_have_type = parent_is_builtin == false && ctx->inside_note == 0 && DebugInsideDiscarded == false;
         if (should_have_type && !n->type) {
             LC_ReportASTError(n, "expression doesn't have type");
         }
@@ -78,8 +79,7 @@ void VerifyASTCopy(LC_ASTRefList packages) {
 
             {
                 LC_ASTWalker walker = LC_GetDefaultWalker(L->arena, VerifyCopy_Walk);
-                walker.visit_notes = walker.visit_discarded = true;
-                walker.user_data                            = (void *)&copy_counter;
+                walker.user_data    = (void *)&copy_counter;
                 LC_WalkAST(&walker, copy);
                 walker.user_data = (void *)&original_counter;
                 LC_WalkAST(&walker, copy);
@@ -101,12 +101,14 @@ void DebugVerifyAST(LC_ASTRefList packages) {
     LC_MapReserve(&DebugASTMap, 4096);
 
     LC_ASTWalker walker = LC_GetDefaultWalker(L->arena, DebugVerify_WalkAST);
-    walker.visit_notes = walker.visit_discarded = true;
-    for (LC_ASTRef *it = packages.first; it; it = it->next) {
-        LC_WalkAST(&walker, it->ast);
-    }
+    walker.visit_notes  = true;
+    for (LC_ASTRef *it = packages.first; it; it = it->next) LC_WalkAST(&walker, it->ast);
     LC_WalkAST(&walker, L->tstring->decl->ast);
     LC_WalkAST(&walker, L->tany->decl->ast);
+
+    DebugInsideDiscarded = true;
+    for (LC_ASTRef *it = L->discarded.first; it; it = it->next) LC_WalkAST(&walker, it->ast);
+    DebugInsideDiscarded = false;
 
     for (int i = 0; i < L->ast_count; i += 1) {
         LC_AST *it = (LC_AST *)L->ast_arena->memory.data + i;

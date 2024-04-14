@@ -12,6 +12,7 @@ bool generate_type_info() {
     LC_Intern name = LC_ILit("generate_type_info");
 
     LC_ParsePackagesUsingRegistry(name);
+    LC_BuildIfPass();
     if (L->errors) {
         LC_LangEnd(lang);
         return false;

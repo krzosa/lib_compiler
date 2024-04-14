@@ -9,6 +9,7 @@ bool add_dynamic_array_macro() {
 
     LC_Intern name = LC_ILit("add_dynamic_array_macro");
     LC_ParsePackagesUsingRegistry(name);
+    LC_BuildIfPass();
     if (L->errors) {
         LC_LangEnd(lang);
         return false;

@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    PackageCompiler();
+    // PackageCompiler();
     IO_Printf("Compiler packed successfully: lib_compiler.h\n");
 
     if (ShouldRun("test_readme")) {

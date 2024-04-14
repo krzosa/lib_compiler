@@ -65,6 +65,7 @@ bool sandbox() {
 
     LC_Intern name = LC_ILit("sandbox");
     LC_ParsePackagesUsingRegistry(name);
+    LC_BuildIfPass();
     if (L->errors) {
         LC_LangEnd(lang);
         return false;
