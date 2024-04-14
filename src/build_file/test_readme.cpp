@@ -30,8 +30,8 @@ void TestReadme() {
             LC_RegisterPackageDir("../pkgs");
             LC_Intern name = LC_ILit("readme_test");
             LC_AddSingleFilePackage(name, readme_path);
-            LC_ResolvePackageByName(name);
-            // LC_FindUnusedLocalsAndRemoveUnusedGlobalDecls();
+            LC_ParseAndResolve(name);
+            // LC_FindUnusedLocalsAndRemoveUnusedGlobalDeclsPass();
         }
     }
 }

@@ -13,7 +13,7 @@ bool add_printf_format_check() {
     LC_RegisterPackageDir("../examples");
 
     LC_Intern name = LC_ILit("add_printf_format_check");
-    LC_ResolvePackageByName(name);
+    LC_ParseAndResolve(name);
 
     LC_LangEnd(lang);
     return result;

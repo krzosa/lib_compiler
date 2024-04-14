@@ -6,8 +6,8 @@ bool create_raylib_window() {
     LC_RegisterPackageDir("../examples/");
     LC_RegisterPackageDir("../pkgs");
 
-    LC_Intern     name     = LC_ILit("create_raylib_window");
-    LC_ASTRefList packages = LC_ResolvePackageByName(name);
+    LC_Intern name = LC_ILit("create_raylib_window");
+    LC_ParseAndResolve(name);
     if (L->errors) {
         LC_LangEnd(lang);
         return false;
@@ -15,7 +15,7 @@ bool create_raylib_window() {
 
     OS_MakeDir("examples/create_raylib_window");
     S8_String path = "examples/create_raylib_window/create_raylib_window.c";
-    S8_String code = LC_GenerateUnityBuild(packages);
+    LC_String code = LC_GenerateUnityBuild();
     OS_WriteFile(path, code);
 
     bool success = true;

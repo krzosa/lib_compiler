@@ -276,16 +276,16 @@ void RunTestFile(TestDesc it) {
     LC_AddSingleFilePackage(name, it.absolute_path);
 
     L->first_package = name;
-    LC_ParsePackagesUsingRegistry(name);
+    LC_ParsePackagesPass(name);
     LC_BuildIfPass();
     if (L->errors) {
         result = Failed_Parse;
         goto end_of_test;
     }
 
-    LC_OrderAndResolveTopLevelDecls(name);
-    LC_ResolveAllProcBodies();
-    LC_FindUnusedLocalsAndRemoveUnusedGlobalDecls();
+    LC_OrderAndResolveTopLevelPass(name);
+    LC_ResolveProcBodiesPass();
+    LC_FindUnusedLocalsAndRemoveUnusedGlobalDeclsPass();
     if (L->errors) {
         result = Failed_Resolve;
         goto end_of_test;
@@ -294,7 +294,7 @@ void RunTestFile(TestDesc it) {
     DebugVerifyAST(L->ordered_packages);
 
     OS_MakeDir(it.filename);
-    code     = LC_GenerateUnityBuild(L->ordered_packages);
+    code     = LC_GenerateUnityBuild();
     out_path = S8_Format(L->arena, "%.*s/%.*s.c", S8_Expand(it.filename), S8_Expand(it.filename));
     OS_WriteFile(out_path, code);
 
@@ -333,15 +333,15 @@ void RunTestDir(TestDesc it, S8_String package_name) {
     LC_Intern first_package = LC_ILit(package_name.str);
     LC_RegisterPackageDir(it.absolute_path.str);
     LC_RegisterPackageDir("../../pkgs");
-    LC_ASTRefList packages = LC_ResolvePackageByName(first_package);
-    LC_FindUnusedLocalsAndRemoveUnusedGlobalDecls();
+    LC_ParseAndResolve(first_package);
+    LC_FindUnusedLocalsAndRemoveUnusedGlobalDeclsPass();
     if (L->errors != 0) result = Failed_Package;
 
     if (result == OK && T->expected_result == OK) {
-        DebugVerifyAST(packages);
+        DebugVerifyAST(L->ordered_packages);
 
         OS_MakeDir(it.filename);
-        S8_String code     = LC_GenerateUnityBuild(packages);
+        S8_String code     = LC_GenerateUnityBuild();
         S8_String out_path = S8_Format(L->arena, "%.*s/%.*s.c", S8_Expand(it.filename), S8_Expand(it.filename));
         OS_WriteFile(out_path, code);
         if (!T->dont_run) result = Compile(it.filename, out_path);
@@ -437,16 +437,16 @@ void RunTests() {
         lang->breakpoint_on_error         = BreakpointOnError;
         LC_LangBegin(lang);
         LC_RegisterPackageDir(T->path);
-        LC_ASTRefList dll_packages = LC_ResolvePackageByName(LC_ILit("dll"));
-        LC_ASTRefList exe_packages = LC_ResolvePackageByName(LC_ILit("exe"));
-        result                     = L->errors >= 1 ? Failed_Package : OK;
+        LC_ParseAndResolve(LC_ILit("dll"));
+        LC_ParseAndResolve(LC_ILit("exe"));
+        result = L->errors >= 1 ? Failed_Package : OK;
 
         if (result == OK) {
-            DebugVerifyAST(dll_packages);
+            DebugVerifyAST(L->ordered_packages);
             // DebugVerifyAST(exe_packages);
 
             S8_String prev = PushDir("example_ui_and_hot_reloading");
-            S8_String code = LC_GenerateUnityBuild(exe_packages);
+            LC_String code = LC_GenerateUnityBuild();
             OS_WriteFile("example_ui_and_hot_reloading", code);
             OS_SetWorkingDir(prev);
         }

@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
     }
 
     LC_Intern     name     = LC_InternStrLen(package.str, (int)package.len);
-    LC_ASTRefList packages = LC_ResolvePackageByName(name);
+    LC_ASTRefList packages = LC_ParseAndResolve(name);
     if (lang->errors) return 1;
 
     LC_String code = LC_GenerateUnityBuild(packages);

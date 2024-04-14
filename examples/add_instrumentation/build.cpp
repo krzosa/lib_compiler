@@ -1,9 +1,7 @@
-bool OnDeclParsed_AddInstrumentation(bool discard, LC_AST *n) {
-    if (discard) return discard;
-
+void OnDeclParsed_AddInstrumentation(LC_AST *n) {
     if (n->kind == LC_ASTKind_DeclProc && n->dproc.body) {
-        if (n->dbase.name == LC_ILit("BeginProc")) return false;
-        if (n->dbase.name == LC_ILit("EndProc")) return false;
+        if (n->dbase.name == LC_ILit("BeginProc")) return;
+        if (n->dbase.name == LC_ILit("EndProc")) return;
 
         LC_AST *body = n->dproc.body;
 
@@ -13,7 +11,6 @@ bool OnDeclParsed_AddInstrumentation(bool discard, LC_AST *n) {
         LC_DLLAddFront(body->sblock.first, body->sblock.last, end);
         LC_DLLAddFront(body->sblock.first, body->sblock.last, begin);
     }
-    return discard;
 }
 
 bool add_instrumentation() {
@@ -26,37 +23,30 @@ bool add_instrumentation() {
     LC_RegisterPackageDir("../pkgs");
     LC_RegisterPackageDir("../examples");
 
-    LC_Intern     name     = LC_ILit("add_instrumentation");
-    LC_ASTRefList packages = LC_ResolvePackageByName(name);
-    if (L->errors) {
+    LC_Intern name = LC_ILit("add_instrumentation");
+    LC_ParseAndResolve(name);
+    if (lang->errors) {
         LC_LangEnd(lang);
         return false;
     }
 
-    DebugVerifyAST(packages);
-    if (L->errors) {
+    DebugVerifyAST(L->ordered_packages);
+    if (lang->errors) {
         LC_LangEnd(lang);
         return false;
     }
 
-    S8_String code = LC_GenerateUnityBuild(packages);
+    LC_String code = LC_GenerateUnityBuild();
+    LC_LangEnd(lang);
+
     S8_String path = "examples/add_instrumentation/add_instrumentation.c";
     OS_MakeDir("examples");
     OS_MakeDir("examples/add_instrumentation");
     OS_WriteFile(path, code);
-    if (!UseCL) {
-        LC_LangEnd(lang);
-        return true;
-    }
+    if (!UseCL) return true;
 
     S8_String cmd     = Fmt("cl %.*s -Zi -std:c11 -nologo -FC -Fd:examples/add_instrumentation/a.pdb -Fe:examples/add_instrumentation/add_instrumentation.exe %.*s", S8_Expand(path), S8_Expand(RaylibLIB));
     int       errcode = Run(cmd);
-    if (errcode != 0) {
-        LC_LangEnd(lang);
-        return false;
-    }
-    // Run("examples/add_instrumentation/add_instrumentation.exe");
-
-    LC_LangEnd(lang);
+    if (errcode != 0) return false;
     return true;
 }

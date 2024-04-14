@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
     S8_For(it, dirs) { LC_RegisterPackageDir(it->string.str); }
 
     LC_Intern     name     = LC_InternStrLen(package.str, (int)package.len);
-    LC_ASTRefList packages = LC_ResolvePackageByName(name);
+    LC_ASTRefList packages = LC_ParseAndResolve(name);
     if (lang->errors) return 1;
 
     S8_String code = LC_GenerateUnityBuild(packages);

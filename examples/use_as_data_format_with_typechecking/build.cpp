@@ -8,8 +8,8 @@ bool use_as_data_format_with_typechecking() {
     LC_RegisterPackageDir("../examples/");
     LC_RegisterPackageDir("../pkgs");
 
-    LC_Intern     name     = LC_ILit("use_as_data_format_with_typechecking");
-    LC_ASTRefList packages = LC_ResolvePackageByName(name);
+    LC_Intern name = LC_ILit("use_as_data_format_with_typechecking");
+    LC_ParseAndResolve(name);
     if (L->errors) {
         LC_LangEnd(lang);
         return false;

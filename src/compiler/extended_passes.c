@@ -29,7 +29,7 @@ LC_FUNCTION LC_Map LC_CountDeclRefs(LC_Arena *arena) {
     return map;
 }
 
-LC_FUNCTION void LC_RemoveUnreferencedGlobalDecls(LC_Map *map_of_visits) {
+LC_FUNCTION void LC_RemoveUnreferencedGlobalDeclsPass(LC_Map *map_of_visits) {
     for (LC_ASTRef *it = L->ordered_packages.first; it; it = it->next) {
         for (LC_Decl *decl = it->ast->apackage.ext->first_ordered; decl;) {
             intptr_t ref_count = (intptr_t)LC_MapGetP(map_of_visits, decl);
@@ -43,7 +43,7 @@ LC_FUNCTION void LC_RemoveUnreferencedGlobalDecls(LC_Map *map_of_visits) {
     }
 }
 
-LC_FUNCTION void LC_ErrorOnUnreferencedLocals(LC_Map *map_of_visits) {
+LC_FUNCTION void LC_ErrorOnUnreferencedLocalsPass(LC_Map *map_of_visits) {
     LC_Decl *first = (LC_Decl *)L->decl_arena->memory.data;
     for (int i = 0; i < L->decl_count; i += 1) {
         LC_Decl *decl = first + i;
@@ -60,13 +60,13 @@ LC_FUNCTION void LC_ErrorOnUnreferencedLocals(LC_Map *map_of_visits) {
     }
 }
 
-LC_FUNCTION void LC_FindUnusedLocalsAndRemoveUnusedGlobalDecls(void) {
+LC_FUNCTION void LC_FindUnusedLocalsAndRemoveUnusedGlobalDeclsPass(void) {
     if (L->errors) return;
     LC_TempArena check = LC_BeginTemp(L->arena);
 
     LC_Map map = LC_CountDeclRefs(check.arena);
-    LC_ErrorOnUnreferencedLocals(&map);
-    LC_RemoveUnreferencedGlobalDecls(&map);
+    LC_ErrorOnUnreferencedLocalsPass(&map);
+    LC_RemoveUnreferencedGlobalDeclsPass(&map);
 
     LC_EndTemp(check);
 }

@@ -449,6 +449,7 @@ LC_FUNCTION LC_Lex *LC_LexStream(char *file, char *str, int line) {
         LC_LexNext(x, t);
         if (t->kind == LC_TokenKind_EOF) break;
     }
+    if (L->on_tokens_lexed) L->on_tokens_lexed(x);
 
     return x;
 }
@@ -530,6 +531,7 @@ LC_FUNCTION void LC_InternTokens(LC_Lex *x) {
             }
         }
     }
+    if (L->on_tokens_interned) L->on_tokens_interned(x);
 }
 
 #undef LC_IF

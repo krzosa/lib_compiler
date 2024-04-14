@@ -64,7 +64,7 @@ bool sandbox() {
     LC_RegisterPackageDir("../examples");
 
     LC_Intern name = LC_ILit("sandbox");
-    LC_ParsePackagesUsingRegistry(name);
+    LC_ParsePackagesPass(name);
     LC_BuildIfPass();
     if (L->errors) {
         LC_LangEnd(lang);
@@ -97,14 +97,14 @@ bool sandbox() {
         LC_DLLAdd(package->apackage.ffile, package->apackage.lfile, new_array_file);
     }
 
-    LC_OrderAndResolveTopLevelDecls(name);
-    LC_ResolveAllProcBodies();
+    LC_OrderAndResolveTopLevelPass(name);
+    LC_ResolveProcBodiesPass();
     if (L->errors) {
         LC_LangEnd(lang);
         return false;
     }
 
-    S8_String code = LC_GenerateUnityBuild(L->ordered_packages);
+    LC_String code = LC_GenerateUnityBuild();
     S8_String path = "examples/sandbox/sandbox.c";
 
     OS_MakeDir("examples/sandbox");

@@ -7,15 +7,15 @@ bool pathfinding_visualizer() {
     LC_RegisterPackageDir("../examples/");
     LC_RegisterPackageDir("../pkgs");
 
-    LC_Intern     name     = LC_ILit("pathfinding_visualizer");
-    LC_ASTRefList packages = LC_ResolvePackageByName(name);
-    LC_FindUnusedLocalsAndRemoveUnusedGlobalDecls();
+    LC_Intern name = LC_ILit("pathfinding_visualizer");
+    LC_ParseAndResolve(name);
+    LC_FindUnusedLocalsAndRemoveUnusedGlobalDeclsPass();
     if (L->errors) {
         LC_LangEnd(lang);
         return false;
     }
 
-    DebugVerifyAST(packages);
+    DebugVerifyAST(L->ordered_packages);
     if (L->errors) {
         LC_LangEnd(lang);
         return false;
@@ -23,7 +23,7 @@ bool pathfinding_visualizer() {
 
     OS_MakeDir("examples");
     OS_MakeDir("examples/pathfinding_visualizer");
-    S8_String code = LC_GenerateUnityBuild(packages);
+    LC_String code = LC_GenerateUnityBuild();
     S8_String path = "examples/pathfinding_visualizer/pathfinding_visualizer.c";
     OS_WriteFile(path, code);
 

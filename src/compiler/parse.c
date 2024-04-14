@@ -987,8 +987,8 @@ LC_FUNCTION LC_AST *LC_ParseFileEx(LC_AST *package) {
         if (decl->kind == LC_ASTKind_Error) {
             LC_EatUntilNextValidDecl();
         } else {
-            if (L->on_decl_parsed) L->on_decl_parsed(false, decl);
             LC_DLLAdd(n->afile.fdecl, n->afile.ldecl, decl);
+            if (L->on_decl_parsed) L->on_decl_parsed(decl);
         }
     }
 

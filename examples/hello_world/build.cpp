@@ -6,24 +6,23 @@ bool hello_world() {
     LC_RegisterPackageDir("../examples/");
     LC_RegisterPackageDir("../pkgs");
 
-    LC_Intern     name     = LC_ILit("hello_world");
-    LC_ASTRefList packages = LC_ResolvePackageByName(name);
-    if (L->errors) {
+    LC_Intern name = LC_ILit("hello_world");
+    LC_ParseAndResolve(name);
+    if (lang->errors) {
         LC_LangEnd(lang);
         return false;
     }
 
     OS_MakeDir("examples/hello_world");
-    S8_String code = LC_GenerateUnityBuild(packages);
+    LC_ParseAndResolve(name);
+    LC_String code = LC_GenerateUnityBuild();
+    LC_LangEnd(lang);
+
     S8_String path = "examples/hello_world/hello_world.c";
     OS_WriteFile(path, code);
-
-    bool success = true;
     if (UseCL) {
-        S8_String cmd = Fmt("cl %.*s -Zi -std:c11 -nologo -FC -Fd:examples/hello_world/hello_world.pdb -Fe:examples/hello_world/hello_world.exe %.*s", S8_Expand(path), S8_Expand(RaylibLIB));
-        if (Run(cmd) != 0) success = false;
+        S8_String cmd = Fmt("cl %.*s -nologo -FC -Fd:examples/hello_world/hello_world.pdb -Fe:examples/hello_world/hello_world.exe", S8_Expand(path));
+        if (Run(cmd) != 0) return false;
     }
-
-    LC_LangEnd(lang);
-    return success;
+    return true;
 }

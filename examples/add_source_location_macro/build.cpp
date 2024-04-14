@@ -26,23 +26,18 @@ bool add_source_location_macro() {
     LC_RegisterPackageDir("../examples/");
     LC_RegisterPackageDir("../pkgs");
 
-    LC_Intern     name     = LC_ILit("add_source_location_macro");
-    LC_ASTRefList packages = LC_ResolvePackageByName(name);
+    LC_Intern name = LC_ILit("add_source_location_macro");
+    LC_ParseAndResolve(name);
     if (L->errors) {
         LC_LangEnd(lang);
         return false;
     }
 
-    S8_String dir = "examples/add_source_location_macro";
-    OS_MakeDir(dir);
-    S8_String cfile = "examples/add_source_location_macro/add_source_location_macro.c";
-    S8_String code  = LC_GenerateUnityBuild(packages);
-    OS_WriteFile(cfile, code);
-    if (L->errors) {
-        LC_LangEnd(lang);
-        return false;
-    }
-
+    LC_String code = LC_GenerateUnityBuild();
     LC_LangEnd(lang);
+
+    OS_MakeDir("examples/add_source_location_macro");
+    OS_WriteFile("examples/add_source_location_macro/add_source_location_macro.c", code);
+
     return true;
 }

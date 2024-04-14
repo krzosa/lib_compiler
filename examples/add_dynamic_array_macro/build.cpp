@@ -8,7 +8,7 @@ bool add_dynamic_array_macro() {
     LC_RegisterPackageDir("../examples");
 
     LC_Intern name = LC_ILit("add_dynamic_array_macro");
-    LC_ParsePackagesUsingRegistry(name);
+    LC_ParsePackagesPass(name);
     LC_BuildIfPass();
     if (L->errors) {
         LC_LangEnd(lang);
@@ -159,14 +159,14 @@ bool add_dynamic_array_macro() {
         LC_DLLAdd(file->afile.fdecl, file->afile.ldecl, ast);
     }
 
-    LC_OrderAndResolveTopLevelDecls(name);
-    LC_ResolveAllProcBodies();
+    LC_OrderAndResolveTopLevelPass(name);
+    LC_ResolveProcBodiesPass();
     if (L->errors) {
         LC_LangEnd(lang);
         return false;
     }
 
-    LC_String code = LC_GenerateUnityBuild(L->ordered_packages);
+    LC_String code = LC_GenerateUnityBuild();
     OS_MakeDir("examples/add_dynamic_array_macro");
     OS_WriteFile("examples/add_dynamic_array_macro/add_dynamic_array_macro.c", code);
 

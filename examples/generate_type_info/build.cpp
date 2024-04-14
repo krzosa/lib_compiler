@@ -11,14 +11,14 @@ bool generate_type_info() {
 
     LC_Intern name = LC_ILit("generate_type_info");
 
-    LC_ParsePackagesUsingRegistry(name);
+    LC_ParsePackagesPass(name);
     LC_BuildIfPass();
     if (L->errors) {
         LC_LangEnd(lang);
         return false;
     }
 
-    LC_OrderAndResolveTopLevelDecls(name);
+    LC_OrderAndResolveTopLevelPass(name);
     if (L->errors) {
         LC_LangEnd(lang);
         return false;
@@ -55,9 +55,9 @@ bool generate_type_info() {
     }
 
     // Resolve decls again with new content added in
-    LC_OrderAndResolveTopLevelDecls(name);
-    LC_ResolveAllProcBodies();
-    LC_FindUnusedLocalsAndRemoveUnusedGlobalDecls();
+    LC_OrderAndResolveTopLevelPass(name);
+    LC_ResolveProcBodiesPass();
+    LC_FindUnusedLocalsAndRemoveUnusedGlobalDeclsPass();
 
     bool result = L->errors ? false : true;
     LC_LangEnd(lang);

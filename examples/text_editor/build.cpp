@@ -8,20 +8,20 @@ bool text_editor() {
     LC_RegisterPackageDir("../pkgs");
     LC_RegisterPackageDir("../examples");
 
-    LC_Intern     name     = LC_ILit("text_editor");
-    LC_ASTRefList packages = LC_ResolvePackageByName(name);
+    LC_Intern name = LC_ILit("text_editor");
+    LC_ParseAndResolve(name);
     if (L->errors) return false;
 
-    DebugVerifyAST(packages);
+    DebugVerifyAST(L->ordered_packages);
     if (L->errors) return false;
 
-    LC_FindUnusedLocalsAndRemoveUnusedGlobalDecls();
+    LC_FindUnusedLocalsAndRemoveUnusedGlobalDeclsPass();
 
     OS_MakeDir("examples");
     OS_MakeDir("examples/text_editor");
     OS_CopyFile(RaylibDLL, "examples/text_editor/raylib.dll", true);
 
-    S8_String code = LC_GenerateUnityBuild(packages);
+    LC_String code = LC_GenerateUnityBuild();
     S8_String path = "examples/text_editor/text_editor.c";
     OS_WriteFile(path, code);
 

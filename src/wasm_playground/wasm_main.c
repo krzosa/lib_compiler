@@ -115,7 +115,7 @@ void WASM_EXPORT(test)(void) {
 
     LC_Intern name = LC_ILit("file");
     LC_AddSingleFilePackage(name, LC_Lit("file.lc"));
-    LC_ASTRefList packages = LC_ResolvePackageByName(name);
+    LC_ASTRefList packages = LC_ParseAndResolve(name);
 
     if (L->errors == 0) {
         LC_BeginStringGen(L->arena);

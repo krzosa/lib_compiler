@@ -205,7 +205,7 @@ LC_FUNCTION void LC_ParsePackage(LC_AST *n) {
     }
 }
 
-LC_FUNCTION void LC_ParsePackagesUsingRegistry(LC_Intern name) {
+LC_FUNCTION void LC_ParsePackagesPass(LC_Intern name) {
     LC_AST *n = LC_GetPackageByName(name);
     if (!n) {
         LC_SendErrorMessagef(NULL, NULL, "no package with name '%s'\n", name);
@@ -218,7 +218,7 @@ LC_FUNCTION void LC_ParsePackagesUsingRegistry(LC_Intern name) {
     LC_ParsePackage(n);
     LC_ASTRefList imports = LC_GetPackageImports(n);
     for (LC_ASTRef *it = imports.first; it; it = it->next) {
-        LC_ParsePackagesUsingRegistry(it->ast->gimport.path);
+        LC_ParsePackagesPass(it->ast->gimport.path);
     }
 }
 
@@ -320,7 +320,7 @@ LC_FUNCTION LC_AST *LC_OrderPackagesAndBasicResolve(LC_AST *pos, LC_Intern name)
     return n;
 }
 
-LC_FUNCTION void LC_OrderAndResolveTopLevelDecls(LC_Intern name) {
+LC_FUNCTION void LC_OrderAndResolveTopLevelPass(LC_Intern name) {
     L->first_package = name;
     LC_OrderPackagesAndBasicResolve(NULL, name);
 
@@ -334,7 +334,7 @@ LC_FUNCTION void LC_OrderAndResolveTopLevelDecls(LC_Intern name) {
     }
 }
 
-LC_FUNCTION void LC_ResolveAllProcBodies(void) {
+LC_FUNCTION void LC_ResolveProcBodiesPass(void) {
     // We don't need to check errors, only valid packages should have been put into
     // the list.
     for (LC_ASTRef *it = L->ordered_packages.first; it; it = it->next) {
@@ -344,19 +344,18 @@ LC_FUNCTION void LC_ResolveAllProcBodies(void) {
     }
 }
 
-LC_FUNCTION LC_ASTRefList LC_ResolvePackageByName(LC_Intern name) {
-    LC_ParsePackagesUsingRegistry(name);
+LC_FUNCTION void LC_ParseAndResolve(LC_Intern name) {
+    LC_ParsePackagesPass(name);
     LC_BuildIfPass();
-    LC_ASTRefList empty = {0};
-    if (L->errors) return empty;
+    if (L->errors) return;
 
-    LC_OrderAndResolveTopLevelDecls(name);
-    LC_ResolveAllProcBodies();
-    return L->ordered_packages;
+    LC_OrderAndResolveTopLevelPass(name);
+    LC_ResolveProcBodiesPass();
 }
 
-LC_FUNCTION LC_String LC_GenerateUnityBuild(LC_ASTRefList packages) {
+LC_FUNCTION LC_String LC_GenerateUnityBuild(void) {
     if (L->errors) return LC_MakeEmptyString();
+    LC_ASTRefList packages = L->ordered_packages;
 
     LC_BeginStringGen(L->arena);
 

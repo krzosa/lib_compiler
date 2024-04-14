@@ -966,7 +966,9 @@ struct LC_Lang {
     bool breakpoint_on_error;
     bool use_colored_terminal_output;
 
-    bool (*on_decl_parsed)(bool discarded, LC_AST *n); // returning 'true' from here indicates that declaration should be discarded
+    void (*on_tokens_lexed)(LC_Lex *x);
+    void (*on_tokens_interned)(LC_Lex *x);
+    void (*on_decl_parsed)(LC_AST *n);
     void (*on_expr_parsed)(LC_AST *n);
     void (*on_stmt_parsed)(LC_AST *n);
     void (*on_typespec_parsed)(LC_AST *n);
@@ -982,7 +984,6 @@ struct LC_Lang {
 };
 
 extern LC_THREAD_LOCAL LC_Lang *L;
-extern LC_Operand               LC_OPNull;
 
 //
 // Main @api
@@ -992,23 +993,23 @@ LC_FUNCTION LC_Lang *LC_LangAlloc(void);        // This allocates memory for LC_
 LC_FUNCTION void     LC_LangBegin(LC_Lang *l);  // Prepare for compilation: init types, init builtins, set architecture variables stuff like that
 LC_FUNCTION void     LC_LangEnd(LC_Lang *lang); // Deallocate language memory
 
-LC_FUNCTION void          LC_RegisterPackageDir(char *dir);              // Add a package search directory
-LC_FUNCTION LC_ASTRefList LC_ResolvePackageByName(LC_Intern name);       // Fully resolve a package and all it's dependences
-LC_FUNCTION LC_String     LC_GenerateUnityBuild(LC_ASTRefList packages); // Generate the C program and return as a string
+LC_FUNCTION void      LC_RegisterPackageDir(char *dir);   // Add a package search directory
+LC_FUNCTION void      LC_ParseAndResolve(LC_Intern name); // Fully resolve a package and all it's dependences
+LC_FUNCTION LC_String LC_GenerateUnityBuild(void);        // Generate the C program and return as a string
 
 // Smaller passes for AST modification
-LC_FUNCTION void LC_ParsePackagesUsingRegistry(LC_Intern name);   // These 3 functions are equivalent to LC_ResolvePackageByName,
-LC_FUNCTION void LC_OrderAndResolveTopLevelDecls(LC_Intern name); // you can use them to hook into the compilation process - you can modify the AST
-LC_FUNCTION void LC_ResolveAllProcBodies(void);                   // before resolving or use resolved top declarations to generate some code.
-                                                                  // The Parse and Order functions can be called multiple times to accommodate this.
+LC_FUNCTION void LC_ParsePackagesPass(LC_Intern name);           // These functions are equivalent to LC_ParseAndResolve,
+LC_FUNCTION void LC_BuildIfPass(void);                           // you can use them to hook into the compilation process - you can modify the AST
+LC_FUNCTION void LC_OrderAndResolveTopLevelPass(LC_Intern name); // before resolving or use resolved top declarations to generate some code.
+LC_FUNCTION void LC_ResolveProcBodiesPass(void);                 // The Parse and Order functions can be called multiple times to accommodate this.
 
 // Extended pass / optimization
-LC_FUNCTION void LC_FindUnusedLocalsAndRemoveUnusedGlobalDecls(void); // Extended pass that you can execute once you have resolved all packages
+LC_FUNCTION void LC_FindUnusedLocalsAndRemoveUnusedGlobalDeclsPass(void); // Extended pass that you can execute once you have resolved all packages
 
-// These three functions are used to implement LC_FindUnusedLocalsAndRemoveUnusedGlobalDecls
+// These three functions are used to implement LC_FindUnusedLocalsAndRemoveUnusedGlobalDeclsPass
 LC_FUNCTION LC_Map LC_CountDeclRefs(LC_Arena *arena);
-LC_FUNCTION void   LC_RemoveUnreferencedGlobalDecls(LC_Map *map_of_visits);
-LC_FUNCTION void   LC_ErrorOnUnreferencedLocals(LC_Map *map_of_visits);
+LC_FUNCTION void   LC_RemoveUnreferencedGlobalDeclsPass(LC_Map *map_of_visits);
+LC_FUNCTION void   LC_ErrorOnUnreferencedLocalsPass(LC_Map *map_of_visits);
 
 // Notes
 LC_FUNCTION void    LC_DeclareNote(LC_Intern intern);
@@ -1231,6 +1232,7 @@ LC_FUNCTION LC_Operand                 LC_ResolveTypeCast(LC_AST *pos, LC_Operan
 LC_FUNCTION LC_Operand                 LC_ResolveTypeVarDecl(LC_AST *pos, LC_Operand t, LC_Operand v);
 LC_FUNCTION LC_Operand                 LC_ResolveTypeAggregate(LC_AST *pos, LC_Type *type);
 
+extern LC_Operand       LC_OPNull;
 LC_FUNCTION LC_Operand  LC_OPError(void);
 LC_FUNCTION LC_Operand  LC_OPConstType(LC_Type *type);
 LC_FUNCTION LC_Operand  LC_OPDecl(LC_Decl *decl);
