@@ -781,13 +781,13 @@ typedef enum {
 typedef struct {
     int left;
     int right;
-} LC_BindingPower;
+} LC_Precedence;
 
 typedef enum {
-    LC_Binding_Prefix,
-    LC_Binding_Infix,
-    LC_Binding_Postfix,
-} LC_Binding;
+    LC_PrecedenceKind_Prefix,
+    LC_PrecedenceKind_Infix,
+    LC_PrecedenceKind_Postfix,
+} LC_PrecedenceKind;
 
 typedef enum {
     LC_CmpRes_LT,
@@ -828,12 +828,6 @@ struct LC_FileIter {
     X(struct)            \
     X(union)             \
     X(addptr)            \
-    X(and)               \
-    X(or)                \
-    X(bit_and)           \
-    X(bit_or)            \
-    X(bit_xor)           \
-    X(not )              \
     X(true)              \
     X(false)
 
@@ -1141,38 +1135,37 @@ LC_FUNCTION LC_Type       *LC_StripPointer(LC_Type *type);
 LC_FUNCTION LC_AST *LC_ParseFile(LC_AST *package, char *filename, char *content, int line);
 LC_FUNCTION LC_AST *LC_ParseTokens(LC_AST *package, LC_Lex *x);
 
-LC_FUNCTION LC_Parser       LC_MakeParser(LC_Lex *x);
-LC_FUNCTION LC_Parser      *LC_MakeParserQuick(char *str);
-LC_FUNCTION LC_Token       *LC_Next(void);
-LC_FUNCTION LC_Token       *LC_Get(void);
-LC_FUNCTION LC_Token       *LC_GetI(int i);
-LC_FUNCTION LC_Token       *LC_Is(LC_TokenKind kind);
-LC_FUNCTION LC_Token       *LC_IsKeyword(LC_Intern intern);
-LC_FUNCTION LC_Token       *LC_Match(LC_TokenKind kind);
-LC_FUNCTION LC_Token       *LC_MatchKeyword(LC_Intern intern);
-LC_FUNCTION LC_BindingPower LC_MakeBP(int left, int right);
-LC_FUNCTION LC_BindingPower LC_GetBindingPower(LC_Binding binding, LC_TokenKind kind);
-LC_FUNCTION LC_AST         *LC_ParseExprEx(int min_bp);
-LC_FUNCTION LC_AST         *LC_ParseCompo(LC_Token *pos, LC_AST *left);
-LC_FUNCTION LC_AST         *LC_ParseExpr(void);
-LC_FUNCTION LC_AST         *LC_ParseProcType(LC_Token *pos);
-LC_FUNCTION LC_AST         *LC_ParseType(void);
-LC_FUNCTION LC_AST         *LC_ParseForStmt(LC_Token *pos);
-LC_FUNCTION LC_AST         *LC_ParseSwitchStmt(LC_Token *pos);
-LC_FUNCTION LC_AST         *LC_ParseStmt(bool check_semicolon);
-LC_FUNCTION LC_AST         *LC_ParseStmtBlock(int flags);
-LC_FUNCTION LC_AST         *LC_ParseProcDecl(LC_Token *name);
-LC_FUNCTION LC_AST         *LC_ParseStruct(LC_ASTKind kind, LC_Token *ident);
-LC_FUNCTION LC_AST         *LC_ParseTypedef(LC_Token *ident);
-LC_FUNCTION LC_AST         *LC_CreateNote(LC_Token *pos, LC_Intern ident);
-LC_FUNCTION LC_AST         *LC_ParseNote(void);
-LC_FUNCTION LC_AST         *LC_ParseNotes(void);
-LC_FUNCTION bool            LC_ResolveBuildIf(LC_AST *build_if);
-LC_FUNCTION LC_AST         *LC_ParseImport(void);
-LC_FUNCTION LC_AST         *LC_ParseDecl(LC_AST *file);
-LC_FUNCTION bool            LC_EatUntilNextValidDecl(void);
-LC_FUNCTION bool            LC_ParseHashBuildOn(LC_AST *n);
-LC_FUNCTION LC_AST         *LC_ParseFileEx(LC_AST *package);
+LC_FUNCTION LC_Parser     LC_MakeParser(LC_Lex *x);
+LC_FUNCTION LC_Parser    *LC_MakeParserQuick(char *str);
+LC_FUNCTION LC_Token     *LC_Next(void);
+LC_FUNCTION LC_Token     *LC_Get(void);
+LC_FUNCTION LC_Token     *LC_GetI(int i);
+LC_FUNCTION LC_Token     *LC_Is(LC_TokenKind kind);
+LC_FUNCTION LC_Token     *LC_IsKeyword(LC_Intern intern);
+LC_FUNCTION LC_Token     *LC_Match(LC_TokenKind kind);
+LC_FUNCTION LC_Token     *LC_MatchKeyword(LC_Intern intern);
+LC_FUNCTION LC_Precedence LC_GetPrecedence(LC_PrecedenceKind binding, LC_TokenKind kind);
+LC_FUNCTION LC_AST       *LC_ParseExprEx(int min_bp);
+LC_FUNCTION LC_AST       *LC_ParseCompo(LC_Token *pos, LC_AST *left);
+LC_FUNCTION LC_AST       *LC_ParseExpr(void);
+LC_FUNCTION LC_AST       *LC_ParseProcType(LC_Token *pos);
+LC_FUNCTION LC_AST       *LC_ParseType(void);
+LC_FUNCTION LC_AST       *LC_ParseForStmt(LC_Token *pos);
+LC_FUNCTION LC_AST       *LC_ParseSwitchStmt(LC_Token *pos);
+LC_FUNCTION LC_AST       *LC_ParseStmt(bool check_semicolon);
+LC_FUNCTION LC_AST       *LC_ParseStmtBlock(int flags);
+LC_FUNCTION LC_AST       *LC_ParseProcDecl(LC_Token *name);
+LC_FUNCTION LC_AST       *LC_ParseStruct(LC_ASTKind kind, LC_Token *ident);
+LC_FUNCTION LC_AST       *LC_ParseTypedef(LC_Token *ident);
+LC_FUNCTION LC_AST       *LC_CreateNote(LC_Token *pos, LC_Intern ident);
+LC_FUNCTION LC_AST       *LC_ParseNote(void);
+LC_FUNCTION LC_AST       *LC_ParseNotes(void);
+LC_FUNCTION bool          LC_ResolveBuildIf(LC_AST *build_if);
+LC_FUNCTION LC_AST       *LC_ParseImport(void);
+LC_FUNCTION LC_AST       *LC_ParseDecl(LC_AST *file);
+LC_FUNCTION bool          LC_EatUntilNextValidDecl(void);
+LC_FUNCTION bool          LC_ParseHashBuildOn(LC_AST *n);
+LC_FUNCTION LC_AST       *LC_ParseFileEx(LC_AST *package);
 
 //
 // Resolution functions

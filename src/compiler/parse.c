@@ -102,39 +102,35 @@ LC_FUNCTION LC_Token *LC_MatchKeyword(LC_Intern intern) {
 // Pratt expression parser
 // Based on this really good article: https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 // clang-format off
-LC_FUNCTION LC_BindingPower LC_MakeBP(int left, int right) {
-    LC_BindingPower result = {left, right};
-    return result;
-}
-
-LC_FUNCTION LC_BindingPower LC_GetBindingPower(LC_Binding binding, LC_TokenKind kind) {
-    if (binding == LC_Binding_Prefix) goto Prefix;
-    if (binding == LC_Binding_Infix) goto Infix;
-    if (binding == LC_Binding_Postfix) goto Postfix;
+LC_FUNCTION LC_Precedence LC_MakePrecedence(int left, int right) { return {left, right}; }
+LC_FUNCTION LC_Precedence LC_GetPrecedence(LC_PrecedenceKind p, LC_TokenKind kind) {
+    if (p == LC_PrecedenceKind_Prefix) goto Prefix;
+    if (p == LC_PrecedenceKind_Infix) goto Infix;
+    if (p == LC_PrecedenceKind_Postfix) goto Postfix;
     LC_ASSERT(NULL, !"invalid codepath");
 
 Prefix:
     switch (kind) {
-        case LC_TokenKind_OpenBracket: return LC_MakeBP(-2, 22);
+        case LC_TokenKind_OpenBracket: return LC_MakePrecedence(-2, 22);
         case LC_TokenKind_Mul: case LC_TokenKind_BitAnd: case LC_TokenKind_Keyword: case LC_TokenKind_OpenParen:
-        case LC_TokenKind_Sub: case LC_TokenKind_Add: case LC_TokenKind_Neg: case LC_TokenKind_Not: case LC_TokenKind_OpenBrace: return LC_MakeBP(-2, 20);
-        default: return LC_MakeBP(-1, -1);
+        case LC_TokenKind_Sub: case LC_TokenKind_Add: case LC_TokenKind_Neg: case LC_TokenKind_Not: case LC_TokenKind_OpenBrace: return LC_MakePrecedence(-2, 20);
+        default: return LC_MakePrecedence(-1, -1);
     }
 Infix:
     switch (kind) {
-        case LC_TokenKind_Or: return LC_MakeBP(9, 10);
-        case LC_TokenKind_And: return LC_MakeBP(11, 12);
+        case LC_TokenKind_Or: return LC_MakePrecedence(9, 10);
+        case LC_TokenKind_And: return LC_MakePrecedence(11, 12);
         case LC_TokenKind_Equals: case LC_TokenKind_NotEquals: case LC_TokenKind_GreaterThen:
-        case LC_TokenKind_GreaterThenEq: case LC_TokenKind_LesserThen: case LC_TokenKind_LesserThenEq: return LC_MakeBP(13, 14);
-        case LC_TokenKind_Sub: case LC_TokenKind_Add: case LC_TokenKind_BitOr: case LC_TokenKind_BitXor: return LC_MakeBP(15, 16);
+        case LC_TokenKind_GreaterThenEq: case LC_TokenKind_LesserThen: case LC_TokenKind_LesserThenEq: return LC_MakePrecedence(13, 14);
+        case LC_TokenKind_Sub: case LC_TokenKind_Add: case LC_TokenKind_BitOr: case LC_TokenKind_BitXor: return LC_MakePrecedence(15, 16);
         case LC_TokenKind_RightShift: case LC_TokenKind_LeftShift: case LC_TokenKind_BitAnd:
-        case LC_TokenKind_Mul: case LC_TokenKind_Div: case LC_TokenKind_Mod: return LC_MakeBP(17, 18);
-        default: return LC_MakeBP(0, 0);
+        case LC_TokenKind_Mul: case LC_TokenKind_Div: case LC_TokenKind_Mod: return LC_MakePrecedence(17, 18);
+        default: return LC_MakePrecedence(0, 0);
     }
 Postfix:
     switch (kind) {
-        case LC_TokenKind_Dot: case LC_TokenKind_OpenBracket: case LC_TokenKind_OpenParen: return LC_MakeBP(21, -2);
-        default: return LC_MakeBP(-1, -1);
+        case LC_TokenKind_Dot: case LC_TokenKind_OpenBracket: case LC_TokenKind_OpenParen: return LC_MakePrecedence(21, -2);
+        default: return LC_MakePrecedence(-1, -1);
     }
 }
 
@@ -142,7 +138,7 @@ LC_FUNCTION LC_AST *LC_ParseExprEx(int min_bp) {
     LC_AST *left = NULL;
     LC_Token *prev = LC_GetI(-1);
     LC_Token *t = LC_Next();
-    LC_BindingPower prefixbp = LC_GetBindingPower(LC_Binding_Prefix, t->kind);
+    LC_Precedence prefixbp = LC_GetPrecedence(LC_PrecedenceKind_Prefix, t->kind);
 
     // parse prefix expression
     switch (t->kind) {
@@ -240,8 +236,8 @@ LC_FUNCTION LC_AST *LC_ParseExprEx(int min_bp) {
         // it's not so we don't recurse - we break
         // We do the for loop instead
 
-        LC_BindingPower postfix_bp = LC_GetBindingPower(LC_Binding_Postfix, t->kind);
-        LC_BindingPower infix_bp = LC_GetBindingPower(LC_Binding_Infix, t->kind);
+        LC_Precedence postfix_bp = LC_GetPrecedence(LC_PrecedenceKind_Postfix, t->kind);
+        LC_Precedence infix_bp = LC_GetPrecedence(LC_PrecedenceKind_Infix, t->kind);
 
         // parse postfix expression
         if (postfix_bp.left > min_bp) {

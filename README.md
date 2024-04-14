@@ -83,11 +83,9 @@ You only need to compile the build tool once. Afterwards just call `./bld.exe`. 
 
 ## Further plans
 
-My priority is to improve the C user API, harden the compiler, accommodate things that I didn't foresee and stuff like that.
-
-Sometime in the future I want to implement a bytecode backend so that the language can be used like Lua as a nice scripting language.
-
-I'm also considering the addition of overloaded procedures because it would greatly aid in writing macros.
+- **My priority is to improve the C user API, harden the compiler, accommodate things that I didn't foresee and stuff like that.**
+- I want to implement a bytecode backend (in the future) so that the language can be used like Lua.
+- New features are of second priority unless they are small and important but additionally I'm considering the addition of overloaded procedures because it would greatly aid in writing macros.
 
 # Language overview
 
@@ -437,6 +435,55 @@ test :: proc() {
     }
 }
 ```
+
+## Arithmetic operators
+
+``` odin
+arithmetic_operators :: proc() {
+    add                   := 1 +  2;
+    sub                   := 1 -  2;
+    mul                   := 1 *  2;
+    div                   := 1 /  2;
+    mod                   := 1 %  2;
+
+    and                   := 1 && 2;
+    or                    := 1 || 2;
+    equals                := 1 == 2;
+    not_equals            := 1 != 2;
+    greater_then          := 1 >  2;
+    greater_then_or_equal := 1 >= 2;
+    lesser_then           := 1 <  2;
+    lesser_then_or_equal  := 1 <= 2;
+
+    left_shift            := 1 >> 2;
+    right_shift           := 1 << 2;
+    bit_or                := 1 |  2;
+    bit_and               := 1 &  2;
+    bit_xor               := 1 ^  2;
+
+    not                   := !1;
+    negate                := ~1;
+}
+```
+
+## Arithmetic assignment operators
+
+``` odin
+arithmetic_assign_operators :: proc() {
+    a  := 1;
+    a  /= 1;
+    a  *= 1;
+    a  %= 1;
+    a  -= 1;
+    a  += 1;
+    a  &= 1;
+    a  |= 1;
+    a  ^= 1;
+    a <<= 1;
+    a >>= 1;
+}
+```
+
 
 ## Defer statement
 
