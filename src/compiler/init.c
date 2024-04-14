@@ -93,10 +93,11 @@ LC_FUNCTION void LC_LangBegin(LC_Lang *l) {
     }
 
     {
-        LC_AST *builtins         = LC_CreateAST(0, LC_ASTKind_Package);
-        L->builtin_package       = builtins;
-        builtins->apackage.name  = LC_ILit("builtins");
-        builtins->apackage.scope = LC_CreateScope(256);
+        LC_AST *builtins              = LC_CreateAST(0, LC_ASTKind_Package);
+        L->builtin_package            = builtins;
+        builtins->apackage.ext        = LC_PushStruct(L->arena, LC_ASTPackageExt);
+        builtins->apackage.name       = LC_ILit("builtins");
+        builtins->apackage.ext->scope = LC_CreateScope(256);
         LC_AddPackageToList(builtins);
     }
 
@@ -179,7 +180,7 @@ LC_FUNCTION void LC_LangBegin(LC_Lang *l) {
             decl->state   = LC_DeclState_Resolved;
             decl->type    = t;
             t->decl       = decl;
-            LC_AddDeclToScope(L->builtin_package->apackage.scope, decl);
+            LC_AddDeclToScope(L->builtin_package->apackage.ext->scope, decl);
 
             if (t->kind == LC_TypeKind_uchar) decl->foreign_name = LC_ILit("unsigned char");
             if (t->kind == LC_TypeKind_ushort) decl->foreign_name = LC_ILit("unsigned short");
@@ -223,7 +224,7 @@ LC_FUNCTION void LC_LangBegin(LC_Lang *l) {
         decl->state        = LC_DeclState_Resolved;
         decl->type         = L->tstring;
         L->tstring->decl   = decl;
-        LC_AddDeclToScope(L->builtin_package->apackage.scope, decl);
+        LC_AddDeclToScope(L->builtin_package->apackage.ext->scope, decl);
         LC_Operand result = LC_ResolveTypeAggregate(ast, decl->type);
         LC_ASSERT(ast, !LC_IsError(result));
     }
@@ -240,7 +241,7 @@ LC_FUNCTION void LC_LangBegin(LC_Lang *l) {
         decl->state        = LC_DeclState_Resolved;
         decl->type         = L->tany;
         L->tany->decl      = decl;
-        LC_AddDeclToScope(L->builtin_package->apackage.scope, decl);
+        LC_AddDeclToScope(L->builtin_package->apackage.ext->scope, decl);
         LC_Operand result = LC_ResolveTypeAggregate(ast, decl->type);
         LC_ASSERT(ast, !LC_IsError(result));
     }

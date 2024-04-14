@@ -1,6 +1,6 @@
 /*
 This is a compiler frontend in a single-header-file library form.
-In **beta** version so things may change between versions!
+This is a **beta** so things may change between versions!
 
 # How to use
 
@@ -8736,34 +8736,28 @@ LC_FUNCTION LC_AST *LC_ParseFile(LC_AST *package, char *filename, char *content,
 
 LC_FUNCTION LC_AST *LC_ParseStmtf(const char *str, ...) {
     LC_FORMAT(L->arena, str, s8);
-
     LC_Parser *old    = L->parser;
     LC_Parser *p      = LC_MakeParserQuick(s8.str);
     LC_AST    *result = LC_ParseStmt(false);
     L->parser         = old;
-
     return result;
 }
 
 LC_FUNCTION LC_AST *LC_ParseExprf(const char *str, ...) {
     LC_FORMAT(L->arena, str, s8);
-
     LC_Parser *old    = L->parser;
     LC_Parser *p      = LC_MakeParserQuick(s8.str);
     LC_AST    *result = LC_ParseExpr();
     L->parser         = old;
-
     return result;
 }
 
 LC_FUNCTION LC_AST *LC_ParseDeclf(const char *str, ...) {
     LC_FORMAT(L->arena, str, s8);
-
     LC_Parser *old    = L->parser;
     LC_Parser *p      = LC_MakeParserQuick(s8.str);
     LC_AST    *result = LC_ParseDecl(&L->NullAST);
     L->parser         = old;
-
     return result;
 }
 

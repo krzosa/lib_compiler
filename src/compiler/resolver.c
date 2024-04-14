@@ -5,7 +5,7 @@
 #define LC_POP_SCOPE() L->resolver.active_scope = PREV_SCOPE
 #define LC_PUSH_LOCAL_SCOPE() int LOCAL_LEN = L->resolver.locals.len
 #define LC_POP_LOCAL_SCOPE() L->resolver.locals.len = LOCAL_LEN
-#define LC_PUSH_PACKAGE(PKG) LC_AST *PREV_PKG = L->resolver.package; L->resolver.package = PKG; LC_PUSH_SCOPE(PKG->apackage.scope)
+#define LC_PUSH_PACKAGE(PKG) LC_AST *PREV_PKG = L->resolver.package; L->resolver.package = PKG; LC_PUSH_SCOPE(PKG->apackage.ext->scope)
 #define LC_POP_PACKAGE() L->resolver.package = PREV_PKG; LC_POP_SCOPE()
 #define LC_PROP_ERROR(OP, n, ...)  OP = __VA_ARGS__; if (LC_IsError(OP)) { n->kind = LC_ASTKind_Error; return OP; }
 #define LC_DECL_PROP_ERROR(OP, ...) OP = __VA_ARGS__; if (LC_IsError(OP)) { LC_MarkDeclError(decl); return OP; }
@@ -113,14 +113,14 @@ LC_FUNCTION LC_Decl *LC_FindDeclInScope(DeclScope *scope, LC_Intern name) {
 
 LC_FUNCTION LC_Decl *LC_GetLocalOrGlobalDecl(LC_Intern name) {
     LC_Decl *decl = LC_FindDeclInScope(L->resolver.active_scope, name);
-    if (!decl && L->resolver.package->apackage.scope == L->resolver.active_scope) {
+    if (!decl && L->resolver.package->apackage.ext->scope == L->resolver.active_scope) {
         decl = LC_FindDeclOnStack(&L->resolver.locals, name);
     }
     return decl;
 }
 
 LC_FUNCTION LC_Operand LC_PutGlobalDecl(LC_Decl *decl) {
-    LC_Operand LC_DECL_PROP_ERROR(op, LC_AddDeclToScope(L->resolver.package->apackage.scope, decl));
+    LC_Operand LC_DECL_PROP_ERROR(op, LC_AddDeclToScope(L->resolver.package->apackage.ext->scope, decl));
 
     // :Mangle global scope name
     if (!decl->is_foreign && decl->package != L->builtin_package) {
@@ -153,7 +153,7 @@ LC_FUNCTION LC_Operand LC_PutGlobalDecl(LC_Decl *decl) {
 LC_FUNCTION LC_Operand LC_CreateLocalDecl(LC_DeclKind kind, LC_Intern name, LC_AST *ast) {
     LC_Decl *decl = LC_CreateDecl(kind, name, ast);
     decl->state   = LC_DeclState_Resolving;
-    LC_Operand LC_DECL_PROP_ERROR(operr0, LC_ThereIsNoDecl(L->resolver.package->apackage.scope, decl, true));
+    LC_Operand LC_DECL_PROP_ERROR(operr0, LC_ThereIsNoDecl(L->resolver.package->apackage.ext->scope, decl, true));
     LC_AddDecl(&L->resolver.locals, decl);
     return LC_OPDecl(decl);
 }
@@ -164,12 +164,12 @@ LC_FUNCTION LC_Decl *LC_AddConstIntDecl(char *key, int64_t value) {
     decl->state      = LC_DeclState_Resolved;
     decl->type       = L->tuntypedint;
     LC_Bigint_init_signed(&decl->v.i, value);
-    LC_AddDeclToScope(L->resolver.package->apackage.scope, decl);
+    LC_AddDeclToScope(L->resolver.package->apackage.ext->scope, decl);
     return decl;
 }
 
 LC_FUNCTION LC_Decl *LC_GetBuiltin(LC_Intern name) {
-    LC_Decl *decl = (LC_Decl *)LC_MapGetU64(L->builtin_package->apackage.scope, name);
+    LC_Decl *decl = (LC_Decl *)LC_MapGetU64(L->builtin_package->apackage.ext->scope, name);
     return decl;
 }
 

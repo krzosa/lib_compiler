@@ -955,7 +955,7 @@ LC_FUNCTION LC_AST *LC_ParseImport(void) {
 
 LC_FUNCTION void LC_AddFileToPackage(LC_AST *pkg, LC_AST *f) {
     f->afile.package = pkg;
-    LC_DLLAdd(pkg->apackage.ffile, pkg->apackage.lfile, f);
+    LC_DLLAdd(pkg->apackage.ext->ffile, pkg->apackage.ext->lfile, f);
 }
 
 LC_FUNCTION LC_AST *LC_ParseFileEx(LC_AST *package) {

@@ -31,13 +31,13 @@ LC_FUNCTION LC_Map LC_CountDeclRefs(LC_Arena *arena) {
 
 LC_FUNCTION void LC_RemoveUnreferencedGlobalDecls(LC_Map *map_of_visits) {
     for (LC_ASTRef *it = L->ordered_packages.first; it; it = it->next) {
-        for (LC_Decl *decl = it->ast->apackage.first_ordered; decl;) {
+        for (LC_Decl *decl = it->ast->apackage.ext->first_ordered; decl;) {
             intptr_t ref_count = (intptr_t)LC_MapGetP(map_of_visits, decl);
 
             LC_Decl *remove = decl;
             decl            = decl->next;
             if (ref_count == 0 && remove->foreign_name != LC_ILit("main")) {
-                LC_DLLRemove(it->ast->apackage.first_ordered, it->ast->apackage.last_ordered, remove);
+                LC_DLLRemove(it->ast->apackage.ext->first_ordered, it->ast->apackage.ext->last_ordered, remove);
             }
         }
     }

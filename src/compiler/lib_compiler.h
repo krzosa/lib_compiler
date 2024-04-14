@@ -373,21 +373,27 @@ struct LC_ASTFile {
     LC_Token *doc_comment;
 };
 
-struct LC_ASTPackage {
-    LC_Intern     name;
-    LC_DeclState  state;
-    LC_String     path;
+// To minimize package ast size, we want all nodes to be equal in size,
+// a lot of things are easier then and we can loop through all asts for free etc.
+typedef struct LC_ASTPackageExt LC_ASTPackageExt;
+struct LC_ASTPackageExt {
     LC_StringList injected_filepaths; // to sidestep regular file finding, implement single file packages etc.
     LC_AST       *ffile;
     LC_AST       *lfile;
-
-    LC_Token *doc_comment;
 
     // These are resolved later:
     // @todo: add foreign name?
     LC_Decl   *first_ordered;
     LC_Decl   *last_ordered;
     DeclScope *scope;
+};
+
+struct LC_ASTPackage {
+    LC_DeclState      state;
+    LC_Intern         name;
+    LC_String         path;
+    LC_Token         *doc_comment;
+    LC_ASTPackageExt *ext;
 };
 
 struct LC_ASTNoteList {

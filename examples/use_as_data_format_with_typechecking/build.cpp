@@ -19,18 +19,18 @@ bool use_as_data_format_with_typechecking() {
 
     // Constants
     {
-        LC_Decl *int_value = LC_FindDeclInScope(package->apackage.scope, LC_ILit("IntValue"));
+        LC_Decl *int_value = LC_FindDeclInScope(package->apackage.ext->scope, LC_ILit("IntValue"));
         int64_t  IntValue  = LC_Bigint_as_signed(&int_value->val.i);
         IO_Assert(IntValue == 232);
     }
 
     {
-        LC_Decl *decl = LC_FindDeclInScope(package->apackage.scope, LC_ILit("FloatValue"));
+        LC_Decl *decl = LC_FindDeclInScope(package->apackage.ext->scope, LC_ILit("FloatValue"));
         IO_Assert(decl->val.d == 13.0);
     }
 
     {
-        LC_Decl *decl = LC_FindDeclInScope(package->apackage.scope, LC_ILit("SomeString"));
+        LC_Decl *decl = LC_FindDeclInScope(package->apackage.ext->scope, LC_ILit("SomeString"));
         IO_Assert(decl->val.name == LC_ILit("Thing"));
     }
 
@@ -38,7 +38,7 @@ bool use_as_data_format_with_typechecking() {
 
     int64_t LEVEL_BEGIN = -1;
     {
-        LC_Decl *int_value = LC_FindDeclInScope(package->apackage.scope, LC_ILit("LEVEL_BEGIN"));
+        LC_Decl *int_value = LC_FindDeclInScope(package->apackage.ext->scope, LC_ILit("LEVEL_BEGIN"));
         LEVEL_BEGIN        = LC_Bigint_as_signed(&int_value->val.i);
         IO_Assert(LEVEL_BEGIN == 2);
     }
@@ -52,7 +52,7 @@ bool use_as_data_format_with_typechecking() {
             double Variable = GetFloatValue(p, "Variable");
         */
 
-        LC_Decl          *decl  = LC_FindDeclInScope(package->apackage.scope, LC_ILit("Player"));
+        LC_Decl          *decl  = LC_FindDeclInScope(package->apackage.ext->scope, LC_ILit("Player"));
         LC_ResolvedCompo *items = decl->ast->dvar.expr->ecompo.resolved_items;
         for (LC_ResolvedCompoItem *it = items->first; it; it = it->next) {
             LC_Intern name = it->t->name;
@@ -71,12 +71,12 @@ bool use_as_data_format_with_typechecking() {
     }
 
     {
-        LC_Decl *decl = LC_FindDeclInScope(package->apackage.scope, LC_ILit("Variable"));
+        LC_Decl *decl = LC_FindDeclInScope(package->apackage.ext->scope, LC_ILit("Variable"));
         IO_Assert(decl->val.d == 32.0);
     }
 
     {
-        LC_Decl *decl = LC_FindDeclInScope(package->apackage.scope, LC_ILit("Reference"));
+        LC_Decl *decl = LC_FindDeclInScope(package->apackage.ext->scope, LC_ILit("Reference"));
         IO_Assert(decl->val.d == 64.0);
     }
 

@@ -1,6 +1,6 @@
 LC_FUNCTION LC_Operand LC_ImportPackage(LC_AST *import, LC_AST *dst, LC_AST *src) {
-    DeclScope *dst_scope  = dst->apackage.scope;
-    int        scope_size = LC_NextPow2(src->apackage.scope->len * 2 + 1);
+    DeclScope *dst_scope  = dst->apackage.ext->scope;
+    int        scope_size = LC_NextPow2(src->apackage.ext->scope->len * 2 + 1);
     if (import && import->gimport.name) {
         LC_PUSH_PACKAGE(dst);
         LC_Decl *decl = LC_CreateDecl(LC_DeclKind_Import, import->gimport.name, import);
@@ -11,8 +11,8 @@ LC_FUNCTION LC_Operand LC_ImportPackage(LC_AST *import, LC_AST *dst, LC_AST *src
         dst_scope = decl->scope;
     }
 
-    for (int i = 0; i < src->apackage.scope->cap; i += 1) {
-        LC_MapEntry entry = src->apackage.scope->entries[i];
+    for (int i = 0; i < src->apackage.ext->scope->cap; i += 1) {
+        LC_MapEntry entry = src->apackage.ext->scope->entries[i];
         if (entry.key != 0) {
             LC_Decl *decl = (LC_Decl *)entry.value;
             if (decl->package != src) continue;
@@ -87,6 +87,7 @@ LC_FUNCTION void LC_AddPackageToList(LC_AST *n) {
 LC_FUNCTION LC_AST *LC_RegisterPackage(LC_String path) {
     LC_ASSERT(NULL, path.len != 0);
     LC_AST *n        = LC_CreateAST(NULL, LC_ASTKind_Package);
+    n->apackage.ext  = LC_PushStruct(L->arena, LC_ASTPackageExt);
     n->apackage.name = LC_MakePackageNameFromPath(path);
     n->apackage.path = path;
     LC_AddPackageToList(n);
@@ -110,7 +111,7 @@ LC_FUNCTION LC_ASTRefList LC_GetPackageImports(LC_AST *package) {
     LC_ASSERT(package, package->kind == LC_ASTKind_Package);
 
     LC_ASTRefList refs = {0};
-    LC_ASTFor(file, package->apackage.ffile) {
+    LC_ASTFor(file, package->apackage.ext->ffile) {
         LC_ASTFor(import, file->afile.fimport) {
             LC_AST *found = LC_FindImportInRefList(&refs, import->gimport.path);
             if (found) {
@@ -178,10 +179,10 @@ LC_FUNCTION LoadedFile LC_ReadFileHook(LC_AST *package, LC_String path) {
 
 LC_FUNCTION void LC_ParsePackage(LC_AST *n) {
     LC_ASSERT(n, n->kind == LC_ASTKind_Package);
-    LC_ASSERT(n, n->apackage.scope == NULL);
-    n->apackage.scope = LC_CreateScope(256);
+    LC_ASSERT(n, n->apackage.ext->scope == NULL);
+    n->apackage.ext->scope = LC_CreateScope(256);
 
-    LC_StringList files = n->apackage.injected_filepaths;
+    LC_StringList files = n->apackage.ext->injected_filepaths;
     if (files.node_count == 0) {
         files = LC_ListFilesInPackage(L->arena, n->apackage.path);
         if (files.first == NULL) {
@@ -211,7 +212,7 @@ LC_FUNCTION void LC_ParsePackagesUsingRegistry(LC_Intern name) {
         L->errors += 1;
         return;
     }
-    if (n->apackage.scope) {
+    if (n->apackage.ext->scope) {
         return;
     }
     LC_ParsePackage(n);
@@ -223,13 +224,13 @@ LC_FUNCTION void LC_ParsePackagesUsingRegistry(LC_Intern name) {
 
 LC_FUNCTION void LC_BuildIfPass(void) {
     LC_ASTFor(n, L->fpackage) {
-        for (LC_AST *fit = n->apackage.ffile; fit;) {
+        for (LC_AST *fit = n->apackage.ext->ffile; fit;) {
             LC_AST *next = fit->next;
 
             LC_AST *build_if = LC_HasNote(fit, L->ibuild_if);
             if (build_if) {
                 if (!LC_ResolveBuildIf(build_if)) {
-                    LC_DLLRemove(n->apackage.ffile, n->apackage.lfile, fit);
+                    LC_DLLRemove(n->apackage.ext->ffile, n->apackage.ext->lfile, fit);
                     LC_AddASTToRefList(&L->discarded, fit);
                     fit = next;
                     continue;
@@ -387,8 +388,9 @@ LC_FUNCTION LC_String LC_GenerateUnityBuild(LC_ASTRefList packages) {
 
 LC_FUNCTION void LC_AddSingleFilePackage(LC_Intern name, LC_String path) {
     LC_AST *n        = LC_CreateAST(0, LC_ASTKind_Package);
+    n->apackage.ext  = LC_PushStruct(L->arena, LC_ASTPackageExt);
     n->apackage.name = name;
     n->apackage.path = path;
-    LC_AddNode(L->arena, &n->apackage.injected_filepaths, path);
+    LC_AddNode(L->arena, &n->apackage.ext->injected_filepaths, path);
     LC_AddPackageToList(n);
 }

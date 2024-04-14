@@ -35,7 +35,7 @@ LC_FUNCTION void LC_PackageDecls(LC_AST *package) {
     LC_PUSH_PACKAGE(package);
 
     // Register top level declarations
-    LC_ASTFor(file, package->apackage.ffile) {
+    LC_ASTFor(file, package->apackage.ext->ffile) {
         LC_ASTFor(import, file->afile.fimport) {
             if (import->gimport.resolved == false) LC_ReportASTError(import, "internal compiler error: unresolved import got into typechecking stage");
         }
@@ -43,7 +43,7 @@ LC_FUNCTION void LC_PackageDecls(LC_AST *package) {
     }
 
     // Resolve declarations by name
-    LC_ASTFor(file, package->apackage.ffile) {
+    LC_ASTFor(file, package->apackage.ext->ffile) {
         LC_ResolveDeclsFromFile(file);
     }
 
@@ -53,7 +53,7 @@ LC_FUNCTION void LC_PackageDecls(LC_AST *package) {
 LC_FUNCTION void LC_ResolveProcBodies(LC_AST *package) {
     LC_PUSH_PACKAGE(package);
 
-    LC_ASTFor(file, package->apackage.ffile) {
+    LC_ASTFor(file, package->apackage.ext->ffile) {
         LC_ASTFor(n, file->afile.fdecl) {
             if (n->kind == LC_ASTKind_DeclNote) continue;
 
@@ -71,7 +71,7 @@ LC_FUNCTION void LC_ResolveProcBodies(LC_AST *package) {
 LC_FUNCTION void LC_ResolveIncompleteTypes(LC_AST *package) {
     LC_PUSH_PACKAGE(package);
 
-    LC_ASTFor(file, package->apackage.ffile) {
+    LC_ASTFor(file, package->apackage.ext->ffile) {
         LC_ASTFor(n, file->afile.fdecl) {
             if (n->kind == LC_ASTKind_DeclNote) continue;
 
@@ -1163,7 +1163,7 @@ LC_FUNCTION LC_Operand LC_ResolveName(LC_AST *pos, LC_Intern intern) {
 
     if (L->on_decl_type_resolved) L->on_decl_type_resolved(decl);
     LC_AST *pkg = decl->package;
-    LC_DLLAdd(pkg->apackage.first_ordered, pkg->apackage.last_ordered, decl);
+    LC_DLLAdd(pkg->apackage.ext->first_ordered, pkg->apackage.ext->last_ordered, decl);
     return LC_OPDecl(decl);
 }
 
@@ -1408,7 +1408,7 @@ LC_FUNCTION LC_Operand LC_ResolveTypeAggregate(LC_AST *pos, LC_Type *type) {
     if (type->kind == LC_TypeKind_Error) return LC_OPError();
     LC_TYPE_IF(type->kind == LC_TypeKind_Completing, pos, "cyclic dependency in type '%s'", type->decl->name);
     if (type->kind != LC_TypeKind_Incomplete) return LC_OPNull;
-    LC_PUSH_SCOPE(L->resolver.package->apackage.scope);
+    LC_PUSH_SCOPE(L->resolver.package->apackage.ext->scope);
 
     LC_AST *n = decl->ast;
     LC_ASSERT(n, decl);
@@ -1485,7 +1485,7 @@ LC_FUNCTION LC_Operand LC_ResolveTypeAggregate(LC_AST *pos, LC_Type *type) {
 
     if (L->on_decl_type_resolved) L->on_decl_type_resolved(decl);
     LC_AST *pkg = decl->package;
-    LC_DLLAdd(pkg->apackage.first_ordered, pkg->apackage.last_ordered, decl);
+    LC_DLLAdd(pkg->apackage.ext->first_ordered, pkg->apackage.ext->last_ordered, decl);
     LC_POP_SCOPE();
     return LC_OPNull;
 }

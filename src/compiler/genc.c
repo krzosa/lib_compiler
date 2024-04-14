@@ -606,7 +606,7 @@ LC_FUNCTION void LC_GenCVarFDecl(LC_Decl *decl) {
 
 LC_FUNCTION void LC_GenCHeader(LC_AST *package) {
     // C notes
-    LC_ASTFor(file, package->apackage.ffile) {
+    LC_ASTFor(file, package->apackage.ext->ffile) {
         LC_ASTFor(it, file->afile.fdecl) {
             if (it->kind != LC_ASTKind_DeclNote) continue;
 
@@ -618,7 +618,7 @@ LC_FUNCTION void LC_GenCHeader(LC_AST *package) {
     }
 
     // struct forward decls
-    LC_DeclFor(decl, package->apackage.first_ordered) {
+    LC_DeclFor(decl, package->apackage.ext->first_ordered) {
         if (decl->is_foreign) continue;
         LC_AST *n = decl->ast;
         if (decl->kind == LC_DeclKind_Type && LC_IsAgg(n)) LC_GenCAggForwardDecl(decl);
@@ -626,14 +626,14 @@ LC_FUNCTION void LC_GenCHeader(LC_AST *package) {
 
     // type decls
     LC_GenLine();
-    LC_DeclFor(decl, package->apackage.first_ordered) {
+    LC_DeclFor(decl, package->apackage.ext->first_ordered) {
         if (decl->is_foreign) continue;
         LC_AST *n = decl->ast;
         if (decl->kind == LC_DeclKind_Type) LC_GenCTypeDecl(decl);
     }
 
     // proc and var forward decls
-    LC_DeclFor(decl, package->apackage.first_ordered) {
+    LC_DeclFor(decl, package->apackage.ext->first_ordered) {
         if (decl->is_foreign) continue;
         LC_AST *n = decl->ast;
         if (decl->kind == LC_DeclKind_Var) {
@@ -647,7 +647,7 @@ LC_FUNCTION void LC_GenCHeader(LC_AST *package) {
 
 LC_FUNCTION void LC_GenCImpl(LC_AST *package) {
     // implementation of vars
-    LC_DeclFor(decl, package->apackage.first_ordered) {
+    LC_DeclFor(decl, package->apackage.ext->first_ordered) {
         if (decl->kind == LC_DeclKind_Var && !decl->is_foreign) {
             LC_AST  *n    = decl->ast;
             LC_Type *type = decl->type; // make string arrays assignable
@@ -665,7 +665,7 @@ LC_FUNCTION void LC_GenCImpl(LC_AST *package) {
     }
 
     // implementation of procs
-    LC_DeclFor(decl, package->apackage.first_ordered) {
+    LC_DeclFor(decl, package->apackage.ext->first_ordered) {
         LC_AST *n = decl->ast;
         if (decl->kind == LC_DeclKind_Proc && n->dproc.body && !decl->is_foreign) {
             LC_GenCLineDirective(n);

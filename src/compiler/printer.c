@@ -83,7 +83,7 @@ LC_FUNCTION char *LC_GenLCAggName(LC_Type *t) {
 LC_FUNCTION void LC_GenLCNode(LC_AST *n) {
     switch (n->kind) {
     case LC_ASTKind_Package: {
-        LC_ASTFor(it, n->apackage.ffile) {
+        LC_ASTFor(it, n->apackage.ext->ffile) {
             LC_GenLCNode(it);
         }
     } break;
