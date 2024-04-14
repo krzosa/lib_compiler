@@ -413,31 +413,32 @@ struct LC_ASTFile {
     LC_AST *limport;
     LC_AST *fdecl;
     LC_AST *ldecl;
-    LC_AST *fdiscarded;
-    LC_AST *ldiscarded; // @build_if
 
     LC_Token *doc_comment;
-
-    bool build_if;
 };
 
-struct LC_ASTPackage {
-    LC_Intern     name;
+// This extension thing is only to minimize package ast size!
+// I want all nodes to be equal in size, this way a lot of things are
+// easier. You can loop through all the ast nodes easily and stuff like that.
+typedef struct LC_ASTPackageExt LC_ASTPackageExt;
+struct LC_ASTPackageExt {
+    LC_StringList injected_filepaths; // to sidestep regular file finding, implement single file packages etc.
+    LC_Token     *doc_comment;
     LC_DeclState  state;
     LC_String     path;
-    LC_StringList injected_filepaths; // to sidestep regular file finding, implement single file packages etc.
-    LC_AST       *ffile;
-    LC_AST       *lfile;
-    LC_AST       *fdiscarded;
-    LC_AST       *ldiscarded; // #build_if
-
-    LC_Token *doc_comment;
 
     // These are resolved later:
     // @todo: add foreign name?
     LC_Decl   *first_ordered;
     LC_Decl   *last_ordered;
     DeclScope *scope;
+};
+
+struct LC_ASTPackage {
+    LC_AST           *ffile;
+    LC_AST           *lfile;
+    LC_Intern         name;
+    LC_ASTPackageExt *ext;
 };
 
 struct LC_ASTNoteList {
@@ -490,7 +491,7 @@ struct LC_ExprCompoItem {
 };
 
 // clang-format off
-union LC_Val               { LC_BigInt i; double d; LC_Intern name; };
+union  LC_Val             { LC_BigInt i; double d; LC_Intern name; };
 struct LC_ExprIdent       { LC_Intern name; LC_Decl *resolved_decl; };
 struct LC_ExprUnary       { LC_TokenKind op; LC_AST *expr; };
 struct LC_ExprBinary      { LC_TokenKind op; LC_AST *left; LC_AST *right; };
@@ -531,7 +532,7 @@ struct LC_DeclNote        { LC_DeclBase base; LC_AST *expr; bool processed; }; /
 struct LC_GlobImport      { LC_Intern name; LC_Intern path; bool resolved; LC_Decl *resolved_decl; };
 
 struct LC_ASTRef          { LC_ASTRef *next; LC_ASTRef *prev; LC_AST *ast; };
-struct LC_ASTRefList       { LC_ASTRef *first; LC_ASTRef *last; };
+struct LC_ASTRefList      { LC_ASTRef *first; LC_ASTRef *last; };
 // clang-format on
 
 struct LC_TypeAndVal {
@@ -694,10 +695,8 @@ struct LC_ASTWalker {
     LC_ASTArray stack;
 
     int inside_builtin;
-    int inside_discarded;
     int inside_note;
 
-    uint8_t         visit_discarded;
     uint8_t         visit_notes;
     uint8_t         depth_first;
     uint8_t         dont_recurse; // breathfirst only
@@ -949,6 +948,7 @@ struct LC_Lang {
     LC_Intern     first_package;
     LC_ASTRefList ordered_packages;
     LC_StringList package_dirs;
+    LC_ASTRefList discarded;
 
     LC_Map   interns;
     LC_Map   declared_notes;
@@ -1699,10 +1699,6 @@ LC_FUNCTION wchar_t *LC_ToWidechar(LC_Arena *allocator, LC_String string);
         } else {                                       \
             (node)->prev->next = (node)->next;         \
             (node)->next->prev = (node)->prev;         \
-        }                                              \
-        if (node) {                                    \
-            (node)->prev = 0;                          \
-            (node)->next = 0;                          \
         }                                              \
     } while (0)
 #define LC_DLLRemove(first, last, node) LC_DLLRemoveMod(first, last, node, next, prev)
@@ -5455,10 +5451,6 @@ LC_FUNCTION void LC_WalkAST(LC_ASTWalker *ctx, LC_AST *n) {
 
     case LC_ASTKind_Package: {
         LC_ASTFor(it, n->apackage.ffile) LC_WalkAST(ctx, it);
-
-        ctx->inside_discarded += 1;
-        if (ctx->visit_discarded) LC_ASTFor(it, n->apackage.fdiscarded) LC_WalkAST(ctx, it);
-        ctx->inside_discarded -= 1;
     } break;
 
     case LC_ASTKind_File: {
@@ -5467,10 +5459,6 @@ LC_FUNCTION void LC_WalkAST(LC_ASTWalker *ctx, LC_AST *n) {
             if (ctx->visit_notes == false && it->kind == LC_ASTKind_DeclNote) continue;
             LC_WalkAST(ctx, it);
         }
-
-        ctx->inside_discarded += 1;
-        if (ctx->visit_discarded) LC_ASTFor(it, n->afile.fdiscarded) LC_WalkAST(ctx, it);
-        ctx->inside_discarded -= 1;
     } break;
 
     case LC_ASTKind_DeclProc: {
@@ -5732,12 +5720,6 @@ LC_FUNCTION LC_AST *LC_CopyAST(LC_Arena *arena, LC_AST *n) {
             LC_AST *it_copy = LC_CopyAST(arena, it);
             LC_DLLAdd(result->afile.fdecl, result->afile.ldecl, it_copy);
         }
-        LC_ASTFor(it, n->afile.fdiscarded) {
-            LC_AST *it_copy = LC_CopyAST(arena, it);
-            LC_DLLAdd(result->afile.fdiscarded, result->afile.ldiscarded, it_copy);
-        }
-
-        result->afile.build_if = n->afile.build_if;
     } break;
 
     case LC_ASTKind_DeclProc: {
@@ -6002,7 +5984,7 @@ LC_FUNCTION LC_AST *LC_CopyAST(LC_Arena *arena, LC_AST *n) {
 #define LC_POP_SCOPE() L->resolver.active_scope = PREV_SCOPE
 #define LC_PUSH_LOCAL_SCOPE() int LOCAL_LEN = L->resolver.locals.len
 #define LC_POP_LOCAL_SCOPE() L->resolver.locals.len = LOCAL_LEN
-#define LC_PUSH_PACKAGE(PKG) LC_AST *PREV_PKG = L->resolver.package; L->resolver.package = PKG; LC_PUSH_SCOPE(PKG->apackage.scope)
+#define LC_PUSH_PACKAGE(PKG) LC_AST *PREV_PKG = L->resolver.package; L->resolver.package = PKG; LC_PUSH_SCOPE(PKG->apackage.ext->scope)
 #define LC_POP_PACKAGE() L->resolver.package = PREV_PKG; LC_POP_SCOPE()
 #define LC_PROP_ERROR(OP, n, ...)  OP = __VA_ARGS__; if (LC_IsError(OP)) { n->kind = LC_ASTKind_Error; return OP; }
 #define LC_DECL_PROP_ERROR(OP, ...) OP = __VA_ARGS__; if (LC_IsError(OP)) { LC_MarkDeclError(decl); return OP; }
@@ -6110,14 +6092,14 @@ LC_FUNCTION LC_Decl *LC_FindDeclInScope(DeclScope *scope, LC_Intern name) {
 
 LC_FUNCTION LC_Decl *LC_GetLocalOrGlobalDecl(LC_Intern name) {
     LC_Decl *decl = LC_FindDeclInScope(L->resolver.active_scope, name);
-    if (!decl && L->resolver.package->apackage.scope == L->resolver.active_scope) {
+    if (!decl && L->resolver.package->apackage.ext->scope == L->resolver.active_scope) {
         decl = LC_FindDeclOnStack(&L->resolver.locals, name);
     }
     return decl;
 }
 
 LC_FUNCTION LC_Operand LC_PutGlobalDecl(LC_Decl *decl) {
-    LC_Operand LC_DECL_PROP_ERROR(op, LC_AddDeclToScope(L->resolver.package->apackage.scope, decl));
+    LC_Operand LC_DECL_PROP_ERROR(op, LC_AddDeclToScope(L->resolver.package->apackage.ext->scope, decl));
 
     // :Mangle global scope name
     if (!decl->is_foreign && decl->package != L->builtin_package) {
@@ -6150,7 +6132,7 @@ LC_FUNCTION LC_Operand LC_PutGlobalDecl(LC_Decl *decl) {
 LC_FUNCTION LC_Operand LC_CreateLocalDecl(LC_DeclKind kind, LC_Intern name, LC_AST *ast) {
     LC_Decl *decl = LC_CreateDecl(kind, name, ast);
     decl->state   = LC_DeclState_Resolving;
-    LC_Operand LC_DECL_PROP_ERROR(operr0, LC_ThereIsNoDecl(L->resolver.package->apackage.scope, decl, true));
+    LC_Operand LC_DECL_PROP_ERROR(operr0, LC_ThereIsNoDecl(L->resolver.package->apackage.ext->scope, decl, true));
     LC_AddDecl(&L->resolver.locals, decl);
     return LC_OPDecl(decl);
 }
@@ -6161,12 +6143,12 @@ LC_FUNCTION LC_Decl *LC_AddConstIntDecl(char *key, int64_t value) {
     decl->state      = LC_DeclState_Resolved;
     decl->type       = L->tuntypedint;
     LC_Bigint_init_signed(&decl->v.i, value);
-    LC_AddDeclToScope(L->resolver.package->apackage.scope, decl);
+    LC_AddDeclToScope(L->resolver.package->apackage.ext->scope, decl);
     return decl;
 }
 
 LC_FUNCTION LC_Decl *LC_GetBuiltin(LC_Intern name) {
-    LC_Decl *decl = (LC_Decl *)LC_MapGetU64(L->builtin_package->apackage.scope, name);
+    LC_Decl *decl = (LC_Decl *)LC_MapGetU64(L->builtin_package->apackage.ext->scope, name);
     return decl;
 }
 
@@ -7353,7 +7335,7 @@ LC_FUNCTION LC_Operand LC_ResolveName(LC_AST *pos, LC_Intern intern) {
 
     if (L->on_decl_type_resolved) L->on_decl_type_resolved(decl);
     LC_AST *pkg = decl->package;
-    LC_DLLAdd(pkg->apackage.first_ordered, pkg->apackage.last_ordered, decl);
+    LC_DLLAdd(pkg->apackage.ext->first_ordered, pkg->apackage.ext->last_ordered, decl);
     return LC_OPDecl(decl);
 }
 
@@ -7598,7 +7580,7 @@ LC_FUNCTION LC_Operand LC_ResolveTypeAggregate(LC_AST *pos, LC_Type *type) {
     if (type->kind == LC_TypeKind_Error) return LC_OPError();
     LC_TYPE_IF(type->kind == LC_TypeKind_Completing, pos, "cyclic dependency in type '%s'", type->decl->name);
     if (type->kind != LC_TypeKind_Incomplete) return LC_OPNull;
-    LC_PUSH_SCOPE(L->resolver.package->apackage.scope);
+    LC_PUSH_SCOPE(L->resolver.package->apackage.ext->scope);
 
     LC_AST *n = decl->ast;
     LC_ASSERT(n, decl);
@@ -7675,7 +7657,7 @@ LC_FUNCTION LC_Operand LC_ResolveTypeAggregate(LC_AST *pos, LC_Type *type) {
 
     if (L->on_decl_type_resolved) L->on_decl_type_resolved(decl);
     LC_AST *pkg = decl->package;
-    LC_DLLAdd(pkg->apackage.first_ordered, pkg->apackage.last_ordered, decl);
+    LC_DLLAdd(pkg->apackage.ext->first_ordered, pkg->apackage.ext->last_ordered, decl);
     LC_POP_SCOPE();
     return LC_OPNull;
 }
@@ -8462,6 +8444,33 @@ LC_FUNCTION LC_AST *LC_ParseNotes(void) {
     return 0;
 }
 
+LC_FUNCTION bool ParseHashBuildIf(LC_AST *n) {
+    LC_Token *t0 = LC_GetI(0);
+    LC_Token *t1 = LC_GetI(1);
+    if (t0->kind == LC_TokenKind_Hash && t1->kind == LC_TokenKind_Ident && t1->ident == L->ibuild_if) {
+        LC_Next();
+
+        LC_AST *note = LC_ParseNote();
+        if (note->kind == LC_ASTKind_Error) {
+            LC_EatUntilNextValidDecl();
+            return true;
+        }
+
+        if (!LC_Match(LC_TokenKind_Semicolon)) {
+            LC_ReportParseError(LC_GetI(-1), "expected ';' semicolon");
+            LC_EatUntilNextValidDecl();
+            return true;
+        }
+
+        LC_AST *note_list = LC_CreateAST(t0, LC_ASTKind_NoteList);
+        LC_DLLAdd(note_list->anote_list.first, note_list->anote_list.last, note);
+        n->notes = note_list;
+
+        return LC_ResolveBuildIf(note);
+    }
+    return true;
+}
+
 LC_FUNCTION bool LC_ResolveBuildIf(LC_AST *build_if) {
     LC_ExprCompo *note = &build_if->anote;
     if (note->size != 1) {
@@ -8471,7 +8480,7 @@ LC_FUNCTION bool LC_ResolveBuildIf(LC_AST *build_if) {
 
     LC_ExprCompoItem *item = &note->first->ecompo_item;
     if (item->index != NULL || item->name != 0) {
-        LC_ReportParseError(LC_GetI(-1), "invalid syntax, #build_if shouldn't have a named or indexed first argument");
+        LC_ReportParseError(LC_GetI(-1), "invalid syntax, you have passed in a named or indexed argument to #build_if");
         return true;
     }
 
@@ -8594,34 +8603,6 @@ LC_FUNCTION bool LC_EatUntilNextValidDecl(void) {
     }
 }
 
-LC_FUNCTION bool LC_ParseHashBuildOn(LC_AST *n) {
-    LC_Token *t0 = LC_GetI(0);
-    LC_Token *t1 = LC_GetI(1);
-    if (t0->kind == LC_TokenKind_Hash && t1->kind == LC_TokenKind_Ident && t1->ident == L->ibuild_if) {
-        LC_Next();
-
-        LC_AST *build_if     = LC_CreateAST(t1, LC_ASTKind_DeclNote);
-        build_if->dnote.expr = LC_ParseNote();
-        if (build_if->dnote.expr->kind == LC_ASTKind_Error) {
-            LC_EatUntilNextValidDecl();
-            return true;
-        }
-
-        if (!LC_Match(LC_TokenKind_Semicolon)) {
-            LC_ReportParseError(LC_GetI(-1), "expected ';' semicolon");
-            LC_EatUntilNextValidDecl();
-            return true;
-        }
-
-        LC_AST *note_list = LC_CreateAST(t0, LC_ASTKind_NoteList);
-        LC_DLLAdd(note_list->anote_list.first, note_list->anote_list.last, build_if);
-        n->notes = note_list;
-
-        return LC_ResolveBuildIf(build_if->dnote.expr);
-    }
-    return true;
-}
-
 LC_FUNCTION LC_AST *LC_ParseImport(void) {
     LC_AST   *n      = NULL;
     LC_Token *import = LC_MatchKeyword(L->kimport);
@@ -8651,7 +8632,7 @@ LC_FUNCTION LC_AST *LC_ParseFileEx(LC_AST *package) {
     LC_AST *n            = LC_CreateAST(LC_Get(), LC_ASTKind_File);
     n->afile.x           = L->parser->x;
     n->afile.doc_comment = LC_Match(LC_TokenKind_FileDocComment);
-    n->afile.build_if    = LC_ParseHashBuildOn(n);
+    ParseHashBuildIf(n);
 
     // Parse imports
     while (!LC_Is(LC_TokenKind_EOF)) {
@@ -8674,35 +8655,15 @@ LC_FUNCTION LC_AST *LC_ParseFileEx(LC_AST *package) {
         if (decl->kind == LC_ASTKind_Error) {
             LC_EatUntilNextValidDecl();
         } else {
-            bool skip = false;
-
-            LC_AST *build_if = LC_HasNote(decl, L->ibuild_if);
-            if (build_if) {
-                skip = !LC_ResolveBuildIf(build_if);
-            }
-
-            if (L->on_decl_parsed) {
-                skip = L->on_decl_parsed(skip, decl);
-            }
-
-            if (skip) {
-                LC_DLLAdd(n->afile.fdiscarded, n->afile.ldiscarded, decl);
-            } else {
-                LC_DLLAdd(n->afile.fdecl, n->afile.ldecl, decl);
-            }
+            if (L->on_decl_parsed) L->on_decl_parsed(false, decl);
+            LC_DLLAdd(n->afile.fdecl, n->afile.ldecl, decl);
         }
     }
 
     if (package) {
-        if (package->apackage.doc_comment) LC_ReportParseError(package_doc_comment, "there are more then 1 package doc comments in %s package", (char *)package->apackage.name);
-        package->apackage.doc_comment = package_doc_comment;
-
-        if (n->afile.build_if) {
-            LC_AddFileToPackage(package, n);
-        } else {
-            LC_DLLAdd(package->apackage.fdiscarded, package->apackage.ldiscarded, n);
-            n->afile.package = package;
-        }
+        if (package->apackage.ext->doc_comment) LC_ReportParseError(package_doc_comment, "there are more then 1 package doc comments in %s package", (char *)package->apackage.name);
+        package->apackage.ext->doc_comment = package_doc_comment;
+        LC_AddFileToPackage(package, n);
     }
 
     return n;
@@ -9861,7 +9822,7 @@ LC_FUNCTION void LC_GenCHeader(LC_AST *package) {
     }
 
     // struct forward decls
-    LC_DeclFor(decl, package->apackage.first_ordered) {
+    LC_DeclFor(decl, package->apackage.ext->first_ordered) {
         if (decl->is_foreign) continue;
         LC_AST *n = decl->ast;
         if (decl->kind == LC_DeclKind_Type && LC_IsAgg(n)) LC_GenCAggForwardDecl(decl);
@@ -9869,14 +9830,14 @@ LC_FUNCTION void LC_GenCHeader(LC_AST *package) {
 
     // type decls
     LC_GenLine();
-    LC_DeclFor(decl, package->apackage.first_ordered) {
+    LC_DeclFor(decl, package->apackage.ext->first_ordered) {
         if (decl->is_foreign) continue;
         LC_AST *n = decl->ast;
         if (decl->kind == LC_DeclKind_Type) LC_GenCTypeDecl(decl);
     }
 
     // proc and var forward decls
-    LC_DeclFor(decl, package->apackage.first_ordered) {
+    LC_DeclFor(decl, package->apackage.ext->first_ordered) {
         if (decl->is_foreign) continue;
         LC_AST *n = decl->ast;
         if (decl->kind == LC_DeclKind_Var) {
@@ -9890,7 +9851,7 @@ LC_FUNCTION void LC_GenCHeader(LC_AST *package) {
 
 LC_FUNCTION void LC_GenCImpl(LC_AST *package) {
     // implementation of vars
-    LC_DeclFor(decl, package->apackage.first_ordered) {
+    LC_DeclFor(decl, package->apackage.ext->first_ordered) {
         if (decl->kind == LC_DeclKind_Var && !decl->is_foreign) {
             LC_AST  *n    = decl->ast;
             LC_Type *type = decl->type; // make string arrays assignable
@@ -9908,7 +9869,7 @@ LC_FUNCTION void LC_GenCImpl(LC_AST *package) {
     }
 
     // implementation of procs
-    LC_DeclFor(decl, package->apackage.first_ordered) {
+    LC_DeclFor(decl, package->apackage.ext->first_ordered) {
         LC_AST *n = decl->ast;
         if (decl->kind == LC_DeclKind_Proc && n->dproc.body && !decl->is_foreign) {
             LC_GenCLineDirective(n);
@@ -9952,13 +9913,13 @@ LC_FUNCTION LC_Map LC_CountDeclRefs(LC_Arena *arena) {
 
 LC_FUNCTION void LC_RemoveUnreferencedGlobalDecls(LC_Map *map_of_visits) {
     for (LC_ASTRef *it = L->ordered_packages.first; it; it = it->next) {
-        for (LC_Decl *decl = it->ast->apackage.first_ordered; decl;) {
+        for (LC_Decl *decl = it->ast->apackage.ext->first_ordered; decl;) {
             intptr_t ref_count = (intptr_t)LC_MapGetP(map_of_visits, decl);
 
             LC_Decl *remove = decl;
             decl            = decl->next;
             if (ref_count == 0 && remove->foreign_name != LC_ILit("main")) {
-                LC_DLLRemove(it->ast->apackage.first_ordered, it->ast->apackage.last_ordered, remove);
+                LC_DLLRemove(it->ast->apackage.ext->first_ordered, it->ast->apackage.ext->last_ordered, remove);
             }
         }
     }
@@ -9992,8 +9953,8 @@ LC_FUNCTION void LC_FindUnusedLocalsAndRemoveUnusedGlobalDecls(void) {
     LC_EndTemp(check);
 }
 LC_FUNCTION LC_Operand LC_ImportPackage(LC_AST *import, LC_AST *dst, LC_AST *src) {
-    DeclScope *dst_scope  = dst->apackage.scope;
-    int        scope_size = LC_NextPow2(src->apackage.scope->len * 2 + 1);
+    DeclScope *dst_scope  = dst->apackage.ext->scope;
+    int        scope_size = LC_NextPow2(src->apackage.ext->scope->len * 2 + 1);
     if (import && import->gimport.name) {
         LC_PUSH_PACKAGE(dst);
         LC_Decl *decl = LC_CreateDecl(LC_DeclKind_Import, import->gimport.name, import);
@@ -10004,8 +9965,8 @@ LC_FUNCTION LC_Operand LC_ImportPackage(LC_AST *import, LC_AST *dst, LC_AST *src
         dst_scope = decl->scope;
     }
 
-    for (int i = 0; i < src->apackage.scope->cap; i += 1) {
-        LC_MapEntry entry = src->apackage.scope->entries[i];
+    for (int i = 0; i < src->apackage.ext->scope->cap; i += 1) {
+        LC_MapEntry entry = src->apackage.ext->scope->entries[i];
         if (entry.key != 0) {
             LC_Decl *decl = (LC_Decl *)entry.value;
             if (decl->package != src) continue;
@@ -10065,7 +10026,7 @@ LC_FUNCTION bool LC_PackageNameDuplicate(LC_Intern name) {
 LC_FUNCTION void LC_AddPackageToList(LC_AST *n) {
     LC_Intern name = n->apackage.name;
     if (LC_PackageNameDuplicate(name)) {
-        LC_SendErrorMessagef(NULL, NULL, "found 2 packages with the same name: '%s' / '%.*s'\n", name, LC_Expand(n->apackage.path));
+        LC_SendErrorMessagef(NULL, NULL, "found 2 packages with the same name: '%s' / '%.*s'\n", name, LC_Expand(n->apackage.ext->path));
         L->errors += 1;
         return;
     }
@@ -10079,9 +10040,10 @@ LC_FUNCTION void LC_AddPackageToList(LC_AST *n) {
 
 LC_FUNCTION LC_AST *LC_RegisterPackage(LC_String path) {
     LC_ASSERT(NULL, path.len != 0);
-    LC_AST *n        = LC_CreateAST(NULL, LC_ASTKind_Package);
-    n->apackage.name = LC_MakePackageNameFromPath(path);
-    n->apackage.path = path;
+    LC_AST *n             = LC_CreateAST(NULL, LC_ASTKind_Package);
+    n->apackage.ext       = LC_PushStruct(L->arena, LC_ASTPackageExt);
+    n->apackage.name      = LC_MakePackageNameFromPath(path);
+    n->apackage.ext->path = path;
     LC_AddPackageToList(n);
     return n;
 }
@@ -10137,7 +10099,7 @@ LC_FUNCTION LC_AST *LC_GetPackageByName(LC_Intern name) {
         LC_String path = LC_Format(L->arena, "%.*s/%s", LC_Expand(s), (char *)name);
         if (LC_IsDir(L->arena, path)) {
             if (result != NULL) {
-                LC_SendErrorMessagef(NULL, NULL, "found 2 directories with the same name: '%.*s', '%.*s'\n", LC_Expand(path), LC_Expand(result->apackage.path));
+                LC_SendErrorMessagef(NULL, NULL, "found 2 directories with the same name: '%.*s', '%.*s'\n", LC_Expand(path), LC_Expand(result->apackage.ext->path));
                 L->errors += 1;
                 break;
             }
@@ -10171,15 +10133,15 @@ LC_FUNCTION LoadedFile LC_ReadFileHook(LC_AST *package, LC_String path) {
 
 LC_FUNCTION void LC_ParsePackage(LC_AST *n) {
     LC_ASSERT(n, n->kind == LC_ASTKind_Package);
-    LC_ASSERT(n, n->apackage.scope == NULL);
-    n->apackage.scope = LC_CreateScope(256);
+    LC_ASSERT(n, n->apackage.ext->scope == NULL);
+    n->apackage.ext->scope = LC_CreateScope(256);
 
-    LC_StringList files = n->apackage.injected_filepaths;
+    LC_StringList files = n->apackage.ext->injected_filepaths;
     if (files.node_count == 0) {
-        files = LC_ListFilesInPackage(L->arena, n->apackage.path);
+        files = LC_ListFilesInPackage(L->arena, n->apackage.ext->path);
         if (files.first == NULL) {
-            LC_SendErrorMessagef(NULL, NULL, "no valid .lc files in '%.*s'", LC_Expand(n->apackage.path));
-            n->apackage.state = LC_DeclState_Error;
+            LC_SendErrorMessagef(NULL, NULL, "no valid .lc files in '%.*s'", LC_Expand(n->apackage.ext->path));
+            n->apackage.ext->state = LC_DeclState_Error;
             L->errors += 1;
             return;
         }
@@ -10191,7 +10153,7 @@ LC_FUNCTION void LC_ParsePackage(LC_AST *n) {
 
         LC_AST *ast_file = LC_ParseFile(n, file.path.str, file.content.str, file.line);
         if (!ast_file) {
-            n->apackage.state = LC_DeclState_Error;
+            n->apackage.ext->state = LC_DeclState_Error;
             return;
         }
     }
@@ -10204,13 +10166,43 @@ LC_FUNCTION void LC_ParsePackagesUsingRegistry(LC_Intern name) {
         L->errors += 1;
         return;
     }
-    if (n->apackage.scope) {
+    if (n->apackage.ext->scope) {
         return;
     }
     LC_ParsePackage(n);
     LC_ASTRefList imports = LC_GetPackageImports(n);
     for (LC_ASTRef *it = imports.first; it; it = it->next) {
         LC_ParsePackagesUsingRegistry(it->ast->gimport.path);
+    }
+}
+
+LC_FUNCTION void LC_BuildIfPass(void) {
+    LC_ASTFor(n, L->fpackage) {
+        for (LC_AST *fit = n->apackage.ffile; fit;) {
+            LC_AST *next = fit->next;
+
+            LC_AST *build_if = LC_HasNote(fit, L->ibuild_if);
+            if (build_if) {
+                if (!LC_ResolveBuildIf(build_if)) {
+                    LC_DLLRemove(n->apackage.ffile, n->apackage.lfile, fit);
+                    LC_AddASTToRefList(&L->discarded, fit);
+                    fit = next;
+                    continue;
+                }
+            }
+
+            for (LC_AST *dit = fit->afile.fdecl; dit; dit = dit->next) {
+                LC_AST *build_if = LC_HasNote(dit, L->ibuild_if);
+                if (build_if) {
+                    if (!LC_ResolveBuildIf(build_if)) {
+                        LC_DLLRemove(fit->afile.fdecl, fit->afile.ldecl, dit);
+                        LC_AddASTToRefList(&L->discarded, dit);
+                    }
+                }
+            }
+
+            fit = next;
+        }
     }
 }
 
@@ -10231,23 +10223,23 @@ LC_FUNCTION void LC_AddOrderedPackageToRefList(LC_AST *n) {
 // an aggregate. It's just a number.
 LC_FUNCTION LC_AST *LC_OrderPackagesAndBasicResolve(LC_AST *pos, LC_Intern name) {
     LC_AST *n = LC_GetPackageByName(name);
-    if (n->apackage.state == LC_DeclState_Error) {
+    if (n->apackage.ext->state == LC_DeclState_Error) {
         return NULL;
     }
-    if (n->apackage.state == LC_DeclState_Resolved) {
+    if (n->apackage.ext->state == LC_DeclState_Resolved) {
         // This function can be called multiple times, I assume user might
         // want to use type information to generate something. Pattern:
         // typecheck -> generate -> typecheck is expected!
         LC_PackageDecls(n);
         return n;
     }
-    if (n->apackage.state == LC_DeclState_Resolving) {
+    if (n->apackage.ext->state == LC_DeclState_Resolving) {
         LC_ReportASTError(pos, "circular import '%s'", name);
-        n->apackage.state = LC_DeclState_Error;
+        n->apackage.ext->state = LC_DeclState_Error;
         return NULL;
     }
-    LC_ASSERT(pos, n->apackage.state == LC_DeclState_Unresolved);
-    n->apackage.state = LC_DeclState_Resolving;
+    LC_ASSERT(pos, n->apackage.ext->state == LC_DeclState_Unresolved);
+    n->apackage.ext->state = LC_DeclState_Resolving;
 
     LC_Operand op = LC_ImportPackage(NULL, n, L->builtin_package);
     LC_ASSERT(pos, !LC_IsError(op));
@@ -10261,14 +10253,14 @@ LC_FUNCTION LC_AST *LC_OrderPackagesAndBasicResolve(LC_AST *pos, LC_Intern name)
     for (LC_ASTRef *it = refs.first; it; it = it->next) {
         LC_AST *import = LC_OrderPackagesAndBasicResolve(it->ast, it->ast->gimport.path);
         if (!import) {
-            n->apackage.state = LC_DeclState_Error;
+            n->apackage.ext->state = LC_DeclState_Error;
             wrong_import += 1;
             continue;
         }
 
         LC_Operand op = LC_ImportPackage(it->ast, n, import);
         if (LC_IsError(op)) {
-            n->apackage.state = LC_DeclState_Error;
+            n->apackage.ext->state = LC_DeclState_Error;
             wrong_import += 1;
             continue;
         }
@@ -10278,7 +10270,7 @@ LC_FUNCTION LC_AST *LC_OrderPackagesAndBasicResolve(LC_AST *pos, LC_Intern name)
 
     LC_PackageDecls(n);
     LC_AddOrderedPackageToRefList(n);
-    n->apackage.state = LC_DeclState_Resolved;
+    n->apackage.ext->state = LC_DeclState_Resolved;
     return n;
 }
 
@@ -10291,7 +10283,7 @@ LC_FUNCTION void LC_OrderAndResolveTopLevelDecls(LC_Intern name) {
     // it should still be fine to go forward with this and also proc body analysis
     for (LC_ASTRef *it = L->ordered_packages.first; it; it = it->next) {
         LC_AST *package = it->ast;
-        LC_ASSERT(package, package->apackage.state == LC_DeclState_Resolved);
+        LC_ASSERT(package, package->apackage.ext->state == LC_DeclState_Resolved);
         LC_ResolveIncompleteTypes(package);
     }
 }
@@ -10301,13 +10293,14 @@ LC_FUNCTION void LC_ResolveAllProcBodies(void) {
     // the list.
     for (LC_ASTRef *it = L->ordered_packages.first; it; it = it->next) {
         LC_AST *package = it->ast;
-        LC_ASSERT(package, package->apackage.state == LC_DeclState_Resolved);
+        LC_ASSERT(package, package->apackage.ext->state == LC_DeclState_Resolved);
         LC_ResolveProcBodies(package);
     }
 }
 
 LC_FUNCTION LC_ASTRefList LC_ResolvePackageByName(LC_Intern name) {
     LC_ParsePackagesUsingRegistry(name);
+    LC_BuildIfPass();
     LC_ASTRefList empty = {0};
     if (L->errors) return empty;
 
@@ -10348,10 +10341,11 @@ LC_FUNCTION LC_String LC_GenerateUnityBuild(LC_ASTRefList packages) {
 }
 
 LC_FUNCTION void LC_AddSingleFilePackage(LC_Intern name, LC_String path) {
-    LC_AST *n        = LC_CreateAST(0, LC_ASTKind_Package);
-    n->apackage.name = name;
-    n->apackage.path = path;
-    LC_AddNode(L->arena, &n->apackage.injected_filepaths, path);
+    LC_AST *n             = LC_CreateAST(0, LC_ASTKind_Package);
+    n->apackage.ext       = LC_PushStruct(L->arena, LC_ASTPackageExt);
+    n->apackage.name      = name;
+    n->apackage.ext->path = path;
+    LC_AddNode(L->arena, &n->apackage.ext->injected_filepaths, path);
     LC_AddPackageToList(n);
 }
 LC_FUNCTION LC_Lang *LC_LangAlloc(void) {
@@ -10449,10 +10443,11 @@ LC_FUNCTION void LC_LangBegin(LC_Lang *l) {
     }
 
     {
-        LC_AST *builtins         = LC_CreateAST(0, LC_ASTKind_Package);
-        L->builtin_package       = builtins;
-        builtins->apackage.name  = LC_ILit("builtins");
-        builtins->apackage.scope = LC_CreateScope(256);
+        LC_AST *builtins              = LC_CreateAST(0, LC_ASTKind_Package);
+        L->builtin_package            = builtins;
+        builtins->apackage.ext        = LC_PushStruct(L->arena, LC_ASTPackageExt);
+        builtins->apackage.name       = LC_ILit("builtins");
+        builtins->apackage.ext->scope = LC_CreateScope(256);
         LC_AddPackageToList(builtins);
     }
 
@@ -10535,7 +10530,7 @@ LC_FUNCTION void LC_LangBegin(LC_Lang *l) {
             decl->state   = LC_DeclState_Resolved;
             decl->type    = t;
             t->decl       = decl;
-            LC_AddDeclToScope(L->builtin_package->apackage.scope, decl);
+            LC_AddDeclToScope(L->builtin_package->apackage.ext->scope, decl);
 
             if (t->kind == LC_TypeKind_uchar) decl->foreign_name = LC_ILit("unsigned char");
             if (t->kind == LC_TypeKind_ushort) decl->foreign_name = LC_ILit("unsigned short");
@@ -10579,7 +10574,7 @@ LC_FUNCTION void LC_LangBegin(LC_Lang *l) {
         decl->state        = LC_DeclState_Resolved;
         decl->type         = L->tstring;
         L->tstring->decl   = decl;
-        LC_AddDeclToScope(L->builtin_package->apackage.scope, decl);
+        LC_AddDeclToScope(L->builtin_package->apackage.ext->scope, decl);
         LC_Operand result = LC_ResolveTypeAggregate(ast, decl->type);
         LC_ASSERT(ast, !LC_IsError(result));
     }
@@ -10596,7 +10591,7 @@ LC_FUNCTION void LC_LangBegin(LC_Lang *l) {
         decl->state        = LC_DeclState_Resolved;
         decl->type         = L->tany;
         L->tany->decl      = decl;
-        LC_AddDeclToScope(L->builtin_package->apackage.scope, decl);
+        LC_AddDeclToScope(L->builtin_package->apackage.ext->scope, decl);
         LC_Operand result = LC_ResolveTypeAggregate(ast, decl->type);
         LC_ASSERT(ast, !LC_IsError(result));
     }
