@@ -1404,9 +1404,12 @@ LC_FUNCTION const char *LC_DeclKindToString(LC_DeclKind decl_kind);
 LC_FUNCTION const char *LC_TokenKindToString(LC_TokenKind token_kind);
 LC_FUNCTION const char *LC_TokenKindToOperator(LC_TokenKind token_kind);
 
-//
-// bigint functions
-//
+/*
+The bigint code was written by Christoffer Lerno, he is the programmer
+behind C3. He allowed me to use this code without any restrictions. Great guy!
+You can check out C3 compiler: https://github.com/c3lang/c3c
+He also writes very helpful blogs about compilers: https://c3.handmade.network/blog
+*/
 LC_FUNCTION LC_BigInt LC_Bigint_u64(uint64_t val);
 LC_FUNCTION uint64_t *LC_Bigint_ptr(LC_BigInt *big_int);
 LC_FUNCTION size_t    LC_Bigint_bits_needed(LC_BigInt *big_int);
@@ -3419,13 +3422,6 @@ LC_FUNCTION void LC_InternTokens(LC_Lex *x) {
 }
 
 #undef LC_IF
-
-/*
-The bigint code was written by Christoffer Lerno, he is the programmer
-behind C3. He allowed me to use this code without any restrictions. Great guy!
-You can check out C3 compiler: https://github.com/c3lang/c3c
-He also writes very helpful blogs about compilers: https://c3.handmade.network/blog
-*/
 
 #ifndef malloc_arena
     #define malloc_arena(size) LC_PushSize(L->arena, size)

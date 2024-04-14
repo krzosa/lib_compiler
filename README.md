@@ -85,7 +85,7 @@ You only need to compile the build tool once. Afterwards just call `./bld.exe`. 
 
 - **My priority is to improve the C user API, harden the compiler, accommodate things that I didn't foresee and stuff like that.**
 - I want to implement a bytecode backend (in the future) so that the language can be used like Lua.
-- New features are of second priority unless they are small and important but additionally I'm considering the addition of overloaded procedures because it would greatly aid in writing macros.
+- New features are of second priority unless they important. I'm considering the addition of overloaded procedures because it would greatly aid in writing macros.
 
 # Language overview
 
