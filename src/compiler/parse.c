@@ -955,7 +955,7 @@ LC_FUNCTION LC_AST *LC_ParseImport(void) {
 
 LC_FUNCTION void LC_AddFileToPackage(LC_AST *pkg, LC_AST *f) {
     f->afile.package = pkg;
-    LC_DLLAdd(pkg->apackage.ext->ffile, pkg->apackage.ext->lfile, f);
+    LC_DLLAdd(pkg->apackage.ffile, pkg->apackage.lfile, f);
 }
 
 LC_FUNCTION LC_AST *LC_ParseFileEx(LC_AST *package) {
@@ -993,8 +993,8 @@ LC_FUNCTION LC_AST *LC_ParseFileEx(LC_AST *package) {
     }
 
     if (package) {
-        if (package->apackage.doc_comment) LC_ReportParseError(package_doc_comment, "there are more then 1 package doc comments in %s package", (char *)package->apackage.name);
-        package->apackage.doc_comment = package_doc_comment;
+        if (package->apackage.ext->doc_comment) LC_ReportParseError(package_doc_comment, "there are more then 1 package doc comments in %s package", (char *)package->apackage.name);
+        package->apackage.ext->doc_comment = package_doc_comment;
         LC_AddFileToPackage(package, n);
     }
 

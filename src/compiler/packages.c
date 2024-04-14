@@ -72,7 +72,7 @@ LC_FUNCTION bool LC_PackageNameDuplicate(LC_Intern name) {
 LC_FUNCTION void LC_AddPackageToList(LC_AST *n) {
     LC_Intern name = n->apackage.name;
     if (LC_PackageNameDuplicate(name)) {
-        LC_SendErrorMessagef(NULL, NULL, "found 2 packages with the same name: '%s' / '%.*s'\n", name, LC_Expand(n->apackage.path));
+        LC_SendErrorMessagef(NULL, NULL, "found 2 packages with the same name: '%s' / '%.*s'\n", name, LC_Expand(n->apackage.ext->path));
         L->errors += 1;
         return;
     }
@@ -86,10 +86,10 @@ LC_FUNCTION void LC_AddPackageToList(LC_AST *n) {
 
 LC_FUNCTION LC_AST *LC_RegisterPackage(LC_String path) {
     LC_ASSERT(NULL, path.len != 0);
-    LC_AST *n        = LC_CreateAST(NULL, LC_ASTKind_Package);
-    n->apackage.ext  = LC_PushStruct(L->arena, LC_ASTPackageExt);
-    n->apackage.name = LC_MakePackageNameFromPath(path);
-    n->apackage.path = path;
+    LC_AST *n             = LC_CreateAST(NULL, LC_ASTKind_Package);
+    n->apackage.ext       = LC_PushStruct(L->arena, LC_ASTPackageExt);
+    n->apackage.name      = LC_MakePackageNameFromPath(path);
+    n->apackage.ext->path = path;
     LC_AddPackageToList(n);
     return n;
 }
@@ -111,7 +111,7 @@ LC_FUNCTION LC_ASTRefList LC_GetPackageImports(LC_AST *package) {
     LC_ASSERT(package, package->kind == LC_ASTKind_Package);
 
     LC_ASTRefList refs = {0};
-    LC_ASTFor(file, package->apackage.ext->ffile) {
+    LC_ASTFor(file, package->apackage.ffile) {
         LC_ASTFor(import, file->afile.fimport) {
             LC_AST *found = LC_FindImportInRefList(&refs, import->gimport.path);
             if (found) {
@@ -145,7 +145,7 @@ LC_FUNCTION LC_AST *LC_GetPackageByName(LC_Intern name) {
         LC_String path = LC_Format(L->arena, "%.*s/%s", LC_Expand(s), (char *)name);
         if (LC_IsDir(L->arena, path)) {
             if (result != NULL) {
-                LC_SendErrorMessagef(NULL, NULL, "found 2 directories with the same name: '%.*s', '%.*s'\n", LC_Expand(path), LC_Expand(result->apackage.path));
+                LC_SendErrorMessagef(NULL, NULL, "found 2 directories with the same name: '%.*s', '%.*s'\n", LC_Expand(path), LC_Expand(result->apackage.ext->path));
                 L->errors += 1;
                 break;
             }
@@ -184,10 +184,10 @@ LC_FUNCTION void LC_ParsePackage(LC_AST *n) {
 
     LC_StringList files = n->apackage.ext->injected_filepaths;
     if (files.node_count == 0) {
-        files = LC_ListFilesInPackage(L->arena, n->apackage.path);
+        files = LC_ListFilesInPackage(L->arena, n->apackage.ext->path);
         if (files.first == NULL) {
-            LC_SendErrorMessagef(NULL, NULL, "no valid .lc files in '%.*s'", LC_Expand(n->apackage.path));
-            n->apackage.state = LC_DeclState_Error;
+            LC_SendErrorMessagef(NULL, NULL, "no valid .lc files in '%.*s'", LC_Expand(n->apackage.ext->path));
+            n->apackage.ext->state = LC_DeclState_Error;
             L->errors += 1;
             return;
         }
@@ -199,7 +199,7 @@ LC_FUNCTION void LC_ParsePackage(LC_AST *n) {
 
         LC_AST *ast_file = LC_ParseFile(n, file.path.str, file.content.str, file.line);
         if (!ast_file) {
-            n->apackage.state = LC_DeclState_Error;
+            n->apackage.ext->state = LC_DeclState_Error;
             return;
         }
     }
@@ -224,13 +224,13 @@ LC_FUNCTION void LC_ParsePackagesUsingRegistry(LC_Intern name) {
 
 LC_FUNCTION void LC_BuildIfPass(void) {
     LC_ASTFor(n, L->fpackage) {
-        for (LC_AST *fit = n->apackage.ext->ffile; fit;) {
+        for (LC_AST *fit = n->apackage.ffile; fit;) {
             LC_AST *next = fit->next;
 
             LC_AST *build_if = LC_HasNote(fit, L->ibuild_if);
             if (build_if) {
                 if (!LC_ResolveBuildIf(build_if)) {
-                    LC_DLLRemove(n->apackage.ext->ffile, n->apackage.ext->lfile, fit);
+                    LC_DLLRemove(n->apackage.ffile, n->apackage.lfile, fit);
                     LC_AddASTToRefList(&L->discarded, fit);
                     fit = next;
                     continue;
@@ -269,23 +269,23 @@ LC_FUNCTION void LC_AddOrderedPackageToRefList(LC_AST *n) {
 // an aggregate. It's just a number.
 LC_FUNCTION LC_AST *LC_OrderPackagesAndBasicResolve(LC_AST *pos, LC_Intern name) {
     LC_AST *n = LC_GetPackageByName(name);
-    if (n->apackage.state == LC_DeclState_Error) {
+    if (n->apackage.ext->state == LC_DeclState_Error) {
         return NULL;
     }
-    if (n->apackage.state == LC_DeclState_Resolved) {
+    if (n->apackage.ext->state == LC_DeclState_Resolved) {
         // This function can be called multiple times, I assume user might
         // want to use type information to generate something. Pattern:
         // typecheck -> generate -> typecheck is expected!
         LC_PackageDecls(n);
         return n;
     }
-    if (n->apackage.state == LC_DeclState_Resolving) {
+    if (n->apackage.ext->state == LC_DeclState_Resolving) {
         LC_ReportASTError(pos, "circular import '%s'", name);
-        n->apackage.state = LC_DeclState_Error;
+        n->apackage.ext->state = LC_DeclState_Error;
         return NULL;
     }
-    LC_ASSERT(pos, n->apackage.state == LC_DeclState_Unresolved);
-    n->apackage.state = LC_DeclState_Resolving;
+    LC_ASSERT(pos, n->apackage.ext->state == LC_DeclState_Unresolved);
+    n->apackage.ext->state = LC_DeclState_Resolving;
 
     LC_Operand op = LC_ImportPackage(NULL, n, L->builtin_package);
     LC_ASSERT(pos, !LC_IsError(op));
@@ -299,14 +299,14 @@ LC_FUNCTION LC_AST *LC_OrderPackagesAndBasicResolve(LC_AST *pos, LC_Intern name)
     for (LC_ASTRef *it = refs.first; it; it = it->next) {
         LC_AST *import = LC_OrderPackagesAndBasicResolve(it->ast, it->ast->gimport.path);
         if (!import) {
-            n->apackage.state = LC_DeclState_Error;
+            n->apackage.ext->state = LC_DeclState_Error;
             wrong_import += 1;
             continue;
         }
 
         LC_Operand op = LC_ImportPackage(it->ast, n, import);
         if (LC_IsError(op)) {
-            n->apackage.state = LC_DeclState_Error;
+            n->apackage.ext->state = LC_DeclState_Error;
             wrong_import += 1;
             continue;
         }
@@ -316,7 +316,7 @@ LC_FUNCTION LC_AST *LC_OrderPackagesAndBasicResolve(LC_AST *pos, LC_Intern name)
 
     LC_PackageDecls(n);
     LC_AddOrderedPackageToRefList(n);
-    n->apackage.state = LC_DeclState_Resolved;
+    n->apackage.ext->state = LC_DeclState_Resolved;
     return n;
 }
 
@@ -329,7 +329,7 @@ LC_FUNCTION void LC_OrderAndResolveTopLevelDecls(LC_Intern name) {
     // it should still be fine to go forward with this and also proc body analysis
     for (LC_ASTRef *it = L->ordered_packages.first; it; it = it->next) {
         LC_AST *package = it->ast;
-        LC_ASSERT(package, package->apackage.state == LC_DeclState_Resolved);
+        LC_ASSERT(package, package->apackage.ext->state == LC_DeclState_Resolved);
         LC_ResolveIncompleteTypes(package);
     }
 }
@@ -339,7 +339,7 @@ LC_FUNCTION void LC_ResolveAllProcBodies(void) {
     // the list.
     for (LC_ASTRef *it = L->ordered_packages.first; it; it = it->next) {
         LC_AST *package = it->ast;
-        LC_ASSERT(package, package->apackage.state == LC_DeclState_Resolved);
+        LC_ASSERT(package, package->apackage.ext->state == LC_DeclState_Resolved);
         LC_ResolveProcBodies(package);
     }
 }
@@ -387,10 +387,10 @@ LC_FUNCTION LC_String LC_GenerateUnityBuild(LC_ASTRefList packages) {
 }
 
 LC_FUNCTION void LC_AddSingleFilePackage(LC_Intern name, LC_String path) {
-    LC_AST *n        = LC_CreateAST(0, LC_ASTKind_Package);
-    n->apackage.ext  = LC_PushStruct(L->arena, LC_ASTPackageExt);
-    n->apackage.name = name;
-    n->apackage.path = path;
+    LC_AST *n             = LC_CreateAST(0, LC_ASTKind_Package);
+    n->apackage.ext       = LC_PushStruct(L->arena, LC_ASTPackageExt);
+    n->apackage.name      = name;
+    n->apackage.ext->path = path;
     LC_AddNode(L->arena, &n->apackage.ext->injected_filepaths, path);
     LC_AddPackageToList(n);
 }

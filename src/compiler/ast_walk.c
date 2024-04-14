@@ -57,7 +57,7 @@ LC_FUNCTION void LC_WalkAST(LC_ASTWalker *ctx, LC_AST *n) {
     case LC_ASTKind_StmtContinue: break;
 
     case LC_ASTKind_Package: {
-        LC_ASTFor(it, n->apackage.ext->ffile) LC_WalkAST(ctx, it);
+        LC_ASTFor(it, n->apackage.ffile) LC_WalkAST(ctx, it);
     } break;
 
     case LC_ASTKind_File: {

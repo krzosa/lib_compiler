@@ -154,7 +154,7 @@ bool add_dynamic_array_macro() {
     // that is going to be imported into every other package, for now we use only the current package
     For(array_of_to_gen) {
         LC_AST *ast  = LC_ParseDeclf("ArrayOf%s :: struct { data: *%s; len: int; cap: int; }", (char *)it, (char *)it);
-        LC_AST *file = package->apackage.ext->ffile;
+        LC_AST *file = package->apackage.ffile;
 
         LC_DLLAdd(file->afile.fdecl, file->afile.ldecl, ast);
     }

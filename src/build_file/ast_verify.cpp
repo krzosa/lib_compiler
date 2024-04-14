@@ -70,7 +70,7 @@ void VerifyCopy_Walk(LC_ASTWalker *ctx, LC_AST *n) {
 
 void VerifyASTCopy(LC_ASTRefList packages) {
     for (LC_ASTRef *it = packages.first; it; it = it->next) {
-        LC_ASTFor(file, it->ast->apackage.ext->ffile) {
+        LC_ASTFor(file, it->ast->apackage.ffile) {
             LC_TempArena c    = LC_BeginTemp(L->arena);
             LC_AST      *copy = LC_CopyAST(L->arena, file);
 

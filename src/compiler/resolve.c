@@ -35,7 +35,7 @@ LC_FUNCTION void LC_PackageDecls(LC_AST *package) {
     LC_PUSH_PACKAGE(package);
 
     // Register top level declarations
-    LC_ASTFor(file, package->apackage.ext->ffile) {
+    LC_ASTFor(file, package->apackage.ffile) {
         LC_ASTFor(import, file->afile.fimport) {
             if (import->gimport.resolved == false) LC_ReportASTError(import, "internal compiler error: unresolved import got into typechecking stage");
         }
@@ -43,7 +43,7 @@ LC_FUNCTION void LC_PackageDecls(LC_AST *package) {
     }
 
     // Resolve declarations by name
-    LC_ASTFor(file, package->apackage.ext->ffile) {
+    LC_ASTFor(file, package->apackage.ffile) {
         LC_ResolveDeclsFromFile(file);
     }
 
@@ -53,7 +53,7 @@ LC_FUNCTION void LC_PackageDecls(LC_AST *package) {
 LC_FUNCTION void LC_ResolveProcBodies(LC_AST *package) {
     LC_PUSH_PACKAGE(package);
 
-    LC_ASTFor(file, package->apackage.ext->ffile) {
+    LC_ASTFor(file, package->apackage.ffile) {
         LC_ASTFor(n, file->afile.fdecl) {
             if (n->kind == LC_ASTKind_DeclNote) continue;
 
@@ -71,7 +71,7 @@ LC_FUNCTION void LC_ResolveProcBodies(LC_AST *package) {
 LC_FUNCTION void LC_ResolveIncompleteTypes(LC_AST *package) {
     LC_PUSH_PACKAGE(package);
 
-    LC_ASTFor(file, package->apackage.ext->ffile) {
+    LC_ASTFor(file, package->apackage.ffile) {
         LC_ASTFor(n, file->afile.fdecl) {
             if (n->kind == LC_ASTKind_DeclNote) continue;
 

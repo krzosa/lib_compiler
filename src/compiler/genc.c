@@ -606,7 +606,7 @@ LC_FUNCTION void LC_GenCVarFDecl(LC_Decl *decl) {
 
 LC_FUNCTION void LC_GenCHeader(LC_AST *package) {
     // C notes
-    LC_ASTFor(file, package->apackage.ext->ffile) {
+    LC_ASTFor(file, package->apackage.ffile) {
         LC_ASTFor(it, file->afile.fdecl) {
             if (it->kind != LC_ASTKind_DeclNote) continue;
 

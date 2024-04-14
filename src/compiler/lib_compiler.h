@@ -373,13 +373,15 @@ struct LC_ASTFile {
     LC_Token *doc_comment;
 };
 
-// To minimize package ast size, we want all nodes to be equal in size,
-// a lot of things are easier then and we can loop through all asts for free etc.
+// This extension thing is only to minimize package ast size!
+// I want all nodes to be equal in size, this way a lot of things are
+// easier. You can loop through all the ast nodes easily and stuff like that.
 typedef struct LC_ASTPackageExt LC_ASTPackageExt;
 struct LC_ASTPackageExt {
     LC_StringList injected_filepaths; // to sidestep regular file finding, implement single file packages etc.
-    LC_AST       *ffile;
-    LC_AST       *lfile;
+    LC_Token     *doc_comment;
+    LC_DeclState  state;
+    LC_String     path;
 
     // These are resolved later:
     // @todo: add foreign name?
@@ -389,10 +391,9 @@ struct LC_ASTPackageExt {
 };
 
 struct LC_ASTPackage {
-    LC_DeclState      state;
+    LC_AST           *ffile;
+    LC_AST           *lfile;
     LC_Intern         name;
-    LC_String         path;
-    LC_Token         *doc_comment;
     LC_ASTPackageExt *ext;
 };
 

@@ -78,11 +78,11 @@ bool sandbox() {
     //
     LC_AST *package            = LC_GetPackageByName(name);
     LC_AST *dynamic_array_file = NULL;
-    LC_ASTFor(it, package->apackage.ext->ffile) {
+    LC_ASTFor(it, package->apackage.ffile) {
         S8_String path = S8_MakeFromChar((char *)it->afile.x->file);
         if (S8_EndsWith(path, "dynamic_array.lc")) {
             dynamic_array_file = it;
-            DLL_QUEUE_REMOVE(package->apackage.ext->ffile, package->apackage.ext->lfile, it);
+            DLL_QUEUE_REMOVE(package->apackage.ffile, package->apackage.lfile, it);
             break;
         }
     }
@@ -94,7 +94,7 @@ bool sandbox() {
 
         walker.user_data = (void *)&it;
         LC_WalkAST(&walker, new_array_file);
-        LC_DLLAdd(package->apackage.ext->ffile, package->apackage.ext->lfile, new_array_file);
+        LC_DLLAdd(package->apackage.ffile, package->apackage.lfile, new_array_file);
     }
 
     LC_OrderAndResolveTopLevelDecls(name);
