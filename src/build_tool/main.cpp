@@ -78,7 +78,7 @@ int main(int argument_count, char **arguments) {
         exe_name   = OS_GetAbsolutePath(Perm, exe_name);
         int result = Run(exe_name + cmd);
         if (result != 0) {
-            IO_Printf("FAILED execution of the build file!\n");
+            IO_Printf("FAILED execution of the build file, deleting cache!\n");
             OS_DeleteFile("build_tool.cache");
             return 1;
         }
