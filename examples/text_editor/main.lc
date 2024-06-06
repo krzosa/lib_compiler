@@ -37,6 +37,11 @@ main :: proc(): int {
 
         screen_size: Vector2 = {:f32(GetScreenWidth()), :f32(GetScreenHeight())};
         screen_rect := Rect2PSize(0, 0, screen_size.x, screen_size.y);
+        CutBottom(&screen_rect, 200);
+        CutLeft(&screen_rect, 100);
+        CutTop(&screen_rect, 100);
+        CutRight(&screen_rect, 150);
+        screen_with_bar := screen_rect;
         bar := CutRight(&screen_rect, 10);
 
         if IsKeyPressed(KEY_LEFT) || IsKeyPressedRepeat(KEY_LEFT) {
@@ -218,36 +223,44 @@ main :: proc(): int {
         buffer_end_wpos := CalculateWorldPosUnscrolled(buffer_end_vpos);
 
         mouse_p := GetMousePosition();
-        if CheckCollisionPointRec(mouse_p, Rect2PToRectangle(screen_rect)) && !MouseScrolling {
-            if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
-                p := Vector2Add(mouse_p, Scroll);
-                p  = Vector2Divide(p, Monosize);
-                x := :int(floorf(p.x));
-                y := :int(floorf(p.y));
-                MainCursor.a = CalculatePosFromVisualPos(&buffer, {x, y});
-                MainCursor.b = MainCursor.a;
-            } else if IsMouseButtonDown(MOUSE_BUTTON_LEFT) {
-                p := Vector2Add(mouse_p, Scroll);
-                p  = Vector2Divide(p, Monosize);
-                x := :int(floorf(p.x));
-                y := :int(floorf(p.y));
-                MainCursor.b = CalculatePosFromVisualPos(&buffer, {x, y});
-            }
-            SetMouseCursor(MOUSE_CURSOR_IBEAM);
-        } else {
-            SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+        if CheckCollisionPointRec(mouse_p, Rect2PToRectangle(screen_with_bar)) {
+            if CheckCollisionPointRec(mouse_p, Rect2PToRectangle(screen_rect)) && !MouseScrolling {
+                if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
+                    p := Vector2Add(mouse_p, Scroll);
+                    p  = Vector2Subtract(p, screen_rect.min);
+                    p  = Vector2Divide(p, Monosize);
+                    x := :int(floorf(p.x));
+                    y := :int(floorf(p.y));
+                    MainCursor.a = CalculatePosFromVisualPos(&buffer, {x, y});
+                    MainCursor.b = MainCursor.a;
+                } else if IsMouseButtonDown(MOUSE_BUTTON_LEFT) {
+                    p := Vector2Add(mouse_p, Scroll);
+                    p  = Vector2Subtract(p, screen_rect.min);
+                    p  = Vector2Divide(p, Monosize);
+                    x := :int(floorf(p.x));
+                    y := :int(floorf(p.y));
+                    MainCursor.b = CalculatePosFromVisualPos(&buffer, {x, y});
+                }
+                SetMouseCursor(MOUSE_CURSOR_IBEAM);
+            } else {
+                SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 
-            if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
-                MouseScrolling = true;
+                if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
+                    MouseScrolling = true;
+                }
             }
+
+
         }
 
         if MouseScrolling {
-            mouse_scroll_marker_normalized := mouse_p.y / GetRectY(screen_rect);
+            mouse_scroll_marker_normalized := (mouse_p.y - screen_with_bar.min.y) / GetRectY(bar);
             Scroll.y = mouse_scroll_marker_normalized * buffer_end_wpos.y;
 
             if IsMouseButtonReleased(MOUSE_BUTTON_LEFT) MouseScrolling = false;
         }
+
+
 
         for key := GetCharPressed(); key; key = GetCharPressed() {
             selection_range := GetRange(MainCursor);
@@ -330,6 +343,7 @@ main :: proc(): int {
 
         // Draw text
         {
+            BeginScissorMode(:int(screen_rect.min.x), :int(screen_rect.min.y), :int(GetRectX(screen_rect)), :int(GetRectY(screen_rect)));
             miny = ClampInt(miny, 0, buffer.lines.len - 1);
             maxy = ClampInt(maxy, 0, buffer.lines.len - 1);
             for y := miny; y <= maxy; y += 1 {
@@ -339,8 +353,10 @@ main :: proc(): int {
                 defer free(string.str);
 
                 pos := CalculateWorldPos({0, y});
-                DrawTextEx(font, string.str, pos, font_size, font_spacing, BLACK);
+                pos_adjusted_by_buffer := Vector2Add(pos, screen_rect.min);
+                DrawTextEx(font, string.str, pos_adjusted_by_buffer, font_size, font_spacing, BLACK);
             }
+            EndScissorMode();
         }
 
         // Draw selection
@@ -350,7 +366,9 @@ main :: proc(): int {
             pos := start_vpos;
             for iter := Iterate(&buffer, range.min, range.max); IsValid(iter); Advance(&iter) {
                 world_pos := CalculateWorldPos(pos);
-                rect := Rect2PSize(world_pos.x, world_pos.y, Monosize.x, Monosize.y);
+                world_pos_adjusted_by_buffer := Vector2Add(world_pos, screen_rect.min);
+
+                rect := Rect2PSize(world_pos_adjusted_by_buffer.x, world_pos_adjusted_by_buffer.y, Monosize.x, Monosize.y);
                 DrawRect(rect, {0, 255, 0, 40});
 
                 pos.x += 1;
@@ -365,9 +383,10 @@ main :: proc(): int {
         {
             c := CalculateVisualPos(&buffer, MainCursor.b);
             p := CalculateWorldPos(c);
+            pos_adjusted_by_buffer := Vector2Add(p, screen_rect.min);
 
             cursor_size: f32 = Monosize.x * 0.2;
-            rect := Rect2PSize(p.x, p.y, Monosize.x, Monosize.y);
+            rect := Rect2PSize(pos_adjusted_by_buffer.x, pos_adjusted_by_buffer.y, Monosize.x, Monosize.y);
             rect = CutLeft(&rect, cursor_size);
 
             DrawRect(rect, RED);
