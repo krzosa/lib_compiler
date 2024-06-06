@@ -7763,7 +7763,11 @@ LC_FUNCTION LC_Token *LC_MatchKeyword(LC_Intern intern) {
 // Pratt expression parser
 // Based on this really good article: https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 // clang-format off
-LC_FUNCTION LC_Precedence LC_MakePrecedence(int left, int right) { return {left, right}; }
+LC_FUNCTION LC_Precedence LC_MakePrecedence(int left, int right) {
+    LC_Precedence result = {left, right};
+    return result;
+}
+
 LC_FUNCTION LC_Precedence LC_GetPrecedence(LC_PrecedenceKind p, LC_TokenKind kind) {
     if (p == LC_PrecedenceKind_Prefix) goto Prefix;
     if (p == LC_PrecedenceKind_Infix) goto Infix;

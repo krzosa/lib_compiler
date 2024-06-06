@@ -184,6 +184,7 @@ int main(int argc, char **argv) {
         else IO_Printf("%-50s - ERROR\n", "add_instrumentation");
     }
 
+#if 0
     if (!ShouldRun("wasm_playground") && UseClang) {
         OS_MakeDir("wasm_playground");
         int result = Run("clang --target=wasm32 -mbulk-memory -Oz -Wno-writable-strings --no-standard-libraries -Wl,--strip-all -Wl,--import-memory -Wl,--no-entry -o wasm_playground/playground.wasm ../src/wasm_playground/wasm_main.c -DOS_WASM=1");
@@ -212,6 +213,7 @@ int main(int argc, char **argv) {
         if (result == 0) IO_Printf("%-50s - OK\n", "wasm_playground");
         else IO_Printf("%-50s - ERROR\n", "wasm_playground");
     }
+#endif
 
     if (ShouldRun("use_as_data_format_with_typechecking")) {
         bool result = use_as_data_format_with_typechecking();

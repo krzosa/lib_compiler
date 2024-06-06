@@ -115,12 +115,12 @@ void WASM_EXPORT(test)(void) {
 
     LC_Intern name = LC_ILit("file");
     LC_AddSingleFilePackage(name, LC_Lit("file.lc"));
-    LC_ASTRefList packages = LC_ParseAndResolve(name);
+    LC_ParseAndResolve(name);
 
     if (L->errors == 0) {
         LC_BeginStringGen(L->arena);
-        for (LC_ASTRef *it = packages.first; it; it = it->next) LC_GenCHeader(it->ast);
-        for (LC_ASTRef *it = packages.first; it; it = it->next) LC_GenCImpl(it->ast);
+        for (LC_ASTRef *it = L->ordered_packages.first; it; it = it->next) LC_GenCHeader(it->ast);
+        for (LC_ASTRef *it = L->ordered_packages.last; it; it = it->next) LC_GenCImpl(it->ast);
         LC_String result = LC_EndStringGen(L->arena);
 
         LC_String code_output = LC_Lit("//\n// Code output\n//");
