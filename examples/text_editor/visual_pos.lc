@@ -1,5 +1,4 @@
 Monosize: Vector2;
-ScreenSize: Vector2;
 Scroll: Vector2;
 
 Vec2I :: struct {

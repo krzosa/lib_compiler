@@ -3,6 +3,7 @@ import "std_types";
 import "libc";
 
 MainCursor: Selection;
+MouseScrolling: bool;
 
 Selection :: struct {
     a: int;
@@ -18,7 +19,7 @@ main :: proc(): int {
     InitWindow(800, 600, "TextEditor");
     SetTargetFPS(60);
 
-    font_size: float = 35;
+    font_size: float = 14;
     font_spacing: float = 1;
     font: Font = LoadFontEx("C:/Windows/Fonts/consola.ttf", :int(font_size), nil, 0);
 
@@ -27,41 +28,16 @@ main :: proc(): int {
     Monosize = {:float(glyph_info.image.width), size.y};
 
     buffer: Buffer;
-    AddText(&buffer, "1Testing and stuff 1Testing and stuff 1Testing and stuff 1Testing and stuff\n");
-    AddText(&buffer, "2Testing and stuff\n");
-    AddText(&buffer, "3Testing and stuff\n");
-    AddText(&buffer, "4Testing and stuff\n");
-    AddText(&buffer, "5Testing and stuff\n");
-    AddText(&buffer, "6Testing and stuff\n");
-    AddText(&buffer, "7Testing and stuff\n");
-    AddText(&buffer, "8Testing and stuff\n");
-    AddText(&buffer, "9Testing and stuff\n");
-    AddText(&buffer, "1Testing and stuff\n");
-    AddText(&buffer, "2Testing and stuff\n");
-    AddText(&buffer, "3Testing and stuff\n");
-    AddText(&buffer, "4Testing and stuff\n");
-    AddText(&buffer, "5Testing and stuff\n");
-    AddText(&buffer, "6Testing and stuff\n");
-    AddText(&buffer, "7Testing and stuff\n");
-    AddText(&buffer, "8Testing and stuff\n");
-    AddText(&buffer, "9Testing and stuff\n");
-    AddText(&buffer, "1Testing and stuff\n");
-    AddText(&buffer, "22esting and stuff\n");
-    AddText(&buffer, "3Testing and stuff\n");
-    AddText(&buffer, "4Testing and stuff\n");
-    AddText(&buffer, "5Testing and stuff\n");
-    AddText(&buffer, "6Testing and stuff\n");
-    AddText(&buffer, "7Testing and stuff\n");
-    AddText(&buffer, "8Testing and stuff\n");
-    AddText(&buffer, "9Testing and stuff\n");
-    AddText(&buffer, "1Testing and stuff\n");
-    AddText(&buffer, "2Testing and stuff\n");
-    AddText(&buffer, "3Testing and stuff\n");
-    AddText(&buffer, "4Testing and stuff\n");
+    file_content := LoadFileText("C:/Work/language/examples/text_editor/main.lc");
+    AddText(&buffer, {file_content, :int(strlen(file_content))});
+    UnloadFileText(file_content);
 
     for !WindowShouldClose() {
-        ScreenSize = {:f32(GetScreenWidth()), :f32(GetScreenHeight())};
         initial_cursor: Selection = MainCursor;
+
+        screen_size: Vector2 = {:f32(GetScreenWidth()), :f32(GetScreenHeight())};
+        screen_rect := Rect2PSize(0, 0, screen_size.x, screen_size.y);
+        bar := CutRight(&screen_rect, 10);
 
         if IsKeyPressed(KEY_LEFT) || IsKeyPressedRepeat(KEY_LEFT) {
             if IsKeyDown(KEY_LEFT_SHIFT) {
@@ -75,8 +51,14 @@ main :: proc(): int {
                     MainCursor.a = SeekOnWordBoundary(&buffer, MainCursor.a, GO_BACKWARD);
                     MainCursor.b = MainCursor.a;
                 } else {
-                    MainCursor.a = MoveLeft(&buffer, MainCursor.a);
-                    MainCursor.b = MainCursor.a;
+                    range := GetRange(MainCursor);
+                    if GetRangeSize(range) > 0 {
+                        MainCursor.a = MinInt(MainCursor.a, MainCursor.b);
+                        MainCursor.b = MinInt(MainCursor.a, MainCursor.b);
+                    } else {
+                        MainCursor.a = MoveLeft(&buffer, MainCursor.a);
+                        MainCursor.b = MainCursor.a;
+                    }
                 }
             }
         }
@@ -93,8 +75,14 @@ main :: proc(): int {
                     MainCursor.a = SeekOnWordBoundary(&buffer, MainCursor.a, GO_FORWARD);
                     MainCursor.b = MainCursor.a;
                 } else {
-                    MainCursor.a = MoveRight(&buffer, MainCursor.a);
-                    MainCursor.b = MainCursor.a;
+                    range := GetRange(MainCursor);
+                    if GetRangeSize(range) > 0 {
+                        MainCursor.a = MaxInt(MainCursor.a, MainCursor.b);
+                        MainCursor.b = MaxInt(MainCursor.a, MainCursor.b);
+                    } else {
+                        MainCursor.a = MoveRight(&buffer, MainCursor.a);
+                        MainCursor.b = MainCursor.a;
+                    }
                 }
             }
         }
@@ -176,6 +164,18 @@ main :: proc(): int {
             MainCursor.b = MainCursor.a;
         }
 
+        if IsKeyPressed(KEY_TAB) || IsKeyPressedRepeat(KEY_TAB) {
+            selection_range := GetRange(MainCursor);
+            ReplaceText(&buffer, selection_range, "    ");
+            range_size := GetRangeSize(selection_range);
+            if range_size != 0 {
+                MainCursor.a = selection_range.min;
+                MainCursor.b = selection_range.min;
+            }
+            MainCursor.a = MoveRight(&buffer, MainCursor.a + 3);
+            MainCursor.b = MainCursor.a;
+        }
+
         if IsKeyPressed(KEY_HOME) {
             line := FindLineOfPos(&buffer, MainCursor.b);
             if IsKeyDown(KEY_LEFT_SHIFT) {
@@ -197,7 +197,7 @@ main :: proc(): int {
 
         if IsKeyPressed(KEY_PAGE_DOWN) || IsKeyPressedRepeat(KEY_PAGE_DOWN) {
             vpos := CalculateVisualPos(&buffer, MainCursor.b);
-            move_by := :int(roundf(ScreenSize.y / Monosize.y));
+            move_by := :int(roundf(GetRectY(screen_rect) / Monosize.y));
             vpos.y += move_by;
             MainCursor.b = CalculatePosFromVisualPos(&buffer, vpos);
             if !IsKeyDown(KEY_LEFT_SHIFT) {
@@ -206,7 +206,7 @@ main :: proc(): int {
         }
         if IsKeyPressed(KEY_PAGE_UP) || IsKeyPressedRepeat(KEY_PAGE_UP) {
             vpos := CalculateVisualPos(&buffer, MainCursor.b);
-            move_by := :int(roundf(ScreenSize.y / Monosize.y));
+            move_by := :int(roundf(GetRectY(screen_rect) / Monosize.y));
             vpos.y -= move_by;
             MainCursor.b = CalculatePosFromVisualPos(&buffer, vpos);
             if !IsKeyDown(KEY_LEFT_SHIFT) {
@@ -214,20 +214,39 @@ main :: proc(): int {
             }
         }
 
-        mouse_p := GetMousePosition();
-        if IsMouseButtonDown(MOUSE_BUTTON_LEFT) {
-            p := Vector2Add(mouse_p, Scroll);
-            p  = Vector2Divide(p, Monosize);
-            x := :int(floorf(p.x));
-            y := :int(floorf(p.y));
-            MainCursor.a = CalculatePosFromVisualPos(&buffer, {x, y});
-            MainCursor.b = MainCursor.a;
-        }
+        buffer_end_vpos := CalculateVisualPos(&buffer, buffer.len - 1);
+        buffer_end_wpos := CalculateWorldPosUnscrolled(buffer_end_vpos);
 
-        if CheckCollisionPointRec(mouse_p, {0, 0, ScreenSize.x, ScreenSize.y}) {
+        mouse_p := GetMousePosition();
+        if CheckCollisionPointRec(mouse_p, Rect2PToRectangle(screen_rect)) && !MouseScrolling {
+            if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
+                p := Vector2Add(mouse_p, Scroll);
+                p  = Vector2Divide(p, Monosize);
+                x := :int(floorf(p.x));
+                y := :int(floorf(p.y));
+                MainCursor.a = CalculatePosFromVisualPos(&buffer, {x, y});
+                MainCursor.b = MainCursor.a;
+            } else if IsMouseButtonDown(MOUSE_BUTTON_LEFT) {
+                p := Vector2Add(mouse_p, Scroll);
+                p  = Vector2Divide(p, Monosize);
+                x := :int(floorf(p.x));
+                y := :int(floorf(p.y));
+                MainCursor.b = CalculatePosFromVisualPos(&buffer, {x, y});
+            }
             SetMouseCursor(MOUSE_CURSOR_IBEAM);
         } else {
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+
+            if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
+                MouseScrolling = true;
+            }
+        }
+
+        if MouseScrolling {
+            mouse_scroll_marker_normalized := mouse_p.y / GetRectY(screen_rect);
+            Scroll.y = mouse_scroll_marker_normalized * buffer_end_wpos.y;
+
+            if IsMouseButtonReleased(MOUSE_BUTTON_LEFT) MouseScrolling = false;
         }
 
         for key := GetCharPressed(); key; key = GetCharPressed() {
@@ -252,7 +271,7 @@ main :: proc(): int {
         //
         // Scrolling
         //
-        mouse_wheel := GetMouseWheelMove() * 16;
+        mouse_wheel := GetMouseWheelMove() * 48;
         Scroll.y -= mouse_wheel;
 
         if initial_cursor.b != MainCursor.b {
@@ -262,7 +281,7 @@ main :: proc(): int {
             world_pos_cursor_end := Vector2Add(world_pos, Monosize);
 
             scrolled_begin := Scroll;
-            scrolled_end   := Vector2Add(Scroll, ScreenSize);
+            scrolled_end   := Vector2Add(Scroll, GetRectSize(screen_rect));
 
             if world_pos_cursor_end.x > scrolled_end.x {
                 Scroll.x += world_pos_cursor_end.x - scrolled_end.x;
@@ -279,17 +298,17 @@ main :: proc(): int {
         }
         if (Scroll.x < 0) Scroll.x = 0;
         if (Scroll.y < 0) Scroll.y = 0;
-
-
+        if (Scroll.y > buffer_end_wpos.y) Scroll.y = buffer_end_wpos.y;
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
+        buffer_pixel_size := GetRectSize(screen_rect);
         _miny := Scroll.y / Monosize.y;
-        _maxy := (Scroll.y + ScreenSize.y) / Monosize.y;
+        _maxy := (Scroll.y + buffer_pixel_size.y) / Monosize.y;
 
         _minx := Scroll.x / Monosize.x;
-        _maxx := (Scroll.x + ScreenSize.x) / Monosize.x;
+        _maxx := (Scroll.x + buffer_pixel_size.x) / Monosize.x;
 
         miny := :int(floorf(_miny));
         minx := :int(floorf(_minx));
@@ -298,7 +317,7 @@ main :: proc(): int {
         maxx := :int(ceilf(_maxx));
 
         // Draw grid
-        {
+        if 0 {
             for y := miny; y < maxy; y += 1 {
                 for x := minx; x < maxx; x += 1 {
                     p := CalculateWorldPos({x, y});
@@ -352,6 +371,17 @@ main :: proc(): int {
             rect = CutLeft(&rect, cursor_size);
 
             DrawRect(rect, RED);
+        }
+
+        // Draw bar
+        {
+            DrawRect(bar, LIGHTGRAY);
+
+            scroll_start_normalized := :f32(Scroll.y) / :f32(buffer_end_wpos.y);
+            scroll_start := scroll_start_normalized * GetRectSize(bar).y;
+            CutTop(&bar, scroll_start);
+            marker := CutTop(&bar, 20);
+            DrawRect(marker, GRAY);
         }
 
 

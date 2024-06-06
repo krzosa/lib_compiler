@@ -24,6 +24,16 @@ GetRectSize :: proc(rect: Rect2P): Vector2 {
     return result;
 }
 
+GetRectY :: proc(rect: Rect2P): f32 {
+    result := GetRectSize(rect);
+    return result.y;
+}
+
+GetRectX :: proc(rect: Rect2P): f32 {
+    result := GetRectSize(rect);
+    return result.x;
+}
+
 CutLeft :: proc(r: *Rect2P, value: f32): Rect2P {
     minx := r.min.x;
     r.min.x = F32_Min(r.max.x, r.min.x + value);
