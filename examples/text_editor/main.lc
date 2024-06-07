@@ -9,9 +9,6 @@ import "raylib";
 import "std_types";
 import "libc";
 
-MainCursor: Selection;
-MouseScrolling: bool;
-
 Selection :: struct {
     a: int;
     b: int;
@@ -26,7 +23,8 @@ Window :: struct {
     buffer: *Buffer;
     cursor: Selection;
     scroll: Vector2;
-
+    mouse_scrolling: bool;
+    
     rect: Rect2P;
 }
 
@@ -60,6 +58,15 @@ UpdateAndDrawWindow :: proc(w: *Window, font: Font, font_size: float) {
 
     buffer_end_vpos := CalculateVisualPos(w.buffer, w.buffer.len - 1);
     buffer_end_wpos := CalculateWorldPosUnscrolled(buffer_end_vpos);
+
+    if CheckCollisionPointRec(GetMousePosition(), Rect2PToRectangle(w.rect)) {
+        if w != FocusedWindow {
+            SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+        }
+        if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
+            FocusedWindow = w;
+        }
+    }
 
 
     if w == FocusedWindow {
@@ -289,47 +296,45 @@ UpdateAndDrawWindow :: proc(w: *Window, font: Font, font_size: float) {
         if (w.scroll.x < 0) w.scroll.x = 0;
         if (w.scroll.y < 0) w.scroll.y = 0;
         if (w.scroll.y > buffer_end_wpos.y) w.scroll.y = buffer_end_wpos.y;
-    }
 
-    //
-    // Mouse
-    //
+        //
+        // Mouse
+        //
+        mouse_p := GetMousePosition();
+        if CheckCollisionPointRec(mouse_p, Rect2PToRectangle(w.rect)) {
+            if CheckCollisionPointRec(mouse_p, Rect2PToRectangle(text_window_rect)) && !w.mouse_scrolling {
+                if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
+                    p := Vector2Add(mouse_p, w.scroll);
+                    p  = Vector2Subtract(p, text_window_rect.min);
+                    p  = Vector2Divide(p, Monosize);
+                    x := :int(floorf(p.x));
+                    y := :int(floorf(p.y));
+                    w.cursor.a = CalculatePosFromVisualPos(w.buffer, {x, y});
+                    w.cursor.b = w.cursor.a;
+                } else if IsMouseButtonDown(MOUSE_BUTTON_LEFT) {
+                    p := Vector2Add(mouse_p, w.scroll);
+                    p  = Vector2Subtract(p, text_window_rect.min);
+                    p  = Vector2Divide(p, Monosize);
+                    x := :int(floorf(p.x));
+                    y := :int(floorf(p.y));
+                    w.cursor.b = CalculatePosFromVisualPos(w.buffer, {x, y});
+                }
+                SetMouseCursor(MOUSE_CURSOR_IBEAM);
+            } else {
+                SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 
-    mouse_p := GetMousePosition();
-    if CheckCollisionPointRec(mouse_p, Rect2PToRectangle(w.rect)) {
-        FocusedWindow = w;
-        if CheckCollisionPointRec(mouse_p, Rect2PToRectangle(text_window_rect)) && !MouseScrolling {
-            if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
-                p := Vector2Add(mouse_p, w.scroll);
-                p  = Vector2Subtract(p, text_window_rect.min);
-                p  = Vector2Divide(p, Monosize);
-                x := :int(floorf(p.x));
-                y := :int(floorf(p.y));
-                w.cursor.a = CalculatePosFromVisualPos(w.buffer, {x, y});
-                w.cursor.b = w.cursor.a;
-            } else if IsMouseButtonDown(MOUSE_BUTTON_LEFT) {
-                p := Vector2Add(mouse_p, w.scroll);
-                p  = Vector2Subtract(p, text_window_rect.min);
-                p  = Vector2Divide(p, Monosize);
-                x := :int(floorf(p.x));
-                y := :int(floorf(p.y));
-                w.cursor.b = CalculatePosFromVisualPos(w.buffer, {x, y});
-            }
-            SetMouseCursor(MOUSE_CURSOR_IBEAM);
-        } else {
-            SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-
-            if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
-                MouseScrolling = true;
+                if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
+                    w.mouse_scrolling = true;
+                }
             }
         }
-    }
 
-    if MouseScrolling {
-        mouse_scroll_marker_normalized := (mouse_p.y - w.rect.min.y) / GetRectY(bar);
-        w.scroll.y = mouse_scroll_marker_normalized * buffer_end_wpos.y;
+        if w.mouse_scrolling {
+            mouse_scroll_marker_normalized := (mouse_p.y - w.rect.min.y) / GetRectY(bar);
+            w.scroll.y = mouse_scroll_marker_normalized * buffer_end_wpos.y;
 
-        if IsMouseButtonReleased(MOUSE_BUTTON_LEFT) MouseScrolling = false;
+            if IsMouseButtonReleased(MOUSE_BUTTON_LEFT) w.mouse_scrolling = false;
+        }
     }
 
     buffer_pixel_size := GetRectSize(text_window_rect);
