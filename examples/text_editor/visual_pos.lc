@@ -1,5 +1,4 @@
 Monosize: Vector2;
-Scroll: Vector2;
 
 Vec2I :: struct {
     x: int;
@@ -48,8 +47,8 @@ CalculateWorldPosUnscrolled :: proc(vpos: Vec2I): Vector2 {
     return result;
 }
 
-CalculateWorldPos :: proc(vpos: Vec2I): Vector2 {
-    result: Vector2 = {Monosize.x * :f32(vpos.x) - Scroll.x, Monosize.y * :f32(vpos.y) - Scroll.y};
+CalculateWorldPos :: proc(scroll: Vector2, vpos: Vec2I): Vector2 {
+    result: Vector2 = {Monosize.x * :f32(vpos.x) - scroll.x, Monosize.y * :f32(vpos.y) - scroll.y};
     return result;
 }
 

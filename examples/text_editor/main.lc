@@ -1,3 +1,10 @@
+/*
+- Ctrl+C
+- Ctrl+V
+- Ctrl+X
+- Windows
+- Multiple buffers at the same time
+*/
 import "raylib";
 import "std_types";
 import "libc";
@@ -15,8 +22,416 @@ GetRange :: proc(s: Selection): Range {
     return result;
 }
 
+Window :: struct {
+    buffer: *Buffer;
+    cursor: Selection;
+    scroll: Vector2;
+
+    rect: Rect2P;
+}
+
+FocusedWindow: *Window;
+WindowStack: [8]Window;
+WindowStackCount: int;
+
+AddWindow :: proc(window: Window) {
+    if (WindowStackCount + 1 >= 8) return;
+
+    WindowStack[WindowStackCount] = window;
+    WindowStackCount += 1;
+}
+
+ComputeWindowRects :: proc(screen_rect: Rect2P) {
+    WindowStack[0].rect = CutLeft(&screen_rect, 0.5 * GetRectX(screen_rect));
+    WindowStack[1].rect = CutLeft(&screen_rect, 1.0 * GetRectX(screen_rect));
+}
+
+UpdateAndDrawWindows :: proc(font: Font, font_size: float) {
+    for i := 0; i < WindowStackCount; i += 1 {
+        window: *Window = &WindowStack[i];
+        UpdateAndDrawWindow(window, font, font_size);
+    }
+}
+
+UpdateAndDrawWindow :: proc(w: *Window, font: Font, font_size: float) {
+    initial_cursor: Selection = w.cursor;
+    text_window_rect := w.rect;
+    bar := CutRight(&text_window_rect, 10);
+
+    buffer_end_vpos := CalculateVisualPos(w.buffer, w.buffer.len - 1);
+    buffer_end_wpos := CalculateWorldPosUnscrolled(buffer_end_vpos);
+
+
+    if w == FocusedWindow {
+        if IsKeyPressed(KEY_LEFT) || IsKeyPressedRepeat(KEY_LEFT) {
+            if IsKeyDown(KEY_LEFT_SHIFT) {
+                if IsKeyDown(KEY_LEFT_CONTROL) {
+                    w.cursor.b = SeekOnWordBoundary(w.buffer, w.cursor.b, GO_BACKWARD);
+                } else {
+                    w.cursor.b = MoveLeft(w.buffer, w.cursor.b);
+                }
+            } else {
+                if IsKeyDown(KEY_LEFT_CONTROL) {
+                    w.cursor.a = SeekOnWordBoundary(w.buffer, w.cursor.a, GO_BACKWARD);
+                    w.cursor.b = w.cursor.a;
+                } else {
+                    range := GetRange(w.cursor);
+                    if GetRangeSize(range) > 0 {
+                        w.cursor.a = MinInt(w.cursor.a, w.cursor.b);
+                        w.cursor.b = MinInt(w.cursor.a, w.cursor.b);
+                    } else {
+                        w.cursor.a = MoveLeft(w.buffer, w.cursor.a);
+                        w.cursor.b = w.cursor.a;
+                    }
+                }
+            }
+        }
+
+        if IsKeyPressed(KEY_RIGHT) || IsKeyPressedRepeat(KEY_RIGHT) {
+            if IsKeyDown(KEY_LEFT_SHIFT) {
+                if IsKeyDown(KEY_LEFT_CONTROL) {
+                    w.cursor.b = SeekOnWordBoundary(w.buffer, w.cursor.b, GO_FORWARD);
+                } else {
+                    w.cursor.b = MoveRight(w.buffer, w.cursor.b);
+                }
+            } else {
+                if IsKeyDown(KEY_LEFT_CONTROL) {
+                    w.cursor.a = SeekOnWordBoundary(w.buffer, w.cursor.a, GO_FORWARD);
+                    w.cursor.b = w.cursor.a;
+                } else {
+                    range := GetRange(w.cursor);
+                    if GetRangeSize(range) > 0 {
+                        w.cursor.a = MaxInt(w.cursor.a, w.cursor.b);
+                        w.cursor.b = MaxInt(w.cursor.a, w.cursor.b);
+                    } else {
+                        w.cursor.a = MoveRight(w.buffer, w.cursor.a);
+                        w.cursor.b = w.cursor.a;
+                    }
+                }
+            }
+        }
+
+        if (IsKeyPressed(KEY_DOWN) || IsKeyPressedRepeat(KEY_DOWN)) {
+            if IsKeyDown(KEY_LEFT_SHIFT) {
+                w.cursor.b = MoveDown(w.buffer, w.cursor.b);
+            } else {
+                range := GetRange(w.cursor);
+                if GetRangeSize(range) > 0 {
+                    w.cursor.b = range.max;
+                    w.cursor.a = range.max;
+                }
+                w.cursor.a = MoveDown(w.buffer, w.cursor.a);
+                w.cursor.b = w.cursor.a;
+            }
+        }
+
+        if (IsKeyPressed(KEY_UP) || IsKeyPressedRepeat(KEY_UP)) {
+            if IsKeyDown(KEY_LEFT_SHIFT) {
+                w.cursor.b = MoveUp(w.buffer, w.cursor.b);
+            } else {
+                range := GetRange(w.cursor);
+                if GetRangeSize(range) > 0 {
+                    w.cursor.b = range.min;
+                    w.cursor.a = range.min;
+                }
+                w.cursor.a = MoveUp(w.buffer, w.cursor.a);
+                w.cursor.b = w.cursor.a;
+            }
+        }
+
+        if IsKeyPressed(KEY_BACKSPACE) || IsKeyPressedRepeat(KEY_BACKSPACE) {
+            range      := GetRange(w.cursor);
+            range_size := GetRangeSize(range);
+
+            if range_size == 0 {
+                if IsKeyDown(KEY_LEFT_CONTROL) {
+                    left := SeekOnWordBoundary(w.buffer, w.cursor.a, GO_BACKWARD);
+                    ReplaceText(w.buffer, {left, w.cursor.a}, "");
+                    w.cursor.a = left;
+                    w.cursor.b = w.cursor.a;
+                } else {
+                    left := MoveLeft(w.buffer, w.cursor.a);
+                    ReplaceText(w.buffer, {left, w.cursor.a}, "");
+                    w.cursor.a = left;
+                    w.cursor.b = w.cursor.a;
+                }
+            } else {
+                ReplaceText(w.buffer, range, "");
+                w.cursor.b = range.min;
+                w.cursor.a = w.cursor.b;
+            }
+        }
+
+        if IsKeyPressed(KEY_DELETE) || IsKeyPressedRepeat(KEY_DELETE) {
+            range      := GetRange(w.cursor);
+            range_size := GetRangeSize(range);
+
+            if range_size == 0 {
+                if IsKeyDown(KEY_LEFT_CONTROL) {
+                    right := SeekOnWordBoundary(w.buffer, w.cursor.a);
+                    ReplaceText(w.buffer, {w.cursor.a, right}, "");
+                } else {
+                    right := MoveRight(w.buffer, w.cursor.a);
+                    ReplaceText(w.buffer, {w.cursor.a, right}, "");
+                }
+                w.cursor.b = w.cursor.a;
+            } else {
+                ReplaceText(w.buffer, range, "");
+                w.cursor.b = range.min;
+                w.cursor.a = w.cursor.b;
+            }
+        }
+
+        if IsKeyPressed(KEY_ENTER) || IsKeyPressedRepeat(KEY_ENTER) {
+            ReplaceText(w.buffer, GetRange(w.cursor), "\n");
+            w.cursor.a = MoveRight(w.buffer, w.cursor.a);
+            w.cursor.b = w.cursor.a;
+        }
+
+        if IsKeyPressed(KEY_TAB) || IsKeyPressedRepeat(KEY_TAB) {
+            selection_range := GetRange(w.cursor);
+            ReplaceText(w.buffer, selection_range, "    ");
+            range_size := GetRangeSize(selection_range);
+            if range_size != 0 {
+                w.cursor.a = selection_range.min;
+                w.cursor.b = selection_range.min;
+            }
+            w.cursor.a = MoveRight(w.buffer, w.cursor.a + 3);
+            w.cursor.b = w.cursor.a;
+        }
+
+        if IsKeyPressed(KEY_HOME) {
+            line := FindLineOfPos(w.buffer, w.cursor.b);
+            if IsKeyDown(KEY_LEFT_SHIFT) {
+                w.cursor.b = line.range.min;
+            } else {
+                w.cursor.a = line.range.min;
+                w.cursor.b = line.range.min;
+            }
+        }
+        if IsKeyPressed(KEY_END) {
+            line := FindLineOfPos(w.buffer, w.cursor.b);
+            if IsKeyDown(KEY_LEFT_SHIFT) {
+                w.cursor.b = line.range.max;
+            } else {
+                w.cursor.a = line.range.max;
+                w.cursor.b = line.range.max;
+            }
+        }
+
+        if IsKeyPressed(KEY_PAGE_DOWN) || IsKeyPressedRepeat(KEY_PAGE_DOWN) {
+            vpos := CalculateVisualPos(w.buffer, w.cursor.b);
+            move_by := :int(roundf(GetRectY(text_window_rect) / Monosize.y));
+            vpos.y += move_by;
+            w.cursor.b = CalculatePosFromVisualPos(w.buffer, vpos);
+            if !IsKeyDown(KEY_LEFT_SHIFT) {
+                w.cursor.a = w.cursor.b;
+            }
+        }
+        if IsKeyPressed(KEY_PAGE_UP) || IsKeyPressedRepeat(KEY_PAGE_UP) {
+            vpos := CalculateVisualPos(w.buffer, w.cursor.b);
+            move_by := :int(roundf(GetRectY(text_window_rect) / Monosize.y));
+            vpos.y -= move_by;
+            w.cursor.b = CalculatePosFromVisualPos(w.buffer, vpos);
+            if !IsKeyDown(KEY_LEFT_SHIFT) {
+                w.cursor.a = w.cursor.b;
+            }
+        }
+
+
+        for key := GetCharPressed(); key; key = GetCharPressed() {
+            selection_range := GetRange(w.cursor);
+
+            result: UTF8_Result = UTF32ToUTF8(:u32(key));
+            if result.error == 0 {
+                ReplaceText(w.buffer, selection_range, {:*char(&result.out_str[0]), result.len});
+            } else {
+                ReplaceText(w.buffer, selection_range, "?");
+            }
+
+            range_size := GetRangeSize(selection_range);
+            if range_size != 0 {
+                w.cursor.a = selection_range.min;
+                w.cursor.b = selection_range.min;
+            }
+            w.cursor.a = MoveRight(w.buffer, w.cursor.a);
+            w.cursor.b = w.cursor.a;
+        }
+
+        //
+        // Scrolling
+        //
+        mouse_wheel := GetMouseWheelMove() * 48;
+        w.scroll.y -= mouse_wheel;
+
+        if initial_cursor.b != w.cursor.b {
+            cursor_vpos := CalculateVisualPos(w.buffer, w.cursor.b);
+
+            world_pos            := CalculateWorldPosUnscrolled(cursor_vpos);
+            world_pos_cursor_end := Vector2Add(world_pos, Monosize);
+
+            scrolled_begin := w.scroll;
+            scrolled_end   := Vector2Add(w.scroll, GetRectSize(text_window_rect));
+
+            if world_pos_cursor_end.x > scrolled_end.x {
+                w.scroll.x += world_pos_cursor_end.x - scrolled_end.x;
+            }
+            if world_pos.x < scrolled_begin.x {
+                w.scroll.x -= scrolled_begin.x - world_pos.x;
+            }
+            if world_pos_cursor_end.y > scrolled_end.y {
+                w.scroll.y += world_pos_cursor_end.y - scrolled_end.y;
+            }
+            if world_pos.y < scrolled_begin.y {
+                w.scroll.y -= scrolled_begin.y - world_pos.y;
+            }
+        }
+        if (w.scroll.x < 0) w.scroll.x = 0;
+        if (w.scroll.y < 0) w.scroll.y = 0;
+        if (w.scroll.y > buffer_end_wpos.y) w.scroll.y = buffer_end_wpos.y;
+    }
+
+    //
+    // Mouse
+    //
+
+    mouse_p := GetMousePosition();
+    if CheckCollisionPointRec(mouse_p, Rect2PToRectangle(w.rect)) {
+        FocusedWindow = w;
+        if CheckCollisionPointRec(mouse_p, Rect2PToRectangle(text_window_rect)) && !MouseScrolling {
+            if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
+                p := Vector2Add(mouse_p, w.scroll);
+                p  = Vector2Subtract(p, text_window_rect.min);
+                p  = Vector2Divide(p, Monosize);
+                x := :int(floorf(p.x));
+                y := :int(floorf(p.y));
+                w.cursor.a = CalculatePosFromVisualPos(w.buffer, {x, y});
+                w.cursor.b = w.cursor.a;
+            } else if IsMouseButtonDown(MOUSE_BUTTON_LEFT) {
+                p := Vector2Add(mouse_p, w.scroll);
+                p  = Vector2Subtract(p, text_window_rect.min);
+                p  = Vector2Divide(p, Monosize);
+                x := :int(floorf(p.x));
+                y := :int(floorf(p.y));
+                w.cursor.b = CalculatePosFromVisualPos(w.buffer, {x, y});
+            }
+            SetMouseCursor(MOUSE_CURSOR_IBEAM);
+        } else {
+            SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+
+            if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
+                MouseScrolling = true;
+            }
+        }
+    }
+
+    if MouseScrolling {
+        mouse_scroll_marker_normalized := (mouse_p.y - w.rect.min.y) / GetRectY(bar);
+        w.scroll.y = mouse_scroll_marker_normalized * buffer_end_wpos.y;
+
+        if IsMouseButtonReleased(MOUSE_BUTTON_LEFT) MouseScrolling = false;
+    }
+
+    buffer_pixel_size := GetRectSize(text_window_rect);
+    _miny := w.scroll.y / Monosize.y;
+    _maxy := (w.scroll.y + buffer_pixel_size.y) / Monosize.y;
+
+    _minx := w.scroll.x / Monosize.x;
+    _maxx := (w.scroll.x + buffer_pixel_size.x) / Monosize.x;
+
+    miny := :int(floorf(_miny));
+    minx := :int(floorf(_minx));
+
+    maxy := :int(ceilf(_maxy));
+    maxx := :int(ceilf(_maxx));
+
+    // Draw grid
+    if 0 {
+        for y := miny; y < maxy; y += 1 {
+            for x := minx; x < maxx; x += 1 {
+                p := CalculateWorldPos(w.scroll, {x, y});
+                rect := Rect2PSize(p.x, p.y, Monosize.x, Monosize.y);
+                rect = Shrink(rect, 1);
+                DrawRect(rect, {255, 0, 0, 40});
+            }
+        }
+    }
+
+    BeginScissorMode(:int(text_window_rect.min.x), :int(text_window_rect.min.y), :int(GetRectX(text_window_rect)), :int(GetRectY(text_window_rect)));
+
+    // Draw text
+    {
+        miny = ClampInt(miny, 0, w.buffer.lines.len - 1);
+        maxy = ClampInt(maxy, 0, w.buffer.lines.len - 1);
+        for y := miny; y <= maxy; y += 1 {
+            line := w.buffer.lines.data[y];
+
+            string := AllocStringFromBuffer(w.buffer, line, null_terminate = true);
+            defer free(string.str);
+
+            pos := CalculateWorldPos(w.scroll, {0, y});
+            pos_adjusted_by_buffer := Vector2Add(pos, text_window_rect.min);
+            FONT_SPACING :: 1;
+            DrawTextEx(font, string.str, pos_adjusted_by_buffer, font_size, FONT_SPACING, BLACK);
+        }
+    }
+
+    // Draw selection
+    {
+        range := GetRange(w.cursor);
+        start_vpos := CalculateVisualPos(w.buffer, range.min);
+        pos := start_vpos;
+        for iter := Iterate(w.buffer, range.min, range.max); IsValid(iter); Advance(&iter) {
+            world_pos := CalculateWorldPos(w.scroll, pos);
+            world_pos_adjusted_by_buffer := Vector2Add(world_pos, text_window_rect.min);
+
+            rect := Rect2PSize(world_pos_adjusted_by_buffer.x, world_pos_adjusted_by_buffer.y, Monosize.x, Monosize.y);
+            DrawRect(rect, {0, 255, 0, 40});
+
+            pos.x += 1;
+            if iter.item == '\n' {
+                pos.x = 0;
+                pos.y += 1;
+            }
+        }
+    }
+
+    // Draw cursor
+    {
+        c := CalculateVisualPos(w.buffer, w.cursor.b);
+        p := CalculateWorldPos(w.scroll, c);
+        pos_adjusted_by_buffer := Vector2Add(p, text_window_rect.min);
+
+        cursor_size: f32 = Monosize.x * 0.2;
+        rect := Rect2PSize(pos_adjusted_by_buffer.x, pos_adjusted_by_buffer.y, Monosize.x, Monosize.y);
+        rect = CutLeft(&rect, cursor_size);
+
+        DrawRect(rect, RED);
+    }
+
+    EndScissorMode();
+
+
+    // Draw bar
+    {
+        DrawRect(bar, LIGHTGRAY);
+
+        scroll_start_normalized := :f32(w.scroll.y) / :f32(buffer_end_wpos.y);
+        scroll_start := scroll_start_normalized * GetRectSize(bar).y;
+        CutTop(&bar, scroll_start);
+        marker := CutTop(&bar, 20);
+        DrawRect(marker, GRAY);
+    }
+}
+
+InvalidCodepath :: proc() {
+    assert(:*char("invalid codepath") == :*char(""));
+}
+
+
 main :: proc(): int {
     InitWindow(800, 600, "TextEditor");
+    SetWindowState(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_MAXIMIZED);
     SetTargetFPS(60);
 
     font_size: float = 14;
@@ -32,378 +447,19 @@ main :: proc(): int {
     AddText(&buffer, {file_content, :int(strlen(file_content))});
     UnloadFileText(file_content);
 
-    for !WindowShouldClose() {
-        initial_cursor: Selection = MainCursor;
+    AddWindow({buffer = &buffer});
+    AddWindow({buffer = &buffer});
+    FocusedWindow = &WindowStack[0];
 
+    for !WindowShouldClose() {
         screen_size: Vector2 = {:f32(GetScreenWidth()), :f32(GetScreenHeight())};
         screen_rect := Rect2PSize(0, 0, screen_size.x, screen_size.y);
-        CutBottom(&screen_rect, 200);
-        CutLeft(&screen_rect, 100);
-        CutTop(&screen_rect, 100);
-        CutRight(&screen_rect, 150);
-        screen_with_bar := screen_rect;
-        bar := CutRight(&screen_rect, 10);
+        ComputeWindowRects(screen_rect);
 
-        if IsKeyPressed(KEY_LEFT) || IsKeyPressedRepeat(KEY_LEFT) {
-            if IsKeyDown(KEY_LEFT_SHIFT) {
-                if IsKeyDown(KEY_LEFT_CONTROL) {
-                    MainCursor.b = SeekOnWordBoundary(&buffer, MainCursor.b, GO_BACKWARD);
-                } else {
-                    MainCursor.b = MoveLeft(&buffer, MainCursor.b);
-                }
-            } else {
-                if IsKeyDown(KEY_LEFT_CONTROL) {
-                    MainCursor.a = SeekOnWordBoundary(&buffer, MainCursor.a, GO_BACKWARD);
-                    MainCursor.b = MainCursor.a;
-                } else {
-                    range := GetRange(MainCursor);
-                    if GetRangeSize(range) > 0 {
-                        MainCursor.a = MinInt(MainCursor.a, MainCursor.b);
-                        MainCursor.b = MinInt(MainCursor.a, MainCursor.b);
-                    } else {
-                        MainCursor.a = MoveLeft(&buffer, MainCursor.a);
-                        MainCursor.b = MainCursor.a;
-                    }
-                }
-            }
-        }
-
-        if IsKeyPressed(KEY_RIGHT) || IsKeyPressedRepeat(KEY_RIGHT) {
-            if IsKeyDown(KEY_LEFT_SHIFT) {
-                if IsKeyDown(KEY_LEFT_CONTROL) {
-                    MainCursor.b = SeekOnWordBoundary(&buffer, MainCursor.b, GO_FORWARD);
-                } else {
-                    MainCursor.b = MoveRight(&buffer, MainCursor.b);
-                }
-            } else {
-                if IsKeyDown(KEY_LEFT_CONTROL) {
-                    MainCursor.a = SeekOnWordBoundary(&buffer, MainCursor.a, GO_FORWARD);
-                    MainCursor.b = MainCursor.a;
-                } else {
-                    range := GetRange(MainCursor);
-                    if GetRangeSize(range) > 0 {
-                        MainCursor.a = MaxInt(MainCursor.a, MainCursor.b);
-                        MainCursor.b = MaxInt(MainCursor.a, MainCursor.b);
-                    } else {
-                        MainCursor.a = MoveRight(&buffer, MainCursor.a);
-                        MainCursor.b = MainCursor.a;
-                    }
-                }
-            }
-        }
-
-        if (IsKeyPressed(KEY_DOWN) || IsKeyPressedRepeat(KEY_DOWN)) {
-            if IsKeyDown(KEY_LEFT_SHIFT) {
-                MainCursor.b = MoveDown(&buffer, MainCursor.b);
-            } else {
-                range := GetRange(MainCursor);
-                if GetRangeSize(range) > 0 {
-                    MainCursor.b = range.max;
-                    MainCursor.a = range.max;
-                }
-                MainCursor.a = MoveDown(&buffer, MainCursor.a);
-                MainCursor.b = MainCursor.a;
-            }
-        }
-
-        if (IsKeyPressed(KEY_UP) || IsKeyPressedRepeat(KEY_UP)) {
-            if IsKeyDown(KEY_LEFT_SHIFT) {
-                MainCursor.b = MoveUp(&buffer, MainCursor.b);
-            } else {
-                range := GetRange(MainCursor);
-                if GetRangeSize(range) > 0 {
-                    MainCursor.b = range.min;
-                    MainCursor.a = range.min;
-                }
-                MainCursor.a = MoveUp(&buffer, MainCursor.a);
-                MainCursor.b = MainCursor.a;
-            }
-        }
-
-        if IsKeyPressed(KEY_BACKSPACE) || IsKeyPressedRepeat(KEY_BACKSPACE) {
-            range      := GetRange(MainCursor);
-            range_size := GetRangeSize(range);
-
-            if range_size == 0 {
-                if IsKeyDown(KEY_LEFT_CONTROL) {
-                    left := SeekOnWordBoundary(&buffer, MainCursor.a, GO_BACKWARD);
-                    ReplaceText(&buffer, {left, MainCursor.a}, "");
-                    MainCursor.a = left;
-                    MainCursor.b = MainCursor.a;
-                } else {
-                    left := MoveLeft(&buffer, MainCursor.a);
-                    ReplaceText(&buffer, {left, MainCursor.a}, "");
-                    MainCursor.a = left;
-                    MainCursor.b = MainCursor.a;
-                }
-            } else {
-                ReplaceText(&buffer, range, "");
-                MainCursor.b = range.min;
-                MainCursor.a = MainCursor.b;
-            }
-        }
-
-        if IsKeyPressed(KEY_DELETE) || IsKeyPressedRepeat(KEY_DELETE) {
-            range      := GetRange(MainCursor);
-            range_size := GetRangeSize(range);
-
-            if range_size == 0 {
-                if IsKeyDown(KEY_LEFT_CONTROL) {
-                    right := SeekOnWordBoundary(&buffer, MainCursor.a);
-                    ReplaceText(&buffer, {MainCursor.a, right}, "");
-                } else {
-                    right := MoveRight(&buffer, MainCursor.a);
-                    ReplaceText(&buffer, {MainCursor.a, right}, "");
-                }
-                MainCursor.b = MainCursor.a;
-            } else {
-                ReplaceText(&buffer, range, "");
-                MainCursor.b = range.min;
-                MainCursor.a = MainCursor.b;
-            }
-        }
-
-        if IsKeyPressed(KEY_ENTER) || IsKeyPressedRepeat(KEY_ENTER) {
-            ReplaceText(&buffer, GetRange(MainCursor), "\n");
-            MainCursor.a = MoveRight(&buffer, MainCursor.a);
-            MainCursor.b = MainCursor.a;
-        }
-
-        if IsKeyPressed(KEY_TAB) || IsKeyPressedRepeat(KEY_TAB) {
-            selection_range := GetRange(MainCursor);
-            ReplaceText(&buffer, selection_range, "    ");
-            range_size := GetRangeSize(selection_range);
-            if range_size != 0 {
-                MainCursor.a = selection_range.min;
-                MainCursor.b = selection_range.min;
-            }
-            MainCursor.a = MoveRight(&buffer, MainCursor.a + 3);
-            MainCursor.b = MainCursor.a;
-        }
-
-        if IsKeyPressed(KEY_HOME) {
-            line := FindLineOfPos(&buffer, MainCursor.b);
-            if IsKeyDown(KEY_LEFT_SHIFT) {
-                MainCursor.b = line.range.min;
-            } else {
-                MainCursor.a = line.range.min;
-                MainCursor.b = line.range.min;
-            }
-        }
-        if IsKeyPressed(KEY_END) {
-            line := FindLineOfPos(&buffer, MainCursor.b);
-            if IsKeyDown(KEY_LEFT_SHIFT) {
-                MainCursor.b = line.range.max;
-            } else {
-                MainCursor.a = line.range.max;
-                MainCursor.b = line.range.max;
-            }
-        }
-
-        if IsKeyPressed(KEY_PAGE_DOWN) || IsKeyPressedRepeat(KEY_PAGE_DOWN) {
-            vpos := CalculateVisualPos(&buffer, MainCursor.b);
-            move_by := :int(roundf(GetRectY(screen_rect) / Monosize.y));
-            vpos.y += move_by;
-            MainCursor.b = CalculatePosFromVisualPos(&buffer, vpos);
-            if !IsKeyDown(KEY_LEFT_SHIFT) {
-                MainCursor.a = MainCursor.b;
-            }
-        }
-        if IsKeyPressed(KEY_PAGE_UP) || IsKeyPressedRepeat(KEY_PAGE_UP) {
-            vpos := CalculateVisualPos(&buffer, MainCursor.b);
-            move_by := :int(roundf(GetRectY(screen_rect) / Monosize.y));
-            vpos.y -= move_by;
-            MainCursor.b = CalculatePosFromVisualPos(&buffer, vpos);
-            if !IsKeyDown(KEY_LEFT_SHIFT) {
-                MainCursor.a = MainCursor.b;
-            }
-        }
-
-        buffer_end_vpos := CalculateVisualPos(&buffer, buffer.len - 1);
-        buffer_end_wpos := CalculateWorldPosUnscrolled(buffer_end_vpos);
-
-        mouse_p := GetMousePosition();
-        if CheckCollisionPointRec(mouse_p, Rect2PToRectangle(screen_with_bar)) {
-            if CheckCollisionPointRec(mouse_p, Rect2PToRectangle(screen_rect)) && !MouseScrolling {
-                if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
-                    p := Vector2Add(mouse_p, Scroll);
-                    p  = Vector2Subtract(p, screen_rect.min);
-                    p  = Vector2Divide(p, Monosize);
-                    x := :int(floorf(p.x));
-                    y := :int(floorf(p.y));
-                    MainCursor.a = CalculatePosFromVisualPos(&buffer, {x, y});
-                    MainCursor.b = MainCursor.a;
-                } else if IsMouseButtonDown(MOUSE_BUTTON_LEFT) {
-                    p := Vector2Add(mouse_p, Scroll);
-                    p  = Vector2Subtract(p, screen_rect.min);
-                    p  = Vector2Divide(p, Monosize);
-                    x := :int(floorf(p.x));
-                    y := :int(floorf(p.y));
-                    MainCursor.b = CalculatePosFromVisualPos(&buffer, {x, y});
-                }
-                SetMouseCursor(MOUSE_CURSOR_IBEAM);
-            } else {
-                SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-
-                if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
-                    MouseScrolling = true;
-                }
-            }
-
-
-        }
-
-        if MouseScrolling {
-            mouse_scroll_marker_normalized := (mouse_p.y - screen_with_bar.min.y) / GetRectY(bar);
-            Scroll.y = mouse_scroll_marker_normalized * buffer_end_wpos.y;
-
-            if IsMouseButtonReleased(MOUSE_BUTTON_LEFT) MouseScrolling = false;
-        }
-
-
-
-        for key := GetCharPressed(); key; key = GetCharPressed() {
-            selection_range := GetRange(MainCursor);
-
-            result: UTF8_Result = UTF32ToUTF8(:u32(key));
-            if result.error == 0 {
-                ReplaceText(&buffer, selection_range, {:*char(&result.out_str[0]), result.len});
-            } else {
-                ReplaceText(&buffer, selection_range, "?");
-            }
-
-            range_size := GetRangeSize(selection_range);
-            if range_size != 0 {
-                MainCursor.a = selection_range.min;
-                MainCursor.b = selection_range.min;
-            }
-            MainCursor.a = MoveRight(&buffer, MainCursor.a);
-            MainCursor.b = MainCursor.a;
-        }
-
-        //
-        // Scrolling
-        //
-        mouse_wheel := GetMouseWheelMove() * 48;
-        Scroll.y -= mouse_wheel;
-
-        if initial_cursor.b != MainCursor.b {
-            cursor_vpos := CalculateVisualPos(&buffer, MainCursor.b);
-
-            world_pos            := CalculateWorldPosUnscrolled(cursor_vpos);
-            world_pos_cursor_end := Vector2Add(world_pos, Monosize);
-
-            scrolled_begin := Scroll;
-            scrolled_end   := Vector2Add(Scroll, GetRectSize(screen_rect));
-
-            if world_pos_cursor_end.x > scrolled_end.x {
-                Scroll.x += world_pos_cursor_end.x - scrolled_end.x;
-            }
-            if world_pos.x < scrolled_begin.x {
-                Scroll.x -= scrolled_begin.x - world_pos.x;
-            }
-            if world_pos_cursor_end.y > scrolled_end.y {
-                Scroll.y += world_pos_cursor_end.y - scrolled_end.y;
-            }
-            if world_pos.y < scrolled_begin.y {
-                Scroll.y -= scrolled_begin.y - world_pos.y;
-            }
-        }
-        if (Scroll.x < 0) Scroll.x = 0;
-        if (Scroll.y < 0) Scroll.y = 0;
-        if (Scroll.y > buffer_end_wpos.y) Scroll.y = buffer_end_wpos.y;
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
-
-        buffer_pixel_size := GetRectSize(screen_rect);
-        _miny := Scroll.y / Monosize.y;
-        _maxy := (Scroll.y + buffer_pixel_size.y) / Monosize.y;
-
-        _minx := Scroll.x / Monosize.x;
-        _maxx := (Scroll.x + buffer_pixel_size.x) / Monosize.x;
-
-        miny := :int(floorf(_miny));
-        minx := :int(floorf(_minx));
-
-        maxy := :int(ceilf(_maxy));
-        maxx := :int(ceilf(_maxx));
-
-        // Draw grid
-        if 0 {
-            for y := miny; y < maxy; y += 1 {
-                for x := minx; x < maxx; x += 1 {
-                    p := CalculateWorldPos({x, y});
-                    rect := Rect2PSize(p.x, p.y, Monosize.x, Monosize.y);
-                    rect = Shrink(rect, 1);
-                    DrawRect(rect, {255, 0, 0, 40});
-                }
-            }
-        }
-
-        // Draw text
-        {
-            BeginScissorMode(:int(screen_rect.min.x), :int(screen_rect.min.y), :int(GetRectX(screen_rect)), :int(GetRectY(screen_rect)));
-            miny = ClampInt(miny, 0, buffer.lines.len - 1);
-            maxy = ClampInt(maxy, 0, buffer.lines.len - 1);
-            for y := miny; y <= maxy; y += 1 {
-                line := buffer.lines.data[y];
-
-                string := AllocStringFromBuffer(&buffer, line, null_terminate = true);
-                defer free(string.str);
-
-                pos := CalculateWorldPos({0, y});
-                pos_adjusted_by_buffer := Vector2Add(pos, screen_rect.min);
-                DrawTextEx(font, string.str, pos_adjusted_by_buffer, font_size, font_spacing, BLACK);
-            }
-            EndScissorMode();
-        }
-
-        // Draw selection
-        {
-            range := GetRange(MainCursor);
-            start_vpos := CalculateVisualPos(&buffer, range.min);
-            pos := start_vpos;
-            for iter := Iterate(&buffer, range.min, range.max); IsValid(iter); Advance(&iter) {
-                world_pos := CalculateWorldPos(pos);
-                world_pos_adjusted_by_buffer := Vector2Add(world_pos, screen_rect.min);
-
-                rect := Rect2PSize(world_pos_adjusted_by_buffer.x, world_pos_adjusted_by_buffer.y, Monosize.x, Monosize.y);
-                DrawRect(rect, {0, 255, 0, 40});
-
-                pos.x += 1;
-                if iter.item == '\n' {
-                    pos.x = 0;
-                    pos.y += 1;
-                }
-            }
-        }
-
-        // Draw cursor
-        {
-            c := CalculateVisualPos(&buffer, MainCursor.b);
-            p := CalculateWorldPos(c);
-            pos_adjusted_by_buffer := Vector2Add(p, screen_rect.min);
-
-            cursor_size: f32 = Monosize.x * 0.2;
-            rect := Rect2PSize(pos_adjusted_by_buffer.x, pos_adjusted_by_buffer.y, Monosize.x, Monosize.y);
-            rect = CutLeft(&rect, cursor_size);
-
-            DrawRect(rect, RED);
-        }
-
-        // Draw bar
-        {
-            DrawRect(bar, LIGHTGRAY);
-
-            scroll_start_normalized := :f32(Scroll.y) / :f32(buffer_end_wpos.y);
-            scroll_start := scroll_start_normalized * GetRectSize(bar).y;
-            CutTop(&bar, scroll_start);
-            marker := CutTop(&bar, 20);
-            DrawRect(marker, GRAY);
-        }
-
-
+        UpdateAndDrawWindows(font, font_size);
         EndDrawing();
     }
     CloseWindow();
