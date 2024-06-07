@@ -1,9 +1,11 @@
 /*
+- Embedded windows
+- Multiple buffers at the same time
+
 - Ctrl+C
 - Ctrl+V
 - Ctrl+X
-- Windows
-- Multiple buffers at the same time
+- Open a document dialog, save document to disk
 */
 import "raylib";
 import "std_types";
@@ -24,7 +26,7 @@ Window :: struct {
     cursor: Selection;
     scroll: Vector2;
     mouse_scrolling: bool;
-    
+
     rect: Rect2P;
 }
 
@@ -55,6 +57,8 @@ UpdateAndDrawWindow :: proc(w: *Window, font: Font, font_size: float) {
     initial_cursor: Selection = w.cursor;
     text_window_rect := w.rect;
     bar := CutRight(&text_window_rect, 10);
+    line_numbers_rect := CutLeft(&text_window_rect, Monosize.x * 4);
+    line_numbers_rect; @unused
 
     buffer_end_vpos := CalculateVisualPos(w.buffer, w.buffer.len - 1);
     buffer_end_wpos := CalculateWorldPosUnscrolled(buffer_end_vpos);
@@ -362,22 +366,28 @@ UpdateAndDrawWindow :: proc(w: *Window, font: Font, font_size: float) {
         }
     }
 
-    BeginScissorMode(:int(text_window_rect.min.x), :int(text_window_rect.min.y), :int(GetRectX(text_window_rect)), :int(GetRectY(text_window_rect)));
+    BeginScissorMode(:int(w.rect.min.x), :int(w.rect.min.y), :int(GetRectX(w.rect)), :int(GetRectY(w.rect)));
 
-    // Draw text
+    // Draw text and line numbers
     {
+        FONT_SPACING :: 1;
+
+        DrawRect(line_numbers_rect, LIGHTGRAY);
         miny = ClampInt(miny, 0, w.buffer.lines.len - 1);
         maxy = ClampInt(maxy, 0, w.buffer.lines.len - 1);
         for y := miny; y <= maxy; y += 1 {
-            line := w.buffer.lines.data[y];
+            line_range := w.buffer.lines.data[y];
 
-            string := AllocStringFromBuffer(w.buffer, line, null_terminate = true);
+            string := AllocStringFromBuffer(w.buffer, line_range, null_terminate = true);
             defer free(string.str);
 
             pos := CalculateWorldPos(w.scroll, {0, y});
             pos_adjusted_by_buffer := Vector2Add(pos, text_window_rect.min);
-            FONT_SPACING :: 1;
             DrawTextEx(font, string.str, pos_adjusted_by_buffer, font_size, FONT_SPACING, BLACK);
+
+            line_number_pos: Vector2 = {w.rect.min.x, pos_adjusted_by_buffer.y};
+            line_number_string := TextFormat("%d", y);
+            DrawTextEx(font, line_number_string, line_number_pos, font_size, FONT_SPACING, GRAY);
         }
     }
 
@@ -426,6 +436,10 @@ UpdateAndDrawWindow :: proc(w: *Window, font: Font, font_size: float) {
         CutTop(&bar, scroll_start);
         marker := CutTop(&bar, 20);
         DrawRect(marker, GRAY);
+    }
+
+    if w != FocusedWindow {
+        DrawRect(w.rect, {0,0,0,20});
     }
 }
 
