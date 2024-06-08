@@ -8,23 +8,27 @@ FocusedWindow: *Window;
 WindowStack: [8]Window;
 WindowStackCount: int;
 
-InitTextEditor :: proc(font: Font, font_size: float, font_spacing: float) {
-    TeInited = true;
-    TeFont = font;
-    TeFontSpacing = font_spacing;
-    TeFontSize = font_size;
+UpdateTextEditor :: proc(rect: Rect2P, font: Font, font_size: float, font_spacing: float) {
+    if !TeInited {
+        TeInited = true;
+        TeFont = font;
+        TeFontSpacing = font_spacing;
+        TeFontSize = font_size;
 
-    glyph_info: GlyphInfo = GetGlyphInfo(TeFont, 'A');
-    size := MeasureTextEx(TeFont, "A", TeFontSize, TeFontSpacing);
-    Monosize = {:float(glyph_info.image.width), size.y};
+        glyph_info: GlyphInfo = GetGlyphInfo(TeFont, 'A');
+        size := MeasureTextEx(TeFont, "A", TeFontSize, TeFontSpacing);
+        Monosize = {:float(glyph_info.image.width), size.y};
 
-    file_content := LoadFileText("C:/Work/language/examples/text_editor/main.lc");
-    AddText(&TeBuffer, {file_content, :int(strlen(file_content))});
-    UnloadFileText(file_content);
+        file_content := LoadFileText("C:/Work/language/examples/text_editor/main.lc");
+        AddText(&TeBuffer, {file_content, :int(strlen(file_content))});
+        UnloadFileText(file_content);
 
-    AddWindow({buffer = &TeBuffer});
-    AddWindow({buffer = &TeBuffer});
-    FocusedWindow = &WindowStack[0];
+        AddWindow({buffer = &TeBuffer});
+        AddWindow({buffer = &TeBuffer});
+        FocusedWindow = &WindowStack[0];
+    }
+    ComputeWindowRects(rect);
+    UpdateAndDrawWindows(font, font_size);
 }
 
 Window :: struct {
@@ -32,6 +36,7 @@ Window :: struct {
     cursor: Selection;
     scroll: Vector2;
     mouse_scrolling: bool;
+    mouse_selecting: bool;
 
     rect: Rect2P;
 }
@@ -330,6 +335,7 @@ UpdateAndDrawWindow :: proc(w: *Window, font: Font, font_size: float) {
         if CheckCollisionPointRec(mouse_p, Rect2PToRectangle(w.rect)) {
             if CheckCollisionPointRec(mouse_p, Rect2PToRectangle(text_window_rect)) && !w.mouse_scrolling {
                 if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
+                    w.mouse_selecting = true;
                     p := Vector2Add(mouse_p, w.scroll);
                     p  = Vector2Subtract(p, text_window_rect.min);
                     p  = Vector2Divide(p, Monosize);
@@ -348,7 +354,7 @@ UpdateAndDrawWindow :: proc(w: *Window, font: Font, font_size: float) {
             }
         }
 
-        if IsMouseButtonDown(MOUSE_BUTTON_LEFT) {
+        if w.mouse_selecting && IsMouseButtonDown(MOUSE_BUTTON_LEFT) {
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
             p := Vector2Add(mouse_p, w.scroll);
             p  = Vector2Subtract(p, text_window_rect.min);
@@ -356,6 +362,8 @@ UpdateAndDrawWindow :: proc(w: *Window, font: Font, font_size: float) {
             x := :int(floorf(p.x));
             y := :int(floorf(p.y));
             w.cursor.b = CalculatePosFromVisualPos(w.buffer, {x, y});
+        } else {
+            w.mouse_selecting = false;
         }
 
         if w.mouse_scrolling {

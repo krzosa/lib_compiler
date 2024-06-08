@@ -1,0 +1,2 @@
+UpdatePrototype :: proc(rect: Rect2P) {
+}

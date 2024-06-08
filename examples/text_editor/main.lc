@@ -81,11 +81,9 @@ main :: proc(): int {
         ClearBackground(RAYWHITE);
 
         if sandbox_chosen == SANDBOX_TEXT_EDITOR {
-            if !TeInited InitTextEditor(font, font_size, font_spacing);
-            ComputeWindowRects(screen_rect);
-            UpdateAndDrawWindows(font, font_size);
+            UpdateTextEditor(screen_rect, font, font_size, font_spacing);
         } else if sandbox_chosen == SANDBOX_PROTOTYPE {
-
+            UpdatePrototype(screen_rect);
         }
 
         DrawRect(top_bar_original, LIGHTGRAY);
