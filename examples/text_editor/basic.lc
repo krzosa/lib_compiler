@@ -1,0 +1,34 @@
+ClampInt :: proc(val: int, min: int, max: int): int {
+    result := val;
+    if (val < min) result = min;
+    if (val > max) result = max;
+    return result;
+}
+
+MinInt :: proc(a: int, b: int): int {
+    result := a;
+    if (a > b) result = b;
+    return result;
+}
+
+MaxInt :: proc(a: int, b: int): int {
+    result := b;
+    if (a > b) result = a;
+    return result;
+}
+
+MaxFloat :: proc(a: float, b: float): float {
+    if a > b return a;
+    return b;
+}
+
+MinFloat :: proc(a: float, b: float): float {
+    if a > b return b;
+    return a;
+}
+
+ClampFloat :: proc(val: float, min: float, max: float): float {
+    if (val > max) return max;
+    if (val < min) return min;
+    return val;
+}
