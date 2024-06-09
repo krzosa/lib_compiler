@@ -41,10 +41,10 @@ int main(int argc, char **argv) {
     LC_RegisterPackageDir(path_to_package.str);
     S8_For(it, dirs) { LC_RegisterPackageDir(it->string.str); }
 
-    LC_Intern     name     = LC_InternStrLen(package.str, (int)package.len);
-    LC_ASTRefList packages = LC_ParseAndResolve(name);
+    LC_Intern name = LC_InternStrLen(package.str, (int)package.len);
+    LC_ParseAndResolve(name);
     if (lang->errors) return 1;
 
-    S8_String code = LC_GenerateUnityBuild(packages);
+    S8_String code = LC_GenerateUnityBuild();
     OS_WriteFile(S8_Lit("output.c"), code);
 }

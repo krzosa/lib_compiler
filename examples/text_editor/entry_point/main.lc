@@ -12,6 +12,9 @@ import "raylib";
 import "std_types";
 import "libc";
 
+import "core";
+import TE "text_editor";
+
 InvalidCodepath :: proc() {
     assert(:*char("invalid codepath") == :*char(""));
 }
@@ -81,12 +84,13 @@ main :: proc(): int {
         ClearBackground(RAYWHITE);
 
         if sandbox_chosen == SANDBOX_TEXT_EDITOR {
-            UpdateTextEditor(screen_rect, font, font_size, font_spacing);
+            TE.UpdateTextEditor(screen_rect, font, font_size, font_spacing);
         } else if sandbox_chosen == SANDBOX_PROTOTYPE {
             UpdatePrototype(screen_rect);
         }
 
-        DrawRect(top_bar_original, LIGHTGRAY);
+
+        TE.DrawRect(top_bar_original, LIGHTGRAY);
 
         DrawRectangleRoundedLines(Rect2PToRectangle(button1), 0.3, 12, 2, BLACK);
         if button1_hover DrawRectangleRounded(Rect2PToRectangle(button1), 0.3, 12, WHITE);
@@ -102,3 +106,4 @@ main :: proc(): int {
     CloseWindow();
     return 0;
 }
+

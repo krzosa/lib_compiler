@@ -16,10 +16,10 @@ bool hello_world() {
     OS_MakeDir("examples/hello_world");
     LC_ParseAndResolve(name);
     LC_String code = LC_GenerateUnityBuild();
-    LC_LangEnd(lang);
 
     S8_String path = "examples/hello_world/hello_world.c";
     OS_WriteFile(path, code);
+    LC_LangEnd(lang);
     if (UseCL) {
         S8_String cmd = Fmt("cl %.*s -nologo -FC -Fd:examples/hello_world/hello_world.pdb -Fe:examples/hello_world/hello_world.exe", S8_Expand(path));
         if (Run(cmd) != 0) return false;

@@ -1001,9 +1001,9 @@ LC_FUNCTION void LC_ResolveProcBodiesPass(void);                 // The Parse an
 LC_FUNCTION void LC_FindUnusedLocalsAndRemoveUnusedGlobalDeclsPass(void); // Extended pass that you can execute once you have resolved all packages
 
 // These three functions are used to implement LC_FindUnusedLocalsAndRemoveUnusedGlobalDeclsPass
-LC_FUNCTION LC_Map LC_CountDeclRefs(LC_Arena *arena);
-LC_FUNCTION void   LC_RemoveUnreferencedGlobalDeclsPass(LC_Map *map_of_visits);
-LC_FUNCTION void   LC_ErrorOnUnreferencedLocalsPass(LC_Map *map_of_visits);
+LC_FUNCTION void     LC_CountDeclRefs(LC_Arena *arena, LC_Map *map, LC_AST *ast);
+LC_FUNCTION LC_Decl *LC_RemoveUnreferencedGlobalDeclsPass(LC_Map *map_of_visits);
+LC_FUNCTION void     LC_ErrorOnUnreferencedLocalsPass(LC_Map *map_of_visits);
 
 // Notes
 LC_FUNCTION void    LC_DeclareNote(LC_Intern intern);

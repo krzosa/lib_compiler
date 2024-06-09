@@ -1,3 +1,9 @@
+import "std_types";
+import "raylib";
+import "libc";
+
+import "core";
+
 TeInited := false;
 TeFontSize: float = 14;
 TeFontSpacing: float = 1;
@@ -90,7 +96,6 @@ UpdateAndDrawWindow :: proc(w: *Window, font: Font, font_size: float) {
             FocusedWindow = w;
         }
     }
-
 
     if w == FocusedWindow {
         if IsKeyPressed(KEY_LEFT) || IsKeyPressedRepeat(KEY_LEFT) {

@@ -6,9 +6,9 @@ bool text_editor() {
     defer { LC_LangEnd(lang); };
 
     LC_RegisterPackageDir("../pkgs");
-    LC_RegisterPackageDir("../examples");
+    LC_RegisterPackageDir("../examples/text_editor");
 
-    LC_Intern name = LC_ILit("text_editor");
+    LC_Intern name = LC_ILit("entry_point");
     LC_ParseAndResolve(name);
     if (L->errors) return false;
 

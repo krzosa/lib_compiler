@@ -34,10 +34,9 @@ bool add_source_location_macro() {
     }
 
     LC_String code = LC_GenerateUnityBuild();
-    LC_LangEnd(lang);
-
     OS_MakeDir("examples/add_source_location_macro");
     OS_WriteFile("examples/add_source_location_macro/add_source_location_macro.c", code);
+    LC_LangEnd(lang);
 
     return true;
 }

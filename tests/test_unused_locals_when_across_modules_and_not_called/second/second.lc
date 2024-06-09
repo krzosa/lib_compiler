@@ -1,0 +1,5 @@
+
+other_thing :: proc(): int {
+    a := 0;
+    return a;
+}

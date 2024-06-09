@@ -31,10 +31,10 @@ int main(int argc, char **argv) {
         LC_RegisterPackageDir(it->string.str);
     }
 
-    LC_Intern     name     = LC_InternStrLen(package.str, (int)package.len);
-    LC_ASTRefList packages = LC_ParseAndResolve(name);
+    LC_Intern name = LC_InternStrLen(package.str, (int)package.len);
+    LC_ParseAndResolve(name);
     if (lang->errors) return 1;
 
-    LC_String code = LC_GenerateUnityBuild(packages);
+    LC_String code = LC_GenerateUnityBuild();
     (void)code;
 }

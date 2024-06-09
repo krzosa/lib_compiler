@@ -37,12 +37,12 @@ bool add_instrumentation() {
     }
 
     LC_String code = LC_GenerateUnityBuild();
-    LC_LangEnd(lang);
 
     S8_String path = "examples/add_instrumentation/add_instrumentation.c";
     OS_MakeDir("examples");
     OS_MakeDir("examples/add_instrumentation");
     OS_WriteFile(path, code);
+    LC_LangEnd(lang);
     if (!UseCL) return true;
 
     S8_String cmd     = Fmt("cl %.*s -Zi -std:c11 -nologo -FC -Fd:examples/add_instrumentation/a.pdb -Fe:examples/add_instrumentation/add_instrumentation.exe %.*s", S8_Expand(path), S8_Expand(RaylibLIB));
