@@ -119,6 +119,7 @@ def parse_decl(decl):
         return None
 
 def bindgen_enum(decl):
+    r = ""
     r += decl["name"] + " :: typedef int;\n"
     for item in decl["items"]:
         r += item["name"]
@@ -209,7 +210,7 @@ def bindgen_func(decl):
         if i != len(decl["params"]) - 1 or vargs:
             r += ", "
         i += 1
-    if vargs: r += ".."
+    if vargs: r += "..."
     r += ")"
     decl_type = decl["type"]
     return_type = decl_type[:decl_type.index('(')].strip()

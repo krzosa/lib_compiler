@@ -1,0 +1,394 @@
+IO_MessageHandler :: typedef proc(a: int, b: *char, c: int, d: *char, e: int): void; @api
+IO__FatalErrorf :: proc(file: *char, line: int, msg: *char, ...): bool; @api
+IO__Printf :: proc(kind: int, file: *char, line: int, msg: *char, ...); @api
+IO__FatalError :: proc(msg: *char): bool; @api
+IO_Print :: proc(kind: int, file: *char, line: int, msg: *char, len: int); @api
+IO_OutputMessage :: proc(str: *char, len: int); @api
+IO_Exit :: proc(error_code: int); @api
+IO_IsDebuggerPresent :: proc(): bool; @api
+
+MV_Memory :: struct {
+    commit: usize;
+    reserve: usize;
+    data: *u8;
+} @api
+
+MA_Arena :: struct {
+    memory: MV_Memory;
+    alignment: int;
+    len: usize;
+    base_len: usize;
+} @api
+
+MA_Temp :: struct {
+    arena: *MA_Arena;
+    pos: usize;
+} @api
+
+MA_SourceLoc :: struct {
+    file: *char;
+    line: int;
+} @api
+
+MA_SaveSourceLocEx :: proc(file: *char, line: int); @api
+MA_InitEx :: proc(a: *MA_Arena, reserve: usize); @api
+MA_Init :: proc(a: *MA_Arena); @api
+MA_Create :: proc(): MA_Arena; @api
+MA_MakeSureInitialized :: proc(a: *MA_Arena); @api
+MA_InitFromBuffer :: proc(arena: *MA_Arena, buffer: *void, size: usize); @api
+MA_MakeFromBuffer :: proc(buffer: *void, size: usize): MA_Arena; @api
+MA_Bootstrap :: proc(): *MA_Arena; @api
+MA_PushArena :: proc(arena: *MA_Arena, size: usize): MA_Arena; @api
+MA_PushArenaP :: proc(arena: *MA_Arena, size: usize): *MA_Arena; @api
+MA__PushSizeNonZeroed :: proc(a: *MA_Arena, size: usize): *void; @api
+MA__PushSize :: proc(arena: *MA_Arena, size: usize): *void; @api
+MA__PushStringCopy :: proc(arena: *MA_Arena, p: *char, size: usize): *char; @api
+MA__PushCopy :: proc(arena: *MA_Arena, p: *void, size: usize): *void; @api
+MA_BeginTemp :: proc(arena: *MA_Arena): MA_Temp; @api
+MA_EndTemp :: proc(checkpoint: MA_Temp); @api
+MA_PopToPos :: proc(arena: *MA_Arena, pos: usize); @api
+MA_PopSize :: proc(arena: *MA_Arena, size: usize); @api
+MA_DeallocateArena :: proc(arena: *MA_Arena); @api
+MA_Reset :: proc(arena: *MA_Arena); @api
+MA_GetAlignOffset :: proc(size: usize, align: usize): usize; @api
+MA_AlignUp :: proc(size: usize, align: usize): usize; @api
+MA_AlignDown :: proc(size: usize, align: usize): usize; @api
+MA_IsPointerInside :: proc(arena: *MA_Arena, p: *void): bool; @api
+MA_SetAlignment :: proc(arena: *MA_Arena, alignment: int); @api
+MA_GetTop :: proc(a: *MA_Arena): *u8; @api
+MV_Reserve :: proc(size: usize): MV_Memory; @api
+MV_Commit :: proc(m: *MV_Memory, commit: usize): bool; @api
+MV_Deallocate :: proc(m: *MV_Memory); @api
+MV_DecommitPos :: proc(m: *MV_Memory, pos: usize): bool; @api
+MA_GetScratchEx :: proc(conflicts: **MA_Arena, conflict_count: int): MA_Temp; @api
+MA_GetScratch :: proc(): MA_Temp; @api
+MA_GetScratch1 :: proc(conflict: *MA_Arena): MA_Temp; @api
+
+S8_Length :: proc(string: *char): i64; @api
+S8_String :: struct {
+    str: *char;
+    len: i64;
+} @api
+
+S8_Node :: struct {
+    next: *S8_Node;
+    string: S8_String;
+} @api
+
+S8_List :: struct {
+    node_count: i64;
+    char_count: i64;
+    first: *S8_Node;
+    last: *S8_Node;
+} @api
+
+S16_String :: struct {
+    str: *wchar_t;
+    len: i64;
+} @api
+
+S8_FindFlag :: typedef int;
+S8_SplitFlag :: typedef int;
+CHAR_ToLowerCase :: proc(a: char): char; @api
+CHAR_ToUpperCase :: proc(a: char): char; @api
+CHAR_IsWhitespace :: proc(w: char): bool; @api
+CHAR_IsAlphabetic :: proc(a: char): bool; @api
+CHAR_IsIdent :: proc(a: char): bool; @api
+CHAR_IsDigit :: proc(a: char): bool; @api
+CHAR_IsAlphanumeric :: proc(a: char): bool; @api
+S8_AreEqual :: proc(a: S8_String, b: S8_String, ignore_case: uint): bool; @api
+S8_EndsWith :: proc(a: S8_String, end: S8_String, ignore_case: uint): bool; @api
+S8_StartsWith :: proc(a: S8_String, start: S8_String, ignore_case: uint): bool; @api
+S8_Make :: proc(str: *char, len: i64): S8_String; @api
+S8_Copy :: proc(allocator: *MA_Arena, string: S8_String): S8_String; @api
+S8_CopyChar :: proc(allocator: *MA_Arena, s: *char): S8_String; @api
+S8_NormalizePath :: proc(allocator: *MA_Arena, s: S8_String): S8_String; @api
+S8_NormalizePathUnsafe :: proc(s: S8_String); @api
+S8_Chop :: proc(string: S8_String, len: i64): S8_String; @api
+S8_Skip :: proc(string: S8_String, len: i64): S8_String; @api
+S8_GetPostfix :: proc(string: S8_String, len: i64): S8_String; @api
+S8_GetPrefix :: proc(string: S8_String, len: i64): S8_String; @api
+S8_Slice :: proc(string: S8_String, first_index: i64, one_past_last_index: i64): S8_String; @api
+S8_Trim :: proc(string: S8_String): S8_String; @api
+S8_TrimEnd :: proc(string: S8_String): S8_String; @api
+S8_ToLowerCase :: proc(allocator: *MA_Arena, s: S8_String): S8_String; @api
+S8_ToUpperCase :: proc(allocator: *MA_Arena, s: S8_String): S8_String; @api
+S8_Seek :: proc(string: S8_String, find: S8_String, flags: S8_FindFlag, index_out: *i64): bool; @api
+S8_Find :: proc(string: S8_String, find: S8_String, flags: S8_FindFlag): i64; @api
+S8_ChopLastSlash :: proc(s: S8_String): S8_String; @api
+S8_ChopLastPeriod :: proc(s: S8_String): S8_String; @api
+S8_SkipToLastSlash :: proc(s: S8_String): S8_String; @api
+S8_SkipToLastPeriod :: proc(s: S8_String): S8_String; @api
+S8_GetNameNoExt :: proc(s: S8_String): S8_String; @api
+S8_IsPointerInside :: proc(string: S8_String, p: *char): bool; @api
+S8_SkipToP :: proc(string: S8_String, p: *char): S8_String; @api
+S8_SkipPast :: proc(string: S8_String, a: S8_String): S8_String; @api
+S8_WideLength :: proc(string: *wchar_t): i64; @api
+S8_MakeFromChar :: proc(string: *char): S8_String; @api
+S8_MakeEmpty :: proc(): S8_String; @api
+S8_MakeEmptyList :: proc(): S8_List; @api
+S8_FormatV :: proc(allocator: *MA_Arena, str: *char, args1: va_list): S8_String; @api
+S8_Format :: proc(allocator: *MA_Arena, str: *char, ...): S8_String; @api
+S8_Split :: proc(allocator: *MA_Arena, string: S8_String, find: S8_String, flags: S8_SplitFlag): S8_List; @api
+S8_MergeWithSeparator :: proc(allocator: *MA_Arena, list: S8_List, separator: S8_String): S8_String; @api
+S8_Merge :: proc(allocator: *MA_Arena, list: S8_List): S8_String; @api
+S8_ReplaceAll :: proc(allocator: *MA_Arena, string: S8_String, replace: S8_String, with: S8_String, ignore_case: bool): S8_String; @api
+S8_FindAll :: proc(allocator: *MA_Arena, string: S8_String, find: S8_String, ignore_case: bool): S8_List; @api
+S8_CreateNode :: proc(allocator: *MA_Arena, string: S8_String): *S8_Node; @api
+S8_ReplaceNodeString :: proc(list: *S8_List, node: *S8_Node, new_string: S8_String); @api
+S8_AddExistingNode :: proc(list: *S8_List, node: *S8_Node); @api
+S8_AddArray :: proc(allocator: *MA_Arena, list: *S8_List, array: **char, count: int); @api
+S8_AddArrayWithPrefix :: proc(allocator: *MA_Arena, list: *S8_List, prefix: *char, array: **char, count: int); @api
+S8_MakeList :: proc(allocator: *MA_Arena, a: S8_String): S8_List; @api
+S8_CopyList :: proc(allocator: *MA_Arena, a: S8_List): S8_List; @api
+S8_ConcatLists :: proc(allocator: *MA_Arena, a: S8_List, b: S8_List): S8_List; @api
+S8_AddNode :: proc(allocator: *MA_Arena, list: *S8_List, string: S8_String): *S8_Node; @api
+S8_Add :: proc(allocator: *MA_Arena, list: *S8_List, string: S8_String): *S8_Node; @api
+S8_AddF :: proc(allocator: *MA_Arena, list: *S8_List, str: *char, ...): S8_String; @api
+S8_ToWidecharEx :: proc(allocator: *MA_Arena, string: S8_String): S16_String; @api
+S8_ToWidechar :: proc(allocator: *MA_Arena, string: S8_String): *wchar_t; @api
+S8_FromWidecharEx :: proc(allocator: *MA_Arena, wstring: *wchar_t, wsize: i64): S8_String; @api
+S8_FromWidechar :: proc(allocator: *MA_Arena, wstring: *wchar_t): S8_String; @api
+RandomSeed :: struct {
+    a: u64;
+} @api
+
+HashBytes :: proc(data: *void, size: u64): u64; @api
+MakeRandomSeed :: proc(value: u64): RandomSeed; @api
+GetRandomU64 :: proc(state: *RandomSeed): u64; @api
+GetRandomRangeI :: proc(seed: *RandomSeed, first: int, last_included: int): int; @api
+GetRandomNormal :: proc(series: *RandomSeed): double; @api
+GetRandomNormalRange :: proc(seed: *RandomSeed, min: double, max: double): double; @api
+HashMix :: proc(x: u64, y: u64): u64; @api
+GetRandomNormalF :: proc(series: *RandomSeed): float; @api
+
+MU__Float2 :: struct {
+    x: float;
+    y: float;
+} @api
+
+MU__Int2 :: struct {
+    x: int;
+    y: int;
+} @api
+
+MU_glGetProcAddress :: typedef proc(a: *char): *void; @api
+MU_Window_Params :: struct {
+    size: MU__Int2;
+    pos: MU__Int2;
+    title: *char;
+    enable_canvas: bool;
+    resizable: bool;
+    borderless: bool;
+    fps_cursor: bool;
+} @api
+
+MU_Params :: struct {
+    memory: *void;
+    cap: usize;
+    enable_opengl: bool;
+    opengl_major: int;
+    opengl_minor: int;
+    delta_time: double;
+    window: MU_Window_Params;
+    sound_callback: proc(a: *MU_Context, b: *u16, c: u32): void; @api
+} @api
+
+MU_Key_State :: struct {
+    down: bool;
+    press: bool;
+    unpress: bool;
+    raw_press: bool;
+} @api
+
+MU_Key :: typedef int;
+
+MU_Mouse_State :: struct {
+    pos: MU__Int2;
+    posf: MU__Float2;
+    delta_pos: MU__Int2;
+    delta_pos_normalized: MU__Float2;
+    left: MU_Key_State;
+    middle: MU_Key_State;
+    right: MU_Key_State;
+    delta_wheel: float;
+} @api
+
+MU_DroppedFile :: struct {
+    next: *MU_DroppedFile;
+    filename: *char;
+    filename_size: int;
+} @api
+
+MU_Arena :: struct {
+    memory: *char;
+    len: usize;
+    cap: usize;
+} @api
+
+MU_Window :: struct {
+    size: MU__Int2;
+    sizef: MU__Float2;
+    pos: MU__Int2;
+    posf: MU__Float2;
+    dpi_scale: float;
+    is_fullscreen: bool;
+    is_fps_mode: bool;
+    is_focused: bool;
+    change_cursor_on_mouse_hold: bool;
+    processed_events_this_frame: u64; @api
+    should_render: bool;
+    first_dropped_file: *MU_DroppedFile;
+    canvas: *u32;
+    canvas_enabled: bool;
+    mouse: MU_Mouse_State;
+    key: [140]MU_Key_State;
+    user_text32: [32]u32;
+    user_text32_count: int;
+    user_text8: [32]char;
+    user_text8_count: int;
+    next: *MU_Window;
+    handle: *void;
+    platform: *void;
+} @api
+
+MU_Time :: struct {
+    app_start: double;
+    frame_start: double;
+    update: double;
+    update_total: double;
+    delta: double;
+    deltaf: float;
+    total: double;
+    totalf: float;
+} @api
+
+MU_Sound :: struct {
+    initialized: bool;
+    samples_per_second: uint;
+    number_of_channels: uint;
+    bytes_per_sample: uint;
+    callback: proc(a: *MU_Context, b: *u16, c: u32): void; @api
+} @api
+
+MU_Context :: struct {
+    quit: bool;
+    sound: MU_Sound;
+    time: MU_Time;
+    first_frame: bool;
+    _MU_Update_count: int;
+    frame: usize;
+    consecutive_missed_frames: usize;
+    total_missed_frames: usize;
+    primary_monitor_size: MU__Int2;
+    opengl_initialized: bool;
+    opengl_major: int;
+    opengl_minor: int;
+    gl_get_proc_address: proc(a: *char): *void; @api
+    params: MU_Params;
+    window: *MU_Window;
+    all_windows: *MU_Window;
+    perm_arena: MU_Arena;
+    frame_arena: MU_Arena;
+    platform: *void;
+} @api
+
+MU_Quit :: proc(mu: *MU_Context); @api
+MU_DefaultSoundCallback :: proc(mu: *MU_Context, buffer: *u16, samples_to_fill: u32); @api
+MU_GetTime :: proc(): double; @api
+MU_ToggleFPSMode :: proc(window: *MU_Window); @api
+MU_DisableFPSMode :: proc(window: *MU_Window); @api
+MU_EnableFPSMode :: proc(window: *MU_Window); @api
+MU_ToggleFullscreen :: proc(window: *MU_Window); @api
+MU_Init :: proc(mu: *MU_Context, params: MU_Params, len: usize); @api
+MU_AddWindow :: proc(mu: *MU_Context, params: MU_Window_Params): *MU_Window; @api
+MU_InitWindow :: proc(mu: *MU_Context, window: *MU_Window, params: MU_Window_Params); @api
+MU_Start :: proc(params: MU_Params): *MU_Context; @api
+MU_Update :: proc(mu: *MU_Context): bool; @api
+LIB_Library :: typedef *void;
+LIB_LoadLibrary :: proc(str: *char): LIB_Library; @api
+LIB_LoadSymbol :: proc(lib: LIB_Library, symbol: *char): *void; @api
+LIB_UnloadLibrary :: proc(lib: LIB_Library): bool; @api
+OS_Result :: typedef int;
+OS_SUCCESS :: 0;
+OS_ALREADY_EXISTS :: ^;
+OS_PATH_NOT_FOUND :: ^;
+OS_FAILURE :: ^;
+
+OS_Date :: struct {
+    year: u32;
+    month: u32;
+    day: u32;
+    hour: u32;
+    minute: u32;
+    second: u32;
+} @api
+
+OS_IsAbsolute :: proc(path: S8_String): bool; @api
+OS_GetExePath :: proc(arena: *MA_Arena): S8_String; @api
+OS_GetExeDir :: proc(arena: *MA_Arena): S8_String; @api
+OS_GetWorkingDir :: proc(arena: *MA_Arena): S8_String; @api
+OS_SetWorkingDir :: proc(path: S8_String); @api
+OS_GetAbsolutePath :: proc(arena: *MA_Arena, relative: S8_String): S8_String; @api
+OS_FileExists :: proc(path: S8_String): bool; @api
+OS_IsDir :: proc(path: S8_String): bool; @api
+OS_IsFile :: proc(path: S8_String): bool; @api
+OS_GetTime :: proc(): double; @api
+OS_MakeDir :: proc(path: S8_String): OS_Result; @api
+OS_CopyFile :: proc(from: S8_String, to: S8_String, overwrite: bool): OS_Result; @api
+OS_DeleteFile :: proc(path: S8_String): OS_Result; @api
+OS_DeleteDir :: proc(path: S8_String, flags: uint): OS_Result; @api
+OS_AppendFile :: proc(path: S8_String, string: S8_String): OS_Result; @api
+OS_WriteFile :: proc(path: S8_String, string: S8_String): OS_Result; @api
+OS_ReadFile :: proc(arena: *MA_Arena, path: S8_String): S8_String; @api
+OS_SystemF :: proc(string: *char, ...): int; @api
+OS_GetFileModTime :: proc(file: S8_String): i64; @api
+OS_GetDate :: proc(): OS_Date; @api
+UTF_CreateStringFromWidechar :: proc(arena: *MA_Arena, wstr: *wchar_t, wsize: i64): S8_String; @api
+OS_ExpandIncludesList :: proc(arena: *MA_Arena, out: *S8_List, filepath: S8_String): bool; @api
+OS_ExpandIncludes :: proc(arena: *MA_Arena, filepath: S8_String): S8_String; @api
+OS_EnableTerminalColors :: proc(): bool; @api
+OS_IsValid :: proc(it: OS_FileIter): bool; @api
+OS_Advance :: proc(it: *OS_FileIter); @api
+OS_IterateFiles :: proc(scratch_arena: *MA_Arena, path: S8_String): OS_FileIter; @api
+
+OS_FileIter :: struct {
+    is_valid: bool;
+    is_directory: bool;
+    absolute_path: S8_String;
+    relative_path: S8_String;
+    filename: S8_String;
+
+    path: S8_String;
+    arena: *MA_Arena;
+    _: OS_FileIterPlatform;
+} @api
+
+OS_FileIterPlatform :: union {
+    dir: *void;
+    w32: *void;
+} @api
+
+M_AllocatorOp :: typedef int;
+M_AllocatorOp_Invalid :: 0;
+M_AllocatorOp_Allocate :: ^;
+M_AllocatorOp_Deallocate :: ^;
+M_AllocatorOp_Reallocate :: ^;
+
+M_AllocatorProc :: typedef proc(a: *void, b: M_AllocatorOp, c: *void, d: usize, e: usize): *void; @api
+MA_AllocatorProc :: proc(allocator: *void, kind: M_AllocatorOp, p: *void, size: usize, old_size: usize): *void; @api
+MA_ExclusiveAllocatorProc :: proc(allocator: *void, kind: M_AllocatorOp, p: *void, size: usize, old_size: usize): *void; @api
+M_Allocator :: struct {
+    obj: *int;
+    p: *M_AllocatorProc; @api
+} @api
+
+M__AllocNonZeroed :: proc(allocator: M_Allocator, size: usize): *void; @api
+M__Alloc :: proc(allocator: M_Allocator, size: usize): *void; @api
+M__AllocCopy :: proc(allocator: M_Allocator, p: *void, size: usize): *void; @api
+M__Realloc :: proc(allocator: M_Allocator, p: *void, size: usize, old_size: usize): *void; @api
+M__Dealloc :: proc(allocator: M_Allocator, p: *void); @api
+M_GetSystemAllocator :: proc(): M_Allocator; @api
+MA_GetExclusiveAllocator :: proc(arena: *MA_Arena): M_Allocator; @api
+MA_GetAllocator :: proc(arena: *MA_Arena): M_Allocator; @api
+MA_BootstrapExclusive :: proc(): M_Allocator; @api

@@ -21,7 +21,7 @@ InvalidCodepath :: proc() {
 
 main :: proc(): int {
     InitWindow(800, 600, "TextEditor");
-    SetWindowState(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_MAXIMIZED);
+    SetWindowState(FLAG_WINDOW_RESIZABLE);
     SetTargetFPS(60);
 
     font_size: float = 14;
@@ -30,7 +30,7 @@ main :: proc(): int {
 
     SANDBOX_TEXT_EDITOR :: 1;
     SANDBOX_PROTOTYPE :: 2;
-    sandbox_chosen := SANDBOX_TEXT_EDITOR;
+    sandbox_chosen := SANDBOX_PROTOTYPE;
 
     for !WindowShouldClose() {
         screen_size: Vector2 = {:f32(GetScreenWidth()), :f32(GetScreenHeight())};
@@ -86,7 +86,7 @@ main :: proc(): int {
         if sandbox_chosen == SANDBOX_TEXT_EDITOR {
             TE.UpdateTextEditor(screen_rect, font, font_size, font_spacing);
         } else if sandbox_chosen == SANDBOX_PROTOTYPE {
-            UpdatePrototype(screen_rect);
+            UpdatePrototype(screen_rect, font, font_size, font_spacing);
         }
 
 

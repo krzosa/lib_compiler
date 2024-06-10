@@ -26,7 +26,7 @@ bool text_editor() {
     OS_WriteFile(path, code);
 
     if (!UseCL) return true;
-    S8_String cmd     = Fmt("cl %.*s -Zi -std:c11 -nologo -FC -Fd:examples/text_editor/a.pdb -Fe:examples/text_editor/text_editor.exe %.*s", S8_Expand(path), S8_Expand(RaylibLIB));
+    S8_String cmd     = Fmt("cl %.*s ../src/core/core.c -Zi -std:c11 -nologo -FC -Fd:examples/text_editor/a.pdb -Fe:examples/text_editor/text_editor.exe %.*s", S8_Expand(path), S8_Expand(RaylibLIB));
     int       errcode = Run(cmd);
     if (errcode != 0) return false;
 

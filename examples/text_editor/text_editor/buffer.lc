@@ -37,7 +37,7 @@ AdjustUTF8PosUnsafe :: proc(buffer: *Buffer, pos: int, direction: int = 1): int 
 AdjustUTF8Pos :: proc(buffer: *Buffer, pos: int, direction: int = 1): int {
     assert(direction == 1 || direction == -1);
     pos = AdjustUTF8PosUnsafe(buffer, pos, direction);
-    pos = ClampInt(pos, 0, buffer.len - 1);
+    pos = ClampInt(pos, 0, MaxInt(0, buffer.len - 1));
     if (buffer.data) assert(!IsUTF8ContinuationByte(buffer.data[pos]));
     return pos;
 }

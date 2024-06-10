@@ -1,0 +1,7 @@
+
+cool_variable: *int;
+
+other_thing :: proc(): int {
+    a := 0;
+    return a;
+}

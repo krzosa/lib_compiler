@@ -4,10 +4,7 @@ import "libc";
 
 import "core";
 
-TeInited := false;
-TeFontSize: float = 14;
-TeFontSpacing: float = 1;
-TeFont: Font;
+Inited := false;
 TeBuffer: Buffer;
 
 FocusedWindow: *Window;
@@ -15,17 +12,14 @@ WindowStack: [8]Window;
 WindowStackCount: int;
 
 UpdateTextEditor :: proc(rect: Rect2P, font: Font, font_size: float, font_spacing: float) {
-    if !TeInited {
-        TeInited = true;
-        TeFont = font;
-        TeFontSpacing = font_spacing;
-        TeFontSize = font_size;
+    if !Inited {
+        Inited = true;
 
-        glyph_info: GlyphInfo = GetGlyphInfo(TeFont, 'A');
-        size := MeasureTextEx(TeFont, "A", TeFontSize, TeFontSpacing);
+        glyph_info: GlyphInfo = GetGlyphInfo(font, 'A');
+        size := MeasureTextEx(font, "A", font_size, font_spacing);
         Monosize = {:float(glyph_info.image.width), size.y};
 
-        file_content := LoadFileText("C:/Work/language/examples/text_editor/main.lc");
+        file_content := LoadFileText("C:/Work/language/examples/text_editor/entry_point/entry_point.lc");
         AddText(&TeBuffer, {file_content, :int(strlen(file_content))});
         UnloadFileText(file_content);
 

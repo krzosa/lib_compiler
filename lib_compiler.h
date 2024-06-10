@@ -6881,8 +6881,9 @@ LC_FUNCTION LC_Operand LC_ResolveExprEx(LC_AST *n) {
             LC_IF(!LC_IsAggType(type), n->efield.left, "invalid operation, expected aggregate type, '%s' is not an aggregate", LC_GenLCType(type));
             LC_PROP_ERROR(op, n, LC_ResolveNameInScope(n, type->decl));
             LC_ASSERT(n, op.decl->kind == LC_DeclKind_Var);
-            result.flags |= LC_OPF_LValue | LC_OPF_Const;
+            result.flags |= LC_OPF_Const;
         }
+        result.flags |= LC_OPF_LValue;
         result.val = op.decl->val;
     } break;
 

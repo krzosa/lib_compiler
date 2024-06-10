@@ -1,0 +1,8 @@
+import b "second";
+
+main :: proc(): int {
+    a: int;
+    b.cool_variable = &a;
+    b.other_thing();
+    return 0;
+}

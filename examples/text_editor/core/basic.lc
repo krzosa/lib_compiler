@@ -1,4 +1,5 @@
 import "raylib";
+import "libc";
 import "std_types";
 
 ClampInt :: proc(val: int, min: int, max: int): int {
