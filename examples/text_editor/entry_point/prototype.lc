@@ -3,6 +3,7 @@ Perm: MA_Arena;
 Transcripts: TranscriptStack;
 
 SearchBar: TE.Buffer;
+FilenamesBuffer: TE.Buffer;
 ResultsBuffer: TE.Buffer;
 
 UpdatePrototype :: proc(rect: Rect2P, font: Font, font_size: float, font_spacing: float) {
@@ -10,8 +11,6 @@ UpdatePrototype :: proc(rect: Rect2P, font: Font, font_size: float, font_spacing
         Inited = true;
         for iter := OS_IterateFiles(&Perm, S8("C:/video")); OS_IsValid(iter); OS_Advance(&iter) {
             if S8_EndsWith(iter.absolute_path, S8(".srt"), true) {
-                printf("%.*s\n", :int(iter.absolute_path.len), iter.absolute_path.str);
-
                 file_content := OS_ReadFile(&Perm, iter.absolute_path);
                 PushTranscript(&Transcripts, {
                     absolute_path = STR(iter.absolute_path),
@@ -19,27 +18,21 @@ UpdatePrototype :: proc(rect: Rect2P, font: Font, font_size: float, font_spacing
             }
         }
 
+        for i := 0; i < Transcripts.len; i += 1 {
+            TE.ReplaceText(&FilenamesBuffer, {FilenamesBuffer.len, FilenamesBuffer.len}, Transcripts.data[i].absolute_path);
+            TE.ReplaceText(&FilenamesBuffer, {FilenamesBuffer.len, FilenamesBuffer.len}, "\n");
+        }
+        TE.ReplaceText(&ResultsBuffer, {ResultsBuffer.len, ResultsBuffer.len}, Transcripts.data[0].file_content);
+        TE.ReplaceText(&SearchBar, {SearchBar.len, SearchBar.len}, "");
+
         TE.AddWindow({buffer = &SearchBar});
-        TE.AddWindow({buffer = &ResultsBuffer});
+        TE.AddWindow({buffer = &ResultsBuffer, flags = TE.WindowFlags_DrawScrollbar});
         TE.FocusedWindow = &TE.WindowStack[0];
         TE.FocusedWindow = nil;
     }
 
-    for key := GetCharPressed(); key; key = GetCharPressed() {
-        selection_range := :TE.Range{0,0};
-
-        result: UTF8_Result = UTF32ToUTF8(:u32(key));
-        if result.error == 0 {
-            TE.ReplaceText(&SearchBar, selection_range, {:*char(&result.out_str[0]), result.len});
-        } else {
-            TE.ReplaceText(&SearchBar, selection_range, "?");
-        }
-    }
-
-
-
     // Te.ComputeWindowRects(rect);
-    TE.WindowStack[0].rect = CutLeft(&rect, 0.5 * GetRectX(rect));
+    TE.WindowStack[0].rect = CutTop(&rect, font_size * 2);
     TE.WindowStack[1].rect = CutLeft(&rect, 1.0 * GetRectX(rect));
 
     TE.UpdateAndDrawWindows(font, font_size);

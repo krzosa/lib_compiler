@@ -8,4 +8,4 @@ if not exist build\bld.exe (
 )
 
 rem ubuntu run ./build.sh
-build\bld.exe --quick
+build\bld.exe --tests text_editor

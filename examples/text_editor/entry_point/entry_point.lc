@@ -28,6 +28,10 @@ main :: proc(): int {
     font_spacing: float = 1;
     font: Font = LoadFontEx("C:/Windows/Fonts/consola.ttf", :int(font_size), nil, 0);
 
+    glyph_info: GlyphInfo = GetGlyphInfo(font, 'A');
+    size := MeasureTextEx(font, "A", font_size, font_spacing);
+    TE.Monosize = {:float(glyph_info.image.width), size.y};
+
     SANDBOX_TEXT_EDITOR :: 1;
     SANDBOX_PROTOTYPE :: 2;
     sandbox_chosen := SANDBOX_PROTOTYPE;

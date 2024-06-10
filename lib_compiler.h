@@ -6855,16 +6855,15 @@ LC_FUNCTION LC_Operand LC_ResolveExprEx(LC_AST *n) {
     } break;
 
     case LC_ASTKind_ExprField: {
-        bool first_part_executed = false;
+        bool resolved_import = false;
 
         LC_Operand op = {0};
         if (n->efield.left->kind == LC_ASTKind_ExprIdent) {
             LC_AST    *nf = n->efield.left;
             LC_Operand LC_PROP_ERROR(op_name, nf, LC_ResolveName(nf, nf->eident.name));
 
-            // LC_Match (Package.) and fold (Package.Other) into just (Other)
             if (op_name.decl->kind == LC_DeclKind_Import) {
-                first_part_executed      = true;
+                resolved_import          = true;
                 nf->eident.resolved_decl = op_name.decl;
                 nf->type                 = L->tvoid;
 
@@ -6872,7 +6871,7 @@ LC_FUNCTION LC_Operand LC_ResolveExprEx(LC_AST *n) {
             }
         }
 
-        if (!first_part_executed) {
+        if (!resolved_import) {
             LC_ASTKind left_kind = n->efield.left->kind;
             LC_PROP_ERROR(op, n, LC_ResolveExpr(n->efield.left));
 
@@ -6881,10 +6880,18 @@ LC_FUNCTION LC_Operand LC_ResolveExprEx(LC_AST *n) {
             LC_IF(!LC_IsAggType(type), n->efield.left, "invalid operation, expected aggregate type, '%s' is not an aggregate", LC_GenLCType(type));
             LC_PROP_ERROR(op, n, LC_ResolveNameInScope(n, type->decl));
             LC_ASSERT(n, op.decl->kind == LC_DeclKind_Var);
-            result.flags |= LC_OPF_Const;
+            result.flags |= LC_OPF_LValue | LC_OPF_Const;
+            result.val = op.decl->val;
+        } else {
+            result.val = op.decl->val;
+            // @copy_paste from ExprIdent
+            if (op.decl->kind == LC_DeclKind_Const) {
+                result.flags |= LC_OPF_UTConst | LC_OPF_Const;
+                SetConstVal(n, result.val);
+            } else {
+                result.flags |= LC_OPF_LValue | LC_OPF_Const;
+            }
         }
-        result.flags |= LC_OPF_LValue;
-        result.val = op.decl->val;
     } break;
 
     case LC_ASTKind_ExprCall: {
