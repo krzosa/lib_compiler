@@ -81,12 +81,6 @@ clang++ src/build_tool/main.cpp -o bld.exe
 
 You only need to compile the build tool once. Afterwards just call `./bld.exe`. There are multiple testing options so checkout: `./bld.exe --help`.
 
-## Further plans
-
-- **My priority is to improve the C user API, harden the compiler, accommodate things that I didn't foresee and stuff like that.**
-- I want to implement a bytecode backend (in the future) so that the language can be used like Lua.
-- New features are of second priority unless they important. I'm considering the addition of overloaded procedures because it would greatly aid in writing macros.
-
 # Language overview
 
 The language is strictly procedural, I have taken most of the inspiration from C, Golang, Ion, Jai and Odin. There are no classes, methods etc. only procedures and data types.
