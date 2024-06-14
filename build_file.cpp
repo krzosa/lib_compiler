@@ -52,12 +52,10 @@ S8_String RaylibDLL;
 
 int main(int argc, char **argv) {
     MA_InitScratch();
-
-    MA_Scratch scratch;
     UseColoredIO = OS_EnableTerminalColors();
 
     {
-        CmdParser p = MakeCmdParser(scratch, argc, argv, "I'm a build tool for this codebase, by default I build the entire test suite");
+        CmdParser p = MakeCmdParser(Perm, argc, argv, "I'm a build tool for this codebase, by default I build the entire test suite");
         AddBool(&p, &BuildX64Sandbox, "build-x64-sandbox", "build the x64 sandbox program using msvc");
         AddBool(&p, &QuickRun, "quick", "build tests using tcc compiler only");
         AddBool(&p, &BreakpointOnError, "breakpoint", "breakpoint if a compiler error is thrown");
@@ -109,7 +107,7 @@ int main(int argc, char **argv) {
         PushDir("x64_sandbox");
         S8_String cc = "cl";
 
-        Array<S8_String> flags = {MA_GetAllocator(scratch)};
+        Array<S8_String> flags = {MA_GetAllocator(Perm)};
         flags += "/MP /Zi -D_CRT_SECURE_NO_WARNINGS";
         flags += "/FC /WX /W3 /wd4200 /diagnostics:column /nologo";
         flags += "/GF /Gm- /Oi";
@@ -177,27 +175,28 @@ int main(int argc, char **argv) {
         else IO_Printf("%-50s - ERROR\n", "add_instrumentation");
     }
 
-    if (ShouldRun("wasm_playground") && UseClang) {
+    bool build_wasm = false;
+    if (build_wasm && ShouldRun("wasm_playground") && UseClang) {
         OS_MakeDir("wasm_playground");
         int result = Run("clang --target=wasm32 -mbulk-memory -Oz -Wno-writable-strings --no-standard-libraries -Wl,--strip-all -Wl,--import-memory -Wl,--no-entry -o wasm_playground/playground.wasm ../src/wasm_playground/wasm_main.c -DOS_WASM=1");
 
-        S8_String index    = OS_ReadFile(scratch, "../src/wasm_playground/index.html");
+        S8_String index    = OS_ReadFile(Perm, "../src/wasm_playground/index.html");
         S8_List   programs = S8_MakeEmptyList();
 
         OS_SetWorkingDir("wasm_playground"); // so that RegisterDir("../../pkgs") works
-        for (OS_FileIter it = OS_IterateFiles(scratch, "../../src/wasm_playground/"); OS_IsValid(it); OS_Advance(&it)) {
+        for (OS_FileIter it = OS_IterateFiles(Perm, "../../src/wasm_playground/"); OS_IsValid(it); OS_Advance(&it)) {
             if (S8_EndsWith(it.filename, ".lc", false)) {
                 RunTestFile({TestKind_File, it.absolute_path, it.filename, "not_needed", true});
 
-                S8_String file = OS_ReadFile(scratch, it.absolute_path);
-                file           = S8_ReplaceAll(scratch, file, S8_Lit("\\"), S8_Lit("\\\\"), true);
-                S8_AddF(scratch, &programs, "`%.*s`,\n", S8_Expand(file));
+                S8_String file = OS_ReadFile(Perm, it.absolute_path);
+                file           = S8_ReplaceAll(Perm, file, S8_Lit("\\"), S8_Lit("\\\\"), true);
+                S8_AddF(Perm, &programs, "`%.*s`,\n", S8_Expand(file));
             }
         }
         OS_SetWorkingDir("..");
 
-        S8_String programs_string = S8_Merge(scratch, programs);
-        S8_String new_index       = S8_ReplaceAll(scratch, index, "<InsertPrograms>", programs_string, false);
+        S8_String programs_string = S8_Merge(Perm, programs);
+        S8_String new_index       = S8_ReplaceAll(Perm, index, "<InsertPrograms>", programs_string, false);
 
         OS_WriteFile("wasm_playground/playground.html", new_index);
         OS_CopyFile("../src/wasm_playground/run_server.bat", "wasm_playground/run_server.bat", true);
@@ -218,13 +217,13 @@ int main(int argc, char **argv) {
         else IO_Printf("%-50s - ERROR\n", "add_source_location_macro");
     }
 
-    Array<Process> processes = {MA_GetAllocator(scratch)};
+    Array<Process> processes = {MA_GetAllocator(Perm)};
     if (ShouldRun("compilation")) {
         //
         // Test if things compile in C and C++ mode on all available compilers
         //
         S8_String        working_dir = PushDir("targets");
-        Array<S8_String> files       = {MA_GetAllocator(scratch)};
+        Array<S8_String> files       = {MA_GetAllocator(Perm)};
 
         files.add("../../../tests/compilation/test_compile_packed.c");
         files.add("../../../tests/compilation/test_compile_packed_cpp.c");
@@ -242,12 +241,12 @@ int main(int argc, char **argv) {
             if (UseCL) {
                 S8_String cc = "cl";
 
-                Array<S8_String> flags = {MA_GetAllocator(scratch)};
+                Array<S8_String> flags = {MA_GetAllocator(Perm)};
                 flags += "/Zi -D_CRT_SECURE_NO_WARNINGS";
                 flags += "/FC /WX /W3 /wd4200 /diagnostics:column /nologo";
                 flags += Fmt("/Fe:%.*s /Fd:%.*s.pdb", S8_Expand(exe), S8_Expand(name_no_ext));
 
-                Array<S8_String> link = {MA_GetAllocator(scratch)};
+                Array<S8_String> link = {MA_GetAllocator(Perm)};
                 link += "/link /incremental:no";
 
                 S8_String dir = Fmt("%.*s_cl_debug_" OS_NAME, S8_Expand(name_no_ext));
@@ -258,7 +257,7 @@ int main(int argc, char **argv) {
             if (UseClang) {
                 S8_String cc = "clang";
 
-                Array<S8_String> flags = {MA_GetAllocator(scratch)};
+                Array<S8_String> flags = {MA_GetAllocator(Perm)};
                 flags += "-g -Wno-write-strings";
                 flags += "-fdiagnostics-absolute-paths";
                 flags += "-fsanitize=address";
@@ -274,7 +273,7 @@ int main(int argc, char **argv) {
             if (UseGCC) {
                 S8_String cc = "gcc";
 
-                Array<S8_String> flags = {MA_GetAllocator(scratch)};
+                Array<S8_String> flags = {MA_GetAllocator(Perm)};
                 flags += "-g -Wno-write-strings";
                 flags += "-fsanitize=address";
                 if (is_cpp) flags += "-std=c++11";
