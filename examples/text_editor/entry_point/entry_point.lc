@@ -34,7 +34,7 @@ main :: proc(): int {
 
     SANDBOX_TEXT_EDITOR :: 1;
     SANDBOX_PROTOTYPE :: 2;
-    sandbox_chosen := SANDBOX_PROTOTYPE;
+    sandbox_chosen := SANDBOX_TEXT_EDITOR;
 
     for !WindowShouldClose() {
         screen_size: Vector2 = {:f32(GetScreenWidth()), :f32(GetScreenHeight())};

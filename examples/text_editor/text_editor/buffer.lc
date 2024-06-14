@@ -34,10 +34,25 @@ AdjustUTF8PosUnsafe :: proc(buffer: *Buffer, pos: int, direction: int = 1): int 
     return pos;
 }
 
+GetBufferEnd :: proc(buffer: *Buffer): int {
+    result := MaxInt(0, buffer.len - 1);
+    return result;
+}
+
+GetBufferEndRange :: proc(buffer: *Buffer): Range {
+    result := GetBufferEnd(buffer);
+    return {result, result};
+}
+
+GetEntireBufferRange :: proc(buffer: *Buffer): Range {
+    result: Range = {0, GetBufferEnd(buffer)};
+    return result;
+}
+
 AdjustUTF8Pos :: proc(buffer: *Buffer, pos: int, direction: int = 1): int {
     assert(direction == 1 || direction == -1);
     pos = AdjustUTF8PosUnsafe(buffer, pos, direction);
-    pos = ClampInt(pos, 0, MaxInt(0, buffer.len - 1));
+    pos = ClampInt(pos, 0, GetBufferEnd(buffer));
     if (buffer.data) assert(!IsUTF8ContinuationByte(buffer.data[pos]));
     return pos;
 }
@@ -131,8 +146,7 @@ GetStringFromBuffer :: proc(buffer: *Buffer, range: Range): String {
 }
 
 AddText :: proc(buffer: *Buffer, text: String) {
-    end_of_buffer: Range = {buffer.len - 1, buffer.len - 1};
-    ReplaceText(buffer, end_of_buffer, text);
+    ReplaceText(buffer, GetBufferEndRange(buffer), text);
 }
 
 FindLineOfPos :: proc(buffer: *Buffer, pos: int): LineInfo {
@@ -204,7 +218,7 @@ SeekOnWordBoundary :: proc(buffer: *Buffer, pos: int, direction: int = GO_FORWAR
     seek_whitespace        := standing_on_whitespace == false;
     seek_word              := standing_on_whitespace;
 
-    end := buffer.len - 1;
+    end := GetBufferEnd(buffer);
     if (direction == GO_BACKWARD) end = 0;
 
     result   := end;

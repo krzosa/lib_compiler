@@ -36,3 +36,8 @@ ClampFloat :: proc(val: float, min: float, max: float): float {
     if (val < min) return min;
     return val;
 }
+
+IsFlagSet :: proc(flags: u64, f: u64): bool {
+    result := flags & f;
+    return :bool(result);
+}

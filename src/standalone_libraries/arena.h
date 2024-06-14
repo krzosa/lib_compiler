@@ -118,7 +118,7 @@ MA_API void *          MA__PushSizeNonZeroed(MA_Arena *a, size_t size);
 MA_API void *          MA__PushSize(MA_Arena *arena, size_t size);
 MA_API char *          MA__PushStringCopy(MA_Arena *arena, char *p, size_t size);
 MA_API void *          MA__PushCopy(MA_Arena *arena, void *p, size_t size);
-MA_API MA_Temp   MA_BeginTemp(MA_Arena *arena);
+MA_API MA_Temp         MA_BeginTemp(MA_Arena *arena);
 MA_API void            MA_EndTemp(MA_Temp checkpoint);
 
 MA_API void            MA_PopToPos(MA_Arena *arena, size_t pos);

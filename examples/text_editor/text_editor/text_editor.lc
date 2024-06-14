@@ -26,11 +26,10 @@ UpdateTextEditor :: proc(rect: Rect2P, font: Font, font_size: float, font_spacin
     UpdateAndDrawWindows(font, font_size);
 }
 
-WindowFlags :: typedef u64;
 WindowFlags_DrawScrollbar :: 1;
 
 Window :: struct {
-    flags: WindowFlags;
+    flags: u64;
     buffer: *Buffer;
 
     cursor: Selection;
@@ -76,10 +75,9 @@ UpdateAndDrawWindow :: proc(w: *Window, font: Font, font_size: float) {
     text_window_rect := w.rect;
     bar_rect := CutRight(&text_window_rect, 10);
     horizontal_bar_rect := CutBottom(&text_window_rect, 10);
-    horizontal_bar_rect; @unused
     // line_numbers_rect := CutLeft(&text_window_rect, Monosize.x * 4);
 
-    buffer_end_vpos := CalculateVisualPos(w.buffer, w.buffer.len - 1);
+    buffer_end_vpos := CalculateVisualPos(w.buffer, GetBufferEnd(w.buffer));
     buffer_end_wpos := CalculateWorldPosUnscrolled(buffer_end_vpos);
 
     if CheckCollisionPointRec(GetMousePosition(), Rect2PToRectangle(w.rect)) {
@@ -251,7 +249,7 @@ UpdateAndDrawWindow :: proc(w: *Window, font: Font, font_size: float) {
         // @todo: buffer.len abstract
         if IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_A) {
             w.cursor.a = 0;
-            w.cursor.b = w.buffer.len - 1;
+            w.cursor.b = GetBufferEnd(w.buffer);
         }
 
         if IsKeyPressed(KEY_PAGE_DOWN) || IsKeyPressedRepeat(KEY_PAGE_DOWN) {
@@ -323,7 +321,6 @@ UpdateAndDrawWindow :: proc(w: *Window, font: Font, font_size: float) {
         }
         if (w.scroll.x < 0) w.scroll.x = 0;
         if (w.scroll.y < 0) w.scroll.y = 0;
-
         if (w.scroll.y > buffer_end_wpos.y) w.scroll.y = buffer_end_wpos.y;
 
         //
@@ -345,7 +342,6 @@ UpdateAndDrawWindow :: proc(w: *Window, font: Font, font_size: float) {
                 SetMouseCursor(MOUSE_CURSOR_IBEAM);
             } else {
                 SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-
                 if IsMouseButtonPressed(MOUSE_BUTTON_LEFT) {
                     w.mouse_scrolling = true;
                 }
@@ -364,7 +360,7 @@ UpdateAndDrawWindow :: proc(w: *Window, font: Font, font_size: float) {
             w.mouse_selecting = false;
         }
 
-        if w.mouse_scrolling {
+        if IsFlagSet(w.flags, WindowFlags_DrawScrollbar) && w.mouse_scrolling {
             mouse_scroll_marker_normalized := (mouse_p.y - w.rect.min.y) / GetRectY(bar_rect);
             w.scroll.y = mouse_scroll_marker_normalized * buffer_end_wpos.y;
 
@@ -459,7 +455,7 @@ UpdateAndDrawWindow :: proc(w: *Window, font: Font, font_size: float) {
 
 
     // Draw bar
-    {
+    if IsFlagSet(w.flags, WindowFlags_DrawScrollbar) {
         DrawRect(bar_rect, LIGHTGRAY);
         DrawRect(horizontal_bar_rect, LIGHTGRAY);
 

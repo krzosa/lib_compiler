@@ -1,6 +1,6 @@
 # Compiler front-end in a single-header-file C library
 
-I have no illusions here, this is not the next big language. What I propose is very simple - a return to C. Not to the language as it was, but a return to the ideal of 'C'. A return to something in it - that is more then it. A small language supplemented with modern ideas - distributed as a dependency free, easy to use single-header-file library.
+For a very simple statically typed language. I mostly designed it for personal use, it's small but complete - you can actually program in it and so on. It compiles to C with all the debug info so debuggers work. Currently I find that it's pretty good for metaprogramming and code generation, particularly when you have a workflow "metaprogram -> program". The library provides functions for traversing, printing the AST and other niceties:
 
 - **User has full control over compilation!**
 - **No dependencies, permissive license, single file that compile both in C and C++!**
