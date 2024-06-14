@@ -45,7 +45,6 @@ S8_String RaylibDLL;
 #include "examples/add_dynamic_array_macro/build.cpp"
 #include "examples/text_editor/build.cpp"
 #include "examples/hello_world/build.cpp"
-#include "examples/sandbox/build.cpp"
 #include "examples/create_raylib_window/build.cpp"
 #include "examples/add_instrumentation/build.cpp"
 #include "examples/use_as_data_format_with_typechecking/build.cpp"
@@ -164,12 +163,6 @@ int main(int argc, char **argv) {
         bool result = hello_world();
         if (result) IO_Printf("%-50s - OK\n", "hello_world");
         else IO_Printf("%-50s - ERROR\n", "hello_world");
-    }
-
-    if (ShouldRun("sandbox")) {
-        bool result = sandbox();
-        if (result) IO_Printf("%-50s - OK\n", "sandbox");
-        else IO_Printf("%-50s - ERROR\n", "sandbox");
     }
 
     if (ShouldRun("create_raylib_window")) {
